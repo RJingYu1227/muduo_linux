@@ -1,0 +1,76 @@
+﻿#include"epoller.h"
+#include<assert.h>
+#include<unistd.h>
+#include<strings.h>
+
+epoller::epoller(eventloop* loop) :loop_(loop) {
+	epollfd_ = epoll_create(100);
+}
+
+epoller::~epoller() {
+	close(epollfd_);
+}
+
+void epoller::epoll(int timeoutms, channellist* active_channels_) {
+	int numevents = epoll_wait(epollfd_, events_, 100, timeoutms);//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
+	if (numevents > 0)
+		fillActiveChannels(numevents, active_channels_);
+}
+
+void epoller::assertInLoopThread() {
+	loop_->assertInLoopThread();
+}
+
+void epoller::updateChannel(channel* ch) {
+	assertInLoopThread();
+
+	int fd_ = ch->fd();
+	epoll_event ev;
+	bzero(&ev, sizeof ev);
+	ev.events = ch->getEvent();
+	ev.data.fd = fd_;
+	ev.data.ptr = ch;
+
+	if (ch->mark() == -1) {
+		assert(channels_.find(fd_) == channels_.end());
+		epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd_, &ev);
+		channels_[fd_] = ch;
+		ch->setMark(1);
+	}
+	else {
+		assert(channels_.find(fd_) != channels_.end());
+		assert(channels_[fd_] = ch);
+		epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd_, &ev);
+	}
+}
+
+void epoller::removeChannel(channel* ch) {
+	assertInLoopThread();
+	int fd_ = ch->fd();
+
+	if (ch->mark() == -1) {
+		assert(channels_.find(fd_) == channels_.end());
+		return;
+	}
+
+	epoll_event ev;
+	bzero(&ev, sizeof ev);
+	ev.events = ch->getEvent();
+	ev.data.fd = fd_;
+	ev.data.ptr = ch;
+
+	assert(channels_.find(fd_) != channels_.end());
+	assert(channels_[fd_] = ch);
+	channels_.erase(fd_);
+	epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd_, &ev);
+
+}
+
+void epoller::fillActiveChannels(int numevents_, channellist* active_channels_)const {
+	assert(numevents_ <= 100);
+	for (int i = 0; i < numevents_; ++i) {
+		channel* ch = static_cast<channel*>(events_[i].data.ptr);
+		ch->setRevent(events_[i].events);
+		active_channels_->push_back(ch);
+	}
+}
