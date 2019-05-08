@@ -1,4 +1,4 @@
-#include "buffer.h"
+ï»¿#include "buffer.h"
 #include<stdio.h>
 #include<sys/uio.h>
 
@@ -54,7 +54,7 @@ size_t buffer::readFd(int fd) {
 	const int iovcnt = (writeable_ < sizeof extrabuf) ? 2 : 1;
 	const size_t n = readv(fd, vec, iovcnt);
 	if (n < 0)
-		perror("Êý¾Ý½ÓÊÕ´íÎó");
+		perror("æ•°æ®æŽ¥æ”¶é”™è¯¯");
 	else if (n <= writeable_)
 		write_index_ += n;
 	else {
