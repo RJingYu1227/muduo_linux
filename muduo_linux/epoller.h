@@ -1,4 +1,4 @@
-#ifndef EPOLLER_H
+﻿#ifndef EPOLLER_H
 #define EPOLLER_H
 
 #include"channel.h"
@@ -23,13 +23,16 @@ public:
 	void assertInLoopThread();
 
 private:
-	void fillActiveChannels(int numevents, channellist* active_channels_)const;
-
 	typedef std::map<int, channel*> channel_map;
+	typedef std::vector<epoll_event> event_list;
+
+	static const int kInitEventListSize = 16;
+
+	void fillActiveChannels(int numevents, channellist* active_channels_)const;
 	
 	eventloop* loop_;
 	int epollfd_;
-	epoll_event events_[100];
+	event_list events_;
 	channel_map channels_;
 };
 

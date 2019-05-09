@@ -3,8 +3,11 @@
 #include<unistd.h>
 #include<strings.h>
 
-epoller::epoller(eventloop* loop) :loop_(loop) {
-	epollfd_ = epoll_create(100);
+epoller::epoller(eventloop* loop)
+	:loop_(loop),
+	epollfd_(epoll_create1(EPOLL_CLOEXEC)),
+	events_(kInitEventListSize) {
+	assert(epollfd_ > 0);
 }
 
 epoller::~epoller() {
@@ -12,9 +15,13 @@ epoller::~epoller() {
 }
 
 void epoller::epoll(int timeoutms, channellist* active_channels_) {
-	int numevents = epoll_wait(epollfd_, events_, 100, timeoutms);//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
-	if (numevents > 0)
+	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
+	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
+	if (numevents > 0) {
 		fillActiveChannels(numevents, active_channels_);
+		if (numevents == events_.size())
+			events_.resize(numevents * 2);
+	}
 }
 
 void epoller::assertInLoopThread() {

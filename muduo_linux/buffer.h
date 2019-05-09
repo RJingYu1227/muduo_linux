@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<vector>
 #include<string.h>
@@ -13,29 +13,31 @@ public:
 
 	explicit buffer(size_t initial_size = kInitialSize)
 		:buffer_(kCheapPrepend + initial_size),
-		read_index_(kCheapPrepend),
-		write_index_(kCheapPrepend) {
+		begin_index_(kCheapPrepend),
+		end_index_(kCheapPrepend) {
 
 	}
 	~buffer() {}
 
 	void swap(buffer& rhs);
 	void append(const char* data, size_t len);
+	void prepend(const void* data, size_t len);//用于封包
 
-	size_t readableBytes()const { return write_index_ - read_index_; }
-	size_t writeableBytes()const { return buffer_.size() - write_index_; }
-	size_t prependableBytes()const { return read_index_; }
+	size_t readableBytes()const { return end_index_ - begin_index_; }
+	size_t writeableBytes()const { return buffer_.size() - end_index_; }
+	size_t prependableBytes()const { return begin_index_; }
 	size_t capacity()const { return buffer_.capacity(); }
 
-	char* beginWrite() { return begin() + write_index_; }
-	const char* beginWrite() const { return begin() + write_index_; }
+	char* beginWrite() { return begin() + end_index_; }
+	const char* beginWrite() const { return begin() + end_index_; }
 	void hasWritten(size_t len);
 	void unwrite(size_t len);
 	void ensureWriteable(size_t len);
+	void retrieve(size_t len);
+	void retrieveAll();
 
 	size_t readFd(int fd);
-	const char* peek()const { return begin() + read_index_; }
-
+	const char* peek()const { return begin() + begin_index_; }
 
 private:
 	char* begin() { return &*buffer_.begin(); }
@@ -44,7 +46,7 @@ private:
 	void makeSpace(size_t len);
 
 	std::vector<char> buffer_;
-	size_t read_index_;
-	size_t write_index_;
+	size_t begin_index_;
+	size_t end_index_;
 };
 
