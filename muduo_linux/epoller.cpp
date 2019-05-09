@@ -74,7 +74,7 @@ void epoller::removeChannel(channel* ch) {
 }
 
 void epoller::fillActiveChannels(int numevents_, channellist* active_channels_)const {
-	assert(numevents_ <= 100);
+	assert(numevents_ <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = static_cast<channel*>(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);

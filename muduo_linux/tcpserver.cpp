@@ -34,7 +34,7 @@ tcpserver::~tcpserver() {
 void tcpserver::start() {
 	loop_->assertInLoopThread();
 	listening_ = 1;
-	::listen(listenfd_, 100);
+	listen(listenfd_, SOMAXCONN);
 	channel_->enableReading();
 }
 
