@@ -14,7 +14,7 @@ class channel;
 class epoller;
 class tcpconnection;
 
-typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
+//typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 typedef std::function<void()> functor;
 
 class eventloop {

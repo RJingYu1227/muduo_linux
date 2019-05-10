@@ -9,7 +9,7 @@
 
 tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 	:pool_(pool), 
-	listening_(0) {
+	listening_(0){
 	loop_ = pool_->getServerLoop();
 
 	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -55,24 +55,27 @@ void tcpserver::acceptConn() {
 	}
 
 	eventloop* ioloop_ = pool_->getIoLoop();
-	tcpconn_ptr new_conn(new tcpconnection(ioloop_, clifd_, &cliaddr_));
+	tcpconnection* new_conn;
+	channel* new_ch;
+	pthread_mutex_lock(&lock_);
+
+	new_ch = m_pool_.newElement(new_conn);
+
+	pthread_mutex_unlock(&lock_);
+	new (new_conn)tcpconnection(ioloop_, new_ch, clifd_, &cliaddr_);
 	new_conn->setMsgCallback(msg_callback_);
 	new_conn->setConnCallback(conn_callback_);
 	new_conn->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
 	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_conn));
-	pthread_mutex_lock(&lock_);
 
-	conns_[clifd_] = new_conn;
-
-	pthread_mutex_unlock(&lock_);
 }
 
-void tcpserver::removeConn(const tcpconn_ptr conn) {
-	close_callback_(conn);//为了线程安全
+void tcpserver::removeConn(tcpconnection* conn) {
+	close_callback_(conn);
 	pthread_mutex_lock(&lock_);
 
-	conns_.erase(conn->fd());
+	m_pool_.deleteElement(conn);
 
 	pthread_mutex_unlock(&lock_);
-	//线程安全，因为是io线程调用的
+
 }

@@ -5,7 +5,7 @@
 #include"eventloop.h"
 #include<vector>
 #include<sys/epoll.h>
-#include<map>
+#include<unordered_map>
 
 class channel;
 class eventloop;
@@ -23,7 +23,7 @@ public:
 	void assertInLoopThread();
 
 private:
-	typedef std::map<int, channel*> channel_map;
+	typedef std::unordered_map<int, channel*> channel_map;
 	typedef std::vector<epoll_event> event_list;
 
 	static const int kInitEventListSize = 16;

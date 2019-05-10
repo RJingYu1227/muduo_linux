@@ -32,8 +32,8 @@ void elthreadpool::start() {
 			perror("线程创建失败");
 	}
 	
-	serverloop_->loop();
 	start_ = 1;
+	serverloop_->loop();
 }
 
 eventloop* elthreadpool::getIoLoop() {

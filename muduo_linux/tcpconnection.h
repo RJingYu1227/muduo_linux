@@ -6,22 +6,21 @@
 #include"buffer.h"
 #include<netinet/in.h>
 #include<functional>
-#include<memory>
 
 class eventloop;
 class channel;
 class buffer;
 
-class tcpconnection :
-	public std::enable_shared_from_this<tcpconnection> {
+class tcpconnection /*:
+	public std::enable_shared_from_this<tcpconnection>*/ {
 public:
-	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
+	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
 	//enum state { kconnecting = 0, kconnected, kdisconnecting, kdisconnected };
 	//typedef std::function<void(tcpconnection* conn)> conn_callback;
-	typedef std::function<void(const tcpconn_ptr conn)> event_callback;
-	typedef std::function<void(const tcpconn_ptr conn, buffer* data, ssize_t len)> msg_callback;
+	typedef std::function<void(tcpconnection* conn)> event_callback;
+	typedef std::function<void(tcpconnection* conn, buffer* data, ssize_t len)> msg_callback;
 
-	tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr);
+	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
 
 	void setConnCallback(const event_callback& cb) { conn_callback_ = cb; }

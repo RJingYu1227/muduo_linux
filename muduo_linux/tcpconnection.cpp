@@ -5,13 +5,14 @@
 #include<assert.h>
 #include<arpa/inet.h>
 
-tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr)
+tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:loop_(loop),
 	fd_(fd),
 	state_(0),
 	ip_(inet_ntoa(cliaddr->sin_addr)),
 	port_(cliaddr->sin_port),
-	channel_(new channel(loop_, fd_)) {
+	channel_(ch) {
+	new(channel_)channel(loop_, fd_);
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
@@ -21,7 +22,7 @@ tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr)
 tcpconnection::~tcpconnection() {
 	assert(state_ == 2);
 	state_ = 3;
-	delete channel_;
+	channel_->~channel();
 	close(fd_);
 }
 
@@ -29,7 +30,7 @@ void tcpconnection::start() {
 	assert(state_ == 0);
 	channel_->enableReading();
 	state_ = 1;
-	conn_callback_(shared_from_this());
+	conn_callback_(this);
 }
 
 void tcpconnection::activeClosure() {
@@ -42,7 +43,7 @@ void tcpconnection::handleRead() {
 		loop_->assertInLoopThread();
 		size_t n = input_buff_.readFd(fd_);
 		if (n > 0)
-			msg_callback_(shared_from_this(), &input_buff_, n);
+			msg_callback_(this, &input_buff_, n);
 		else if (n == 0) {
 			handleClose();
 			perror("客户端主动断开一个连接");
@@ -52,7 +53,7 @@ void tcpconnection::handleRead() {
 
 void tcpconnection::handleClose() {
 	if (state_ == 1 && (state_ = 2))
-		close_callback_(shared_from_this());
+		close_callback_(this);
 }
 
 void tcpconnection::handleWrite() {

@@ -2,23 +2,21 @@
 #include<strings.h>
 #include"elthreadpool.h"
 #include"tcpserver.h"
-#include<set>
 #include<pthread.h>
 
-std::set<const tcpconn_ptr> clients_;
-elthreadpool test;
+elthreadpool test(4);
 tcpserver server(&test, "127.0.0.1", 6666);
 
-void on_connection(const tcpconn_ptr conn){
+void on_connection(tcpconnection* conn){
 	std::cout << "收到一个新连接" << conn->getIp() << " " << conn->getPort() << std::endl;
 }
 
-void on_message(const tcpconn_ptr conn, buffer* buff, ssize_t len) {
+void on_message(tcpconnection* conn, buffer* buff, ssize_t len) {
 	std::cout << buff->peek() << std::endl;
 	buff->retrieve(len);
 }
 
-void on_closeclient(const tcpconn_ptr conn) {
+void on_closeclient(tcpconnection* conn) {
 
 }
 

@@ -6,9 +6,9 @@
 #include"channel.h"
 #include"tcpconnection.h"
 #include"buffer.h"
+#include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
-#include<map>
 #include<pthread.h>
 
 class elthreadpool;
@@ -16,13 +16,14 @@ class eventloop;
 class channel;
 class tcpconnection;
 class buffer;
+class memorypool;
 
-typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
+//typedef std::shared_ptr<tcpconnection> tcpconnection;
 
 class tcpserver {
 public:
-	typedef std::function<void(const tcpconn_ptr conn)> event_callback;//客户端事件回调
-	typedef std::function<void(const tcpconn_ptr conn, buffer* data, ssize_t len)> msg_callback;
+	typedef std::function<void(tcpconnection* conn)> event_callback;//客户端事件回调
+	typedef std::function<void(tcpconnection* conn, buffer* data, ssize_t len)> msg_callback;
 
 	tcpserver(elthreadpool* loop, const char* ip, int port);
 	~tcpserver();
@@ -34,17 +35,18 @@ public:
 	void start();
 
 private:
-	typedef std::map<int, tcpconn_ptr> conn_map;
+	//typedef std::map<int, tcpconnection*> conn_map;
 
 	void acceptConn();
-	void removeConn(const tcpconn_ptr conn);
+	void removeConn(tcpconnection* conn);
 
 	elthreadpool* pool_;
 	eventloop* loop_;
 	int listenfd_;
 	sockaddr_in serveraddr_;
 	channel* channel_;
-	conn_map conns_;
+	memorypool m_pool_;
+	//conn_map conns_;
 	bool listening_;
 	pthread_mutex_t lock_;
 
