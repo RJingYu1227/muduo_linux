@@ -10,4 +10,4 @@ tcpserver线程负责新建tcpconnection，完成相应的初始化，然后通�
 I/O线程负责监听并处理tcpconnection的各种epoll_event，处理过程中会调用自定义的回调函数。
 如果是eventfd对应的channel返回则会开始执行通过runInLoop添加到函数队列中的函数，需要加锁。
 
-2019/5/10 更新了内存池，目前只有一个内存池，且未实现扩容。
+2019/5/10 更新了内存池，未实现扩容方法。
