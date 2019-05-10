@@ -12,7 +12,7 @@ memorypool::~memorypool(){
 
 }
 
-channel* memorypool::newElement(tcpconnection* &conn) {
+channel* memorypool::newConn(tcpconnection* &conn) {
 	assert(!queue_.empty());
 	pthread_mutex_lock(&lock_);
 
@@ -25,9 +25,9 @@ channel* memorypool::newElement(tcpconnection* &conn) {
 	return new_ch;
 }
 
-void memorypool::deleteElement(tcpconnection* element) {
-	int n = element - conn_begin_;
-	conn_space_.destroy(element);//由tcpconnection的析构函数调用channel的析构函数
+void memorypool::deleteConn(tcpconnection* conn) {
+	int n = conn - conn_begin_;
+	conn_space_.destroy(conn);//由tcpconnection的析构函数调用channel的析构函数
 	pthread_mutex_lock(&lock_);
 
 	queue_.push(n);

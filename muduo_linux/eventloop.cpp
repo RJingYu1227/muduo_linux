@@ -102,13 +102,13 @@ void eventloop::doFunctors() {
 
 void eventloop::newConn(tcpconnection* &conn, int &fd, sockaddr_in &sockaddr) {
 	channel* ch;
-	ch = m_pool_->newElement(conn);
+	ch = m_pool_->newConn(conn);
 	new(conn)tcpconnection(this, ch, fd, &sockaddr);
 }
 
 void eventloop::removeConn(tcpconnection* conn) {
 	assertInLoopThread();
-	m_pool_->deleteElement(conn);
+	m_pool_->deleteConn(conn);
 }
 
 void eventloop::createQueue(eventloop* loop) {

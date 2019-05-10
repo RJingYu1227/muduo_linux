@@ -13,8 +13,8 @@ public:
 	memorypool(int init = 233);
 	~memorypool();
 
-	channel* newElement(tcpconnection* &conn);
-	void deleteElement(tcpconnection* element);
+	channel* newConn(tcpconnection* &conn);
+	void deleteConn(tcpconnection* conn);
 
 private:
 	pthread_mutex_t lock_;
