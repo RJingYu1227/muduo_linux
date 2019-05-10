@@ -7,7 +7,7 @@
 
 std::set<const tcpconn_ptr> clients_;
 elthreadpool test;
-tcpserver server(test.getServerLoop(), "127.0.0.1", 6666);
+tcpserver server(&test, "127.0.0.1", 6666);
 
 void on_connection(const tcpconn_ptr conn){
 	std::cout << "收到一个新连接" << conn->getIp() << " " << conn->getPort() << std::endl;
@@ -24,7 +24,6 @@ void on_closeclient(const tcpconn_ptr conn) {
 
 int main() {
 
-	server.setIoLoop(test.getIoLoop());
 	server.setConnCallback(on_connection);
 	server.setCloseCallback(on_closeclient);
 	server.setMsgCallback(on_message);

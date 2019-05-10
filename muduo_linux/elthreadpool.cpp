@@ -4,39 +4,42 @@
 #include<errno.h>
 
 
-elthreadpool::elthreadpool(int loops) {
-	start_ = 0;
-	server_ = 0;
+elthreadpool::elthreadpool(int loops)
+	:start_(0),
+	loop_num_(loops - 1),
+	loop_index_(0) {
 	serverloop_ = new eventloop();//主线程退出时会被delete
-	io_ = 0;
-	ioloop_ = new eventloop();
-	eventloop::createQueue(ioloop_);
-	loops_ = loops;
+	for (int i = 1; i <= loop_num_; ++i) {
+		eventloop* ioloop_ = new eventloop();
+		eventloop::createQueue(ioloop_);
+		ioloops_.push_back(ioloop_);
+	}
 }
 
 elthreadpool::~elthreadpool() {
 	delete serverloop_;
-	delete ioloop_;
+	for (eventloop* ioloop : ioloops_)
+		delete ioloop;
 }
 
 void elthreadpool::start() {
 	assert(!start_);
-	int rjy_;
-	rjy_ = pthread_create(&server_, NULL, serverThread, serverloop_);
-	if (rjy_)
-		perror("线程创建失败");
-	rjy_ = pthread_create(&io_, NULL, ioThread, ioloop_);
-	if (rjy_)
-		perror("线程创建失败");
+	int ret;
+	pthread_t temp;
+	for (eventloop* ioloop : ioloops_) {
+		ret = pthread_create(&temp, NULL, ioThread, ioloop);
+		if (ret)
+			perror("线程创建失败");
+	}
+	
+	serverloop_->loop();
 	start_ = 1;
-	pthread_join(server_, nullptr);
-	pthread_join(io_, nullptr);
 }
 
-void* elthreadpool::serverThread(void* a) {
-	eventloop* b = (eventloop*)a;
-	b->updateThread();
-	b->loop();
+eventloop* elthreadpool::getIoLoop() {
+	++loop_index_;
+	loop_index_ %= loop_num_;
+	return ioloops_[loop_index_];
 }
 
 void* elthreadpool::ioThread(void* a) {
