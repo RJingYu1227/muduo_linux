@@ -1,18 +1,21 @@
 #ifndef EVENTLOOP_H
 #define EVENTLOOP_H
 
+#include"channel.h"
+#include"epoller.h"
+#include"tcpconnection.h"
+#include"memorypool.h"
+#include<netinet/in.h>
 #include<pthread.h>
 #include<vector>
 #include<memory>
 #include<sys/eventfd.h>
 #include<functional>
-#include"channel.h"
-#include"epoller.h"
-#include"tcpconnection.h"
 
 class channel;
 class epoller;
 class tcpconnection;
+class memorypool;
 
 //typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 typedef std::function<void()> functor;
@@ -28,8 +31,10 @@ public:
 	void assertInLoopThread();
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
-	bool isInLoopThread()const;
+	bool isInLoopThread()const; 
 	void runInLoop(const functor& cb);
+	void newConn(tcpconnection* &conn, int &fd, sockaddr_in &sockaddr);
+	void removeConn(tcpconnection* conn);
 
 	static void createQueue(eventloop* loop);
 	static eventloop* get_eventloop();
@@ -45,6 +50,8 @@ private:
 	std::vector<functor> pending_functors_;
 	int wakeupfd_;
 	timeval select_timeout_;
+
+	memorypool* m_pool_;
 
 	int epoll_timeout_;
 	bool quit_;

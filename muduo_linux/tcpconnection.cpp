@@ -52,8 +52,10 @@ void tcpconnection::handleRead() {
 }
 
 void tcpconnection::handleClose() {
-	if (state_ == 1 && (state_ = 2))
+	if (state_ == 1 && (state_ = 2)) {
 		close_callback_(this);
+		loop_->removeConn(this);
+	}
 }
 
 void tcpconnection::handleWrite() {

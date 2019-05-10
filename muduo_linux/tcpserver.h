@@ -6,7 +6,6 @@
 #include"channel.h"
 #include"tcpconnection.h"
 #include"buffer.h"
-#include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
 #include<pthread.h>
@@ -16,7 +15,6 @@ class eventloop;
 class channel;
 class tcpconnection;
 class buffer;
-class memorypool;
 
 //typedef std::shared_ptr<tcpconnection> tcpconnection;
 
@@ -45,10 +43,9 @@ private:
 	int listenfd_;
 	sockaddr_in serveraddr_;
 	channel* channel_;
-	memorypool m_pool_;
 	//conn_map conns_;
 	bool listening_;
-	pthread_mutex_t lock_;
+	//pthread_mutex_t lock_;
 
 	event_callback conn_callback_;
 	event_callback close_callback_;

@@ -6,9 +6,9 @@ const int channel::kNoneEvent = 0;
 const int channel::kReadEvent = EPOLLIN | EPOLLPRI;
 const int channel::kWriteEvent = EPOLLOUT;
 
-channel::channel(eventloop* loop, int fdarg)
+channel::channel(eventloop* loop, int fd)
 	:loop_(loop),
-	fd_(fdarg),
+	fd_(fd),
 	event_(0),
 	revent_(0),
 	mark_(-1) {

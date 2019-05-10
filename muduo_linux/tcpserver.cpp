@@ -56,13 +56,7 @@ void tcpserver::acceptConn() {
 
 	eventloop* ioloop_ = pool_->getIoLoop();
 	tcpconnection* new_conn;
-	channel* new_ch;
-	pthread_mutex_lock(&lock_);
-
-	new_ch = m_pool_.newElement(new_conn);
-
-	pthread_mutex_unlock(&lock_);
-	new (new_conn)tcpconnection(ioloop_, new_ch, clifd_, &cliaddr_);
+	ioloop_->newConn(new_conn, clifd_, cliaddr_);
 	new_conn->setMsgCallback(msg_callback_);
 	new_conn->setConnCallback(conn_callback_);
 	new_conn->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
@@ -72,10 +66,4 @@ void tcpserver::acceptConn() {
 
 void tcpserver::removeConn(tcpconnection* conn) {
 	close_callback_(conn);
-	pthread_mutex_lock(&lock_);
-
-	m_pool_.deleteElement(conn);
-
-	pthread_mutex_unlock(&lock_);
-
 }

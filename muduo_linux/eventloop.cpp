@@ -100,7 +100,19 @@ void eventloop::doFunctors() {
 		cb();
 }
 
+void eventloop::newConn(tcpconnection* &conn, int &fd, sockaddr_in &sockaddr) {
+	channel* ch;
+	ch = m_pool_->newElement(conn);
+	new(conn)tcpconnection(this, ch, fd, &sockaddr);
+}
+
+void eventloop::removeConn(tcpconnection* conn) {
+	assertInLoopThread();
+	m_pool_->deleteElement(conn);
+}
+
 void eventloop::createQueue(eventloop* loop) {
+	loop->m_pool_ = new memorypool();
 	loop->wakeupfd_ = eventfd(0, 0);
 	channel* channel_ = new channel(loop, loop->wakeupfd_);
 	channel_->setReadCallback(std::bind(&eventloop::doFunctors, loop));

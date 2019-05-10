@@ -3,7 +3,6 @@
 #include"channel.h"
 #include<memory>
 #include<queue>
-#include<initializer_list>
 
 class channel;
 class tcpconnection;
@@ -18,6 +17,7 @@ public:
 	void deleteElement(tcpconnection* element);
 
 private:
+	pthread_mutex_t lock_;
 	tcpconnection* conn_begin_;
 	channel* ch_begin_;
 	std::allocator<tcpconnection> conn_space_;
