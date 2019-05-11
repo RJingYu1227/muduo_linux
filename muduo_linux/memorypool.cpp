@@ -40,15 +40,16 @@ void memorypool::deleteConn(tcpconnection* conn) {
 }
 
 void memorypool::makeSpace() {
-	addr begin_;
+	addr head_;
 	allocator<tcpconnection>* conn_ = new allocator<tcpconnection>;
 	allocator<channel>* ch_ = new allocator<channel>;
-	begin_.conn_ = conn_->allocate(size_);
-	begin_.ch_ = ch_->allocate(size_);
+	head_.conn_ = conn_->allocate(size_);
+	head_.ch_ = ch_->allocate(size_);
+	head_map_[head_] = size_;
 	for (int i = 0; i < size_; ++i) {
-		queue_.push(begin_);
-		begin_.conn_ += 1;
-		begin_.ch_ += 1;
+		queue_.push(head_);
+		head_.conn_ += 1;
+		head_.ch_ += 1;
 	}
 	size_ *= 2;
 }

@@ -4,6 +4,7 @@
 #include<memory>
 #include<queue>
 #include<pthread.h>
+#include<map>
 using namespace::std;
 
 class channel;
@@ -30,6 +31,7 @@ private:
 	pthread_mutex_t lock_;
 	int size_;
 
+	map<addr, int> head_map_;
 	queue<addr> queue_;
 };
 
