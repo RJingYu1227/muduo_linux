@@ -33,7 +33,7 @@ public:
 	void removeChannel(channel* ch);
 	bool isInLoopThread()const; 
 	void runInLoop(const functor& cb);
-	void newConn(tcpconnection* &conn, int &fd, sockaddr_in &sockaddr);
+	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
 	void removeConn(tcpconnection* conn);
 
 	static void createQueue(eventloop* loop);
@@ -49,7 +49,6 @@ private:
 	eventfd_t count_;
 	std::vector<functor> pending_functors_;
 	int wakeupfd_;
-	timeval select_timeout_;
 
 	memorypool* m_pool_;
 

@@ -88,7 +88,6 @@ void eventloop::runInLoop(const functor& cb) {
 }
 
 void eventloop::doFunctors() {
-	select(0, nullptr, nullptr, nullptr, &select_timeout_);//不建议使用sleep/usleep
 	std::vector<functor> temp_;
 	pthread_mutex_lock(&lock_);
 
@@ -100,10 +99,10 @@ void eventloop::doFunctors() {
 		cb();
 }
 
-void eventloop::newConn(tcpconnection* &conn, int &fd, sockaddr_in &sockaddr) {
+void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
 	channel* ch;
 	ch = m_pool_->newConn(conn);
-	new(conn)tcpconnection(this, ch, fd, &sockaddr);
+	new(conn)tcpconnection(this, ch, fd, cliaddr);
 }
 
 void eventloop::removeConn(tcpconnection* conn) {
@@ -118,5 +117,4 @@ void eventloop::createQueue(eventloop* loop) {
 	channel_->setReadCallback(std::bind(&eventloop::doFunctors, loop));
 	channel_->enableReading();
 	loop->lock_ = PTHREAD_MUTEX_INITIALIZER;
-	loop->select_timeout_.tv_usec = 66666;//66.666ms
 }

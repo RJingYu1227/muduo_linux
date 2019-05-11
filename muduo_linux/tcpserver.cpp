@@ -38,9 +38,9 @@ tcpserver::~tcpserver() {
 
 void tcpserver::start() {
 	loop_->assertInLoopThread();
-	listening_ = 1;
 	listen(listenfd_, SOMAXCONN);
 	channel_->enableReading();
+	listening_ = 1;
 }
 
 void tcpserver::acceptConn() {
@@ -56,7 +56,7 @@ void tcpserver::acceptConn() {
 
 	eventloop* ioloop_ = pool_->getIoLoop();
 	tcpconnection* new_conn;
-	ioloop_->newConn(new_conn, clifd_, cliaddr_);
+	ioloop_->newConn(new_conn, clifd_, &cliaddr_);
 	new_conn->setMsgCallback(msg_callback_);
 	new_conn->setConnCallback(conn_callback_);
 	new_conn->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
