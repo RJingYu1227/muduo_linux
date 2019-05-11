@@ -34,9 +34,8 @@ public:
 
 private:
 	//typedef std::map<int, tcpconnection*> conn_map;
-
+	//void removeConn(tcpconnection* conn);
 	void acceptConn();
-	void removeConn(tcpconnection* conn);
 
 	elthreadpool* pool_;
 	eventloop* loop_;

@@ -59,11 +59,13 @@ void tcpserver::acceptConn() {
 	ioloop_->newConn(new_conn, clifd_, &cliaddr_);
 	new_conn->setMsgCallback(msg_callback_);
 	new_conn->setConnCallback(conn_callback_);
-	new_conn->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+	new_conn->setCloseCallback(close_callback_);
 	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_conn));
 
 }
 
+/*
 void tcpserver::removeConn(tcpconnection* conn) {
 	close_callback_(conn);
 }
+*/
