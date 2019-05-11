@@ -14,7 +14,7 @@ void on_connection(tcpconnection* conn){
 void on_message(tcpconnection* conn, buffer* buff, ssize_t len) {
 	std::cout << buff->toString() << std::endl;
 	buffer* out = conn->outputBuffer();
-	out->append(buff->beginCharPtr(), len);
+	out->append(buff->beginPtr(), len);
 	out->hasUsed(len);
 	buff->retrieve(len);
 	conn->sendBuffer();

@@ -28,8 +28,8 @@ public:
 	size_t prependableBytes()const { return begin_index_; }
 	size_t capacity()const { return buffer_.capacity(); }
 
-	char* endCharPtr() { return headCharPtr() + end_index_; }
-	const char* endCharPtr() const { return headCharPtr() + end_index_; }
+	char* endPtr() { return headPtr() + end_index_; }
+	const char* endPtr() const { return headPtr() + end_index_; }
 	void hasUsed(size_t len);
 	void unUsed(size_t len);
 	void ensureLeftBytes(size_t len);
@@ -37,12 +37,12 @@ public:
 	void retrieveAll();
 
 	size_t readFd(int fd);
-	const char* beginCharPtr()const { return headCharPtr() + begin_index_; }
+	const char* beginPtr()const { return headPtr() + begin_index_; }
 	std::string toString();
 
 private:
-	char* headCharPtr() { return &*buffer_.begin(); }
-	const char* headCharPtr() const { return &*buffer_.begin(); }
+	char* headPtr() { return &*buffer_.begin(); }
+	const char* headPtr() const { return &*buffer_.begin(); }
 
 	void makeSpace(size_t len);
 

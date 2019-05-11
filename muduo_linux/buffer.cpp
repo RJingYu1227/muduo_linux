@@ -10,14 +10,14 @@ void buffer::swap(buffer& rhs) {
 
 void buffer::append(const char* data, size_t len) {
 	ensureLeftBytes(len);
-	std::copy(data, data + len, endCharPtr());
+	std::copy(data, data + len, endPtr());
 }
 
 void buffer::prepend(const void* data, size_t len) {
 	assert(len <= begin_index_);
 	begin_index_ -= len;
 	const char* d = static_cast<const char*>(data);
-	std::copy(d, d + len, headCharPtr() + begin_index_);
+	std::copy(d, d + len, headPtr() + begin_index_);
 }
 
 void buffer::hasUsed(size_t len) {
@@ -42,7 +42,7 @@ void buffer::makeSpace(size_t len) {
 	else {
 		assert(kCheapPrepend < begin_index_);
 		size_t readable_ = usedBytes();
-		std::copy(headCharPtr() + begin_index_, headCharPtr() + end_index_, headCharPtr() + kCheapPrepend);
+		std::copy(headPtr() + begin_index_, headPtr() + end_index_, headPtr() + kCheapPrepend);
 		begin_index_ = kCheapPrepend;
 		end_index_ = begin_index_ + readable_;
 		assert(readable_ = usedBytes());
@@ -66,7 +66,7 @@ size_t buffer::readFd(int fd) {
 	char extrabuf[65536];
 	iovec vec[2];
 	const size_t writeable_ = leftBytes();
-	vec[0].iov_base = headCharPtr() + end_index_;
+	vec[0].iov_base = headPtr() + end_index_;
 	vec[0].iov_len = writeable_;
 	vec[1].iov_base = extrabuf;
 	vec[1].iov_len = sizeof extrabuf;
@@ -86,6 +86,6 @@ size_t buffer::readFd(int fd) {
 }
 
 std::string buffer::toString() {
-	std::string s(beginCharPtr(), usedBytes());
+	std::string s(beginPtr(), usedBytes());
 	return s;
 }

@@ -52,7 +52,7 @@ void tcpconnection::sendBuffer() {
 			perror("输出缓冲区为空");
 			return;
 		}
-		size_t nwrote = send(fd_, output_buff_.beginCharPtr(), output_buff_.usedBytes(), 0);
+		size_t nwrote = send(fd_, output_buff_.beginPtr(), output_buff_.usedBytes(), 0);
 		if (nwrote >= 0) {
 			output_buff_.retrieve(nwrote);
 			if (output_buff_.usedBytes() != 0)
