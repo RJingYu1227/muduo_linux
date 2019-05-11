@@ -30,8 +30,6 @@ void memorypool::deleteConn(tcpconnection* conn) {
 	temp_.conn_ = conn;
 	temp_.ch_ = conn->channel_;
 	conn->~tcpconnection();
-	conn = nullptr;
-
 	pthread_mutex_lock(&lock_);
 
 	queue_.push(temp_);
