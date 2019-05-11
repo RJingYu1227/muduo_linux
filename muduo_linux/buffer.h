@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include<vector>
-#include<string.h>
+#include<string>
 #include<assert.h>
 #include<algorithm>
 
@@ -38,6 +38,7 @@ public:
 
 	size_t readFd(int fd);
 	const char* peek()const { return begin() + begin_index_; }
+	std::string toString();
 
 private:
 	char* begin() { return &*buffer_.begin(); }

@@ -84,3 +84,8 @@ size_t buffer::readFd(int fd) {
 
 	return n;
 }
+
+std::string buffer::toString() {
+	std::string s(peek(), readableBytes());
+	return s;
+}

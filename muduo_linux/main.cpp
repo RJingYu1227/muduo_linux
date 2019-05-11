@@ -1,5 +1,5 @@
 ﻿#include<iostream>
-#include<strings.h>
+#include<string>
 #include"elthreadpool.h"
 #include"tcpserver.h"
 #include<pthread.h>
@@ -12,7 +12,7 @@ void on_connection(tcpconnection* conn){
 }
 
 void on_message(tcpconnection* conn, buffer* buff, ssize_t len) {
-	std::cout << buff->peek() << std::endl;
+	std::cout << buff->toString() << std::endl;
 	buff->retrieve(len);
 }
 
