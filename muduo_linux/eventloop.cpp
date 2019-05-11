@@ -18,8 +18,6 @@ void eventloop::updateThread() {
 
 eventloop::eventloop() :
 	epoll_timeout_(-1),
-	looping_(0),
-	quit_(0),
 	thread_id_(pthread_self()),
 	epoller_(new epoller(this)) {
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;

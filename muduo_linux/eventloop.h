@@ -53,10 +53,10 @@ private:
 	memorypool* m_pool_;
 
 	int epoll_timeout_;
-	bool quit_;
+	bool quit_ = 0;
 	channel_list active_channels_;
 	epoller* epoller_;
-	bool looping_;
+	bool looping_ = 0;
 	pthread_t thread_id_;	
 
 };

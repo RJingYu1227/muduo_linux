@@ -46,4 +46,6 @@ void* elthreadpool::ioThread(void* a) {
 	eventloop* b = (eventloop*)a;
 	b->updateThread();
 	b->loop();
+
+	return (void*)0;
 }
