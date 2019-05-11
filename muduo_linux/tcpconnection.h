@@ -4,15 +4,19 @@
 #include"eventloop.h"
 #include"channel.h"
 #include"buffer.h"
+#include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
 
 class eventloop;
 class channel;
 class buffer;
+class memorypool;
 
 class tcpconnection /*:
 	public std::enable_shared_from_this<tcpconnection>*/ {
+	friend class memorypool;
+
 public:
 	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
 	//enum state { kconnecting = 0, kconnected, kdisconnecting, kdisconnected };

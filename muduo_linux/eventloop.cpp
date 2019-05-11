@@ -100,8 +100,7 @@ void eventloop::doFunctors() {
 }
 
 void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
-	channel* ch;
-	ch = m_pool_->newConn(conn);
+	channel* ch = m_pool_->setAddr(conn);
 	new(conn)tcpconnection(this, ch, fd, cliaddr);
 }
 

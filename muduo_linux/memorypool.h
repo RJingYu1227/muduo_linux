@@ -3,14 +3,13 @@
 #include"channel.h"
 #include<memory>
 #include<queue>
-#include<unordered_map>
 #include<pthread.h>
 using namespace::std;
 
 class channel;
 class tcpconnection;
 
-struct  head {
+struct  addr {
 	tcpconnection* conn_ = nullptr;
 	channel* ch_ = nullptr;
 };
@@ -21,15 +20,16 @@ public:
 	memorypool(int init = 64);
 	~memorypool();
 
-	channel* newConn(tcpconnection* &conn);
+	channel* setAddr(tcpconnection* &conn);
 	void deleteConn(tcpconnection* conn);
+	int size() { return size_; }
 
 private:
-	head* makeSpace();
+	void makeSpace();
 
 	pthread_mutex_t lock_;
 	int size_;
 
-	unordered_map<head*, queue<int>> map_;
+	queue<addr> queue_;
 };
 
