@@ -9,49 +9,49 @@ void buffer::swap(buffer& rhs) {
 }
 
 void buffer::append(const char* data, size_t len) {
-	ensureWriteable(len);
-	std::copy(data, data + len, beginWrite());
+	ensureLeftBytes(len);
+	std::copy(data, data + len, endCharPtr());
 }
 
 void buffer::prepend(const void* data, size_t len) {
 	assert(len <= begin_index_);
 	begin_index_ -= len;
 	const char* d = static_cast<const char*>(data);
-	std::copy(d, d + len, begin() + begin_index_);
+	std::copy(d, d + len, headCharPtr() + begin_index_);
 }
 
-void buffer::hasWritten(size_t len) {
-	assert(len <= writeableBytes());
+void buffer::hasUsed(size_t len) {
+	assert(len <= leftBytes());
 	end_index_ += len;
 }
 
-void buffer::unwrite(size_t len) {
-	assert(len <= readableBytes());
+void buffer::unUsed(size_t len) {
+	assert(len <= usedBytes());
 	end_index_ -= len;
 }
 
-void buffer::ensureWriteable(size_t len) {
-	if (writeableBytes() < len)
+void buffer::ensureLeftBytes(size_t len) {
+	if (leftBytes() < len)
 		makeSpace(len);
-	assert(writeableBytes() >= len);
+	assert(leftBytes() >= len);
 }
 
 void buffer::makeSpace(size_t len) {
-	if (writeableBytes() + prependableBytes() < len + kCheapPrepend)
+	if (leftBytes() + prependableBytes() < len + kCheapPrepend)
 		buffer_.resize(end_index_ + len);
 	else {
 		assert(kCheapPrepend < begin_index_);
-		size_t readable_ = readableBytes();
-		std::copy(begin() + begin_index_, begin() + end_index_, begin() + kCheapPrepend);
+		size_t readable_ = usedBytes();
+		std::copy(headCharPtr() + begin_index_, headCharPtr() + end_index_, headCharPtr() + kCheapPrepend);
 		begin_index_ = kCheapPrepend;
 		end_index_ = begin_index_ + readable_;
-		assert(readable_ = readableBytes());
+		assert(readable_ = usedBytes());
 	}
 }
 
 void buffer::retrieve(size_t len) {
-	assert(len <= readableBytes());
-	if (len < readableBytes())
+	assert(len <= usedBytes());
+	if (len < usedBytes())
 		begin_index_ += len;
 	else
 		retrieveAll();
@@ -65,8 +65,8 @@ void buffer::retrieveAll() {
 size_t buffer::readFd(int fd) {
 	char extrabuf[65536];
 	iovec vec[2];
-	const size_t writeable_ = writeableBytes();
-	vec[0].iov_base = begin() + end_index_;
+	const size_t writeable_ = leftBytes();
+	vec[0].iov_base = headCharPtr() + end_index_;
 	vec[0].iov_len = writeable_;
 	vec[1].iov_base = extrabuf;
 	vec[1].iov_len = sizeof extrabuf;
@@ -86,6 +86,6 @@ size_t buffer::readFd(int fd) {
 }
 
 std::string buffer::toString() {
-	std::string s(peek(), readableBytes());
+	std::string s(beginCharPtr(), usedBytes());
 	return s;
 }

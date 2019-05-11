@@ -1,4 +1,4 @@
-#ifndef TCPCONNECTION_H
+ï»¿#ifndef TCPCONNECTION_H
 #define TCPCONNECTION_H
 
 #include"eventloop.h"
@@ -13,12 +13,11 @@ class channel;
 class buffer;
 class memorypool;
 
-class tcpconnection /*:
-	public std::enable_shared_from_this<tcpconnection>*/ {
+/*:public std::enable_shared_from_this<tcpconnection>*/
+class tcpconnection {
 	friend class memorypool;
-
 public:
-	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr Ö¸µÄÊÇÖ¸ÕëµÄÖµÊÇÒ»¸ö³£Á¿ tcpconnection* const
+	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr æŒ‡çš„æ˜¯æŒ‡é’ˆçš„å€¼æ˜¯ä¸€ä¸ªå¸¸é‡ tcpconnection* const
 	//enum state { kconnecting = 0, kconnected, kdisconnecting, kdisconnected };
 	//typedef std::function<void(tcpconnection* conn)> conn_callback;
 	typedef std::function<void(tcpconnection* conn)> event_callback;
@@ -31,8 +30,17 @@ public:
 	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
 	void setMsgCallback(const msg_callback& cb) { msg_callback_ = cb; }
 
-	//tcp
-	//void set_tcpnodelay();
+	//tcpé€‰é¡¹
+	void setTcpNoDelay(bool on);
+	void setTcpKeepAlive(bool on);
+
+	//channelé€‰é¡¹
+	void startRead();
+	void stopRead();
+	void sendBuffer();
+
+	buffer* inputBuffer() { return &input_buff_; }
+	buffer* outputBuffer() { return &output_buff_; }
 
 	void start();
 	void activeClosure();

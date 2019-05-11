@@ -33,9 +33,34 @@ void tcpconnection::start() {
 	conn_callback_(this);
 }
 
+void tcpconnection::startRead() {
+	channel_->enableReading();
+}
+
+void tcpconnection::stopRead() {
+	channel_->disableReading();
+}
+
 void tcpconnection::activeClosure() {
 	handleClose();
 	perror("服务器主动断开一个连接");
+}
+
+void tcpconnection::sendBuffer() {
+	if (state_ == 1) {
+		if (output_buff_.usedBytes() == 0) {
+			perror("输出缓冲区为空");
+			return;
+		}
+		size_t nwrote = send(fd_, output_buff_.beginCharPtr(), output_buff_.usedBytes(), 0);
+		if (nwrote >= 0) {
+			output_buff_.retrieve(nwrote);
+			if (output_buff_.usedBytes() != 0)
+				sendBuffer();
+		}
+		else
+			perror("发送数据时出错");
+	}
 }
 
 void tcpconnection::handleRead() {
@@ -64,4 +89,16 @@ void tcpconnection::handleWrite() {
 
 void tcpconnection::handleError() {
 	perror("tcp连接出现错误");
+}
+
+void tcpconnection::setTcpNoDelay(bool on) {
+	int optval = on ? 1 : 0;
+	setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR,
+		&optval, static_cast<socklen_t>(sizeof optval));
+}
+
+void tcpconnection::setTcpKeepAlive(bool on) {
+	int optval = on ? 1 : 0;
+	setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE,
+		&optval, static_cast<socklen_t>(sizeof optval));
 }

@@ -23,26 +23,26 @@ public:
 	void append(const char* data, size_t len);
 	void prepend(const void* data, size_t len);//用于封包
 
-	size_t readableBytes()const { return end_index_ - begin_index_; }
-	size_t writeableBytes()const { return buffer_.size() - end_index_; }
+	size_t usedBytes()const { return end_index_ - begin_index_; }
+	size_t leftBytes()const { return buffer_.size() - end_index_; }
 	size_t prependableBytes()const { return begin_index_; }
 	size_t capacity()const { return buffer_.capacity(); }
 
-	char* beginWrite() { return begin() + end_index_; }
-	const char* beginWrite() const { return begin() + end_index_; }
-	void hasWritten(size_t len);
-	void unwrite(size_t len);
-	void ensureWriteable(size_t len);
+	char* endCharPtr() { return headCharPtr() + end_index_; }
+	const char* endCharPtr() const { return headCharPtr() + end_index_; }
+	void hasUsed(size_t len);
+	void unUsed(size_t len);
+	void ensureLeftBytes(size_t len);
 	void retrieve(size_t len);
 	void retrieveAll();
 
 	size_t readFd(int fd);
-	const char* peek()const { return begin() + begin_index_; }
+	const char* beginCharPtr()const { return headCharPtr() + begin_index_; }
 	std::string toString();
 
 private:
-	char* begin() { return &*buffer_.begin(); }
-	const char* begin() const { return &*buffer_.begin(); }
+	char* headCharPtr() { return &*buffer_.begin(); }
+	const char* headCharPtr() const { return &*buffer_.begin(); }
 
 	void makeSpace(size_t len);
 

@@ -32,6 +32,7 @@ public:
 	void enableReading() { event_ |= kReadEvent; update(); }
 	void enableWriting() { event_ |= kWriteEvent; update(); }
 	void disableWrting() { event_ &= ~kWriteEvent; update(); }
+	void disableReading() { event_ &= kReadEvent; update(); }
 	void disableALL() { event_ = kNoneEvent; update(); }
 
 	//epoller
