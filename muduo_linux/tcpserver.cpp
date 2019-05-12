@@ -55,22 +55,23 @@ void tcpserver::acceptConn() {
 	}
 
 	eventloop* ioloop_ = pool_->getIoLoop();
-	tcpconnection* new_conn;
-	ioloop_->newConn(new_conn, clifd_, &cliaddr_);
-	new_conn->setMsgCallback(msg_callback_);
-	new_conn->setConnCallback(conn_callback_);
-	new_conn->setCloseCallback(close_callback_);
-	//pthread_mutex_lock(&lock_);
+	tcpconnection* temp_;
+	ioloop_->newConn(temp_, clifd_, &cliaddr_);
 
-	//conns_[clifd_] = new_conn;
+	tcpconn_ptr new_(temp_, tcpconnection::deleter);
+	new_->setMsgCallback(msg_callback_);
+	new_->setConnCallback(conn_callback_);
+	new_->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
+	pthread_mutex_lock(&lock_);
 
-	//pthread_mutex_unlock(&lock_);
-	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_conn));
+	conns_[clifd_] = new_;
+
+	pthread_mutex_unlock(&lock_);
 
 }
 
-/*
-void tcpserver::removeConn(tcpconnection* conn) {
+void tcpserver::removeConn(const tcpconn_ptr conn) {
 	close_callback_(conn);
 	pthread_mutex_lock(&lock_);
 
@@ -78,4 +79,3 @@ void tcpserver::removeConn(tcpconnection* conn) {
 
 	pthread_mutex_unlock(&lock_);
 }
-*/

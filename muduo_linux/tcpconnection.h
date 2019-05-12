@@ -14,16 +14,17 @@ class channel;
 class buffer;
 class memorypool;
 
-/*:public std::enable_shared_from_this<tcpconnection>*/
-class tcpconnection {
+class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
 	friend class memorypool;
 public:
-	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
-	typedef std::function<void(tcpconnection* conn)> event_callback;
-	typedef std::function<void(tcpconnection* conn, buffer* data, ssize_t len)> msg_callback;
+	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
+	typedef std::function<void(const tcpconn_ptr)> event_callback;
+	typedef std::function<void(const tcpconn_ptr, buffer*, ssize_t)> msg_callback;
 
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
+
+	static void deleter(tcpconnection* conn);
 
 	void setConnCallback(const event_callback& cb) { conn_callback_ = cb; }
 	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
@@ -42,7 +43,7 @@ public:
 	buffer* outputBuffer() { return &output_buff_; }
 
 	void start();
-	void activeClosure();
+	void activeClosure();//并非立即关闭
 	int fd() { return fd_; }
 	bool connected() { return state_ == 1; }
 	char* getIp() { return ip_; }

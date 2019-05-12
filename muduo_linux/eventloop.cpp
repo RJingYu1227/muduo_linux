@@ -62,6 +62,7 @@ void eventloop::loop() {
 		epoller_->epoll(epoll_timeout_, &active_channels_);
 		for (channel* ch : active_channels_)
 			ch->handleEvent();
+		doFunctors();
 	}
 
 	cout << "事件循环" << this << "停止" << endl;
@@ -79,17 +80,20 @@ void eventloop::runInLoop(const functor& cb) {
 		pthread_mutex_lock(&lock_);
 
 		pending_functors_.push_back(cb);
-		eventfd_write(eventfd_, 1);//如果使用count_，可能会造成死锁（write被阻塞）。
 
 		pthread_mutex_unlock(&lock_);
+		eventfd_write(eventfd_, 1);
 	}
+}
+
+void eventloop::handleRead() {
+	eventfd_read(eventfd_, &count_);
 }
 
 void eventloop::doFunctors() {
 	std::vector<functor> temp_;
 	pthread_mutex_lock(&lock_);
 
-	eventfd_read(eventfd_, &count_);
 	temp_.swap(pending_functors_);
 
 	pthread_mutex_unlock(&lock_);

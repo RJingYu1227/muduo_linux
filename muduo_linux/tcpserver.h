@@ -9,6 +9,7 @@
 #include<netinet/in.h>
 #include<functional>
 #include<pthread.h>
+#include<unordered_map>
 
 class elthreadpool;
 class eventloop;
@@ -16,12 +17,12 @@ class channel;
 class tcpconnection;
 class buffer;
 
-//typedef std::shared_ptr<tcpconnection> tcpconnection;
+typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
 class tcpserver {
 public:
-	typedef std::function<void(tcpconnection* conn)> event_callback;//客户端事件回调
-	typedef std::function<void(tcpconnection* conn, buffer* data, ssize_t len)> msg_callback;
+	typedef std::function<void(const tcpconn_ptr)> event_callback;//客户端事件回调
+	typedef std::function<void(const tcpconn_ptr, buffer*, ssize_t)> msg_callback;
 
 	tcpserver(elthreadpool* loop, const char* ip, int port);
 	~tcpserver();
@@ -33,8 +34,8 @@ public:
 	void start();
 
 private:
-	//typedef std::map<int, tcpconnection*> conn_map;
-	//void removeConn(tcpconnection* conn);
+	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
+	void removeConn(const tcpconn_ptr conn);
 	void acceptConn();
 
 	elthreadpool* pool_;
@@ -42,9 +43,9 @@ private:
 	int listenfd_;
 	sockaddr_in serveraddr_;
 	channel* channel_;
-	//conn_map conns_;
+	conn_map conns_;
 	bool listening_;
-	//pthread_mutex_t lock_;
+	pthread_mutex_t lock_;
 
 	event_callback conn_callback_;
 	event_callback close_callback_;

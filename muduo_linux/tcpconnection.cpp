@@ -5,6 +5,11 @@
 #include<assert.h>
 #include<arpa/inet.h>
 
+void tcpconnection::deleter(tcpconnection* conn) {
+	conn->loop_->removeConn(conn);
+	conn = nullptr;
+}
+
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:loop_(loop),
 	fd_(fd),
@@ -20,8 +25,7 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 }
 
 tcpconnection::~tcpconnection() {
-	assert(state_ == 2);
-	state_ = 3;
+	assert(state_ == 3);
 	channel_->~channel();
 	close(fd_);
 }
@@ -30,26 +34,25 @@ void tcpconnection::start() {
 	assert(state_ == 0);
 	channel_->enableReading();
 	state_ = 1;
-	conn_callback_(this);
+	conn_callback_(shared_from_this());
 }
 
 void tcpconnection::startRead() {
-	channel_->enableReading();
+	if (state_ == 1)
+		channel_->enableReading();
 }
 
 void tcpconnection::stopRead() {
-	channel_->disableReading();
+	if (state_ == 1)
+		channel_->disableReading();
 }
 
 void tcpconnection::activeClosure() {
-	if (loop_->isInLoopThread() && state_ == 1) {
-		state_ = 2;
-		handleClose();
-	}
-	else if (state_ == 1) {
-		state_ = 2;
-		loop_->runInLoop(std::bind(&tcpconnection::handleClose, this));
-	}
+	if (loop_->isInLoopThread() && state_ == 1)
+		handleClose();//有没有可能在这之后loop的activechannels还存在该tcpconnection的channel
+	else if (state_ == 1)
+		loop_->runInLoop(std::bind(&tcpconnection::handleClose, shared_from_this()));
+		//在执行该函数前，tcpconnection不会被析构
 }
 
 void tcpconnection::sendBuffer() {
@@ -74,18 +77,17 @@ void tcpconnection::handleRead() {
 		loop_->assertInLoopThread();
 		size_t n = input_buff_.readFd(fd_);
 		if (n > 0)
-			msg_callback_(this, &input_buff_, n);
-		else if (n == 0 && state_ == 1) {
-			state_ = 2;
+			msg_callback_(shared_from_this(), &input_buff_, n);
+		else if (n == 0 && state_ == 1)
 			handleClose();
-		}
 	}
 }
 
 void tcpconnection::handleClose() {
-	assert(state_ == 2);
-	close_callback_(this);
-	loop_->removeConn(this);
+	if (state_ == 1 || state_ == 2) {
+		state_ = 3;
+		close_callback_(shared_from_this());
+	}
 }
 
 void tcpconnection::handleWrite() {
@@ -93,7 +95,8 @@ void tcpconnection::handleWrite() {
 }
 
 void tcpconnection::handleError() {
-	perror("tcp连接出现错误");
+	if (state_ == 1)
+		perror("tcp连接出现错误");
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {

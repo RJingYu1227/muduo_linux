@@ -44,6 +44,7 @@ private:
 	//typedef std::vector<tcpconn_ptr> tcpconn_queue;
 
 	//消息队列
+	void handleRead();
 	void doFunctors();
 	pthread_mutex_t lock_;
 	eventfd_t count_;

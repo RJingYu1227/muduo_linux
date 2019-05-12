@@ -4,14 +4,11 @@
 #include"tcpserver.h"
 #include<pthread.h>
 
-elthreadpool test(4);
-tcpserver server(&test, "127.0.0.1", 6666);
-
-void on_connection(tcpconnection* conn){
-	std::cout << "收到一个新连接" << conn->getIp() << " " << conn->getPort() << std::endl;
+void on_connection(const tcpconn_ptr conn){
+	std::cout << "收到一个连接" << conn->getIp() << " " << conn->getPort() << std::endl;
 }
 
-void on_message(tcpconnection* conn, buffer* buff, ssize_t len) {
+void on_message(const tcpconn_ptr conn, buffer* buff, ssize_t len) {
 	std::cout << buff->toString() << std::endl;
 	buffer* out = conn->outputBuffer();
 	out->append(buff->beginPtr(), len);
@@ -21,17 +18,19 @@ void on_message(tcpconnection* conn, buffer* buff, ssize_t len) {
 	conn->activeClosure();
 }
 
-void on_closeclient(tcpconnection* conn) {
-
+void on_closeclient(const tcpconn_ptr conn) {
+	std::cout << "断开一个连接" << conn->getIp() << " " << conn->getPort() << std::endl;
 }
 
 int main() {
+	elthreadpool test(4);
 
+	tcpserver server(&test, "127.0.0.1", 6666);
 	server.setConnCallback(on_connection);
 	server.setCloseCallback(on_closeclient);
 	server.setMsgCallback(on_message);
-	server.start();	
 
+	server.start();	
 	test.start();
 }
 
