@@ -15,6 +15,17 @@ struct  addr {
 	channel* ch_ = nullptr;
 };
 
+struct head {
+	head(const addr &addr_, const int &size_) {
+		conn_ = addr_.conn_;
+		ch_ = addr_.ch_;
+		this->size_ = size_;
+	}
+	tcpconnection* conn_ = nullptr;
+	channel* ch_ = nullptr;
+	int size_ = 0;
+};
+
 class memorypool//这是在堆上申请空间，地址从低到高
 {
 public:
@@ -31,6 +42,7 @@ private:
 	pthread_mutex_t lock_;
 	int size_;
 
-	queue<addr> queue_;
+	queue<head> head_queue_;
+	queue<addr> addr_queue_;
 };
 

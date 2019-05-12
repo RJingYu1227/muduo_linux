@@ -14,10 +14,10 @@ channel* memorypool::setAddr(tcpconnection* &conn) {
 	addr temp_;
 	pthread_mutex_lock(&lock_);
 
-	if (queue_.empty())
+	if (addr_queue_.empty())
 		makeSpace();
-	temp_ = queue_.front();
-	queue_.pop();
+	temp_ = addr_queue_.front();
+	addr_queue_.pop();
 
 	pthread_mutex_unlock(&lock_);
 	conn = temp_.conn_;
@@ -32,21 +32,24 @@ void memorypool::deleteConn(tcpconnection* conn) {
 	conn->~tcpconnection();
 	pthread_mutex_lock(&lock_);
 
-	queue_.push(temp_);
+	addr_queue_.push(temp_);
 
 	pthread_mutex_unlock(&lock_);
 }
 
 void memorypool::makeSpace() {
-	addr head_;
+	addr addr_;
 	allocator<tcpconnection>* conn_ = new allocator<tcpconnection>;
 	allocator<channel>* ch_ = new allocator<channel>;
-	head_.conn_ = conn_->allocate(size_);
-	head_.ch_ = ch_->allocate(size_);
+	addr_.conn_ = conn_->allocate(size_);
+	addr_.ch_ = ch_->allocate(size_);
+
+	head head_(addr_, size_);
+	head_queue_.push(head_);
 	for (int i = 0; i < size_; ++i) {
-		queue_.push(head_);
-		head_.conn_ += 1;
-		head_.ch_ += 1;
+		addr_queue_.push(addr_);
+		addr_.conn_ += 1;
+		addr_.ch_ += 1;
 	}
 	size_ *= 2;
 }
