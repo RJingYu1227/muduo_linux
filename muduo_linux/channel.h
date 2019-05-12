@@ -1,5 +1,4 @@
-#ifndef CHANNEL_H
-#define CHANNEL_H
+#pragma once
 
 #include"eventloop.h"
 #include<functional>
@@ -59,4 +58,3 @@ private:
 	event_callback error_callback_;
 };
 
-#endif // !MUDUO_NET_CHANNEL_H

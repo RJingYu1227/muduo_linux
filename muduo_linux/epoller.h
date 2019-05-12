@@ -1,5 +1,4 @@
-﻿#ifndef EPOLLER_H
-#define EPOLLER_H
+﻿#pragma once
 
 #include"channel.h"
 #include"eventloop.h"
@@ -35,6 +34,3 @@ private:
 	event_list events_;
 	channel_map channels_;
 };
-
-#endif // !MUDUO_NET_EPOLLER_H
-

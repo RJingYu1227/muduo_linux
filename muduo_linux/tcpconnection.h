@@ -1,5 +1,4 @@
-﻿#ifndef TCPCONNECTION_H
-#define TCPCONNECTION_H
+﻿#pragma once
 
 #include"eventloop.h"
 #include"channel.h"
@@ -69,6 +68,4 @@ private:
 	event_callback close_callback_;
 	msg_callback msg_callback_;
 };
-
-#endif // ! TCPCONNECTION_H
 

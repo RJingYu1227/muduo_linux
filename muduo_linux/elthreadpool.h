@@ -1,5 +1,4 @@
-#ifndef ELTHREADPOOL_H
-#define ELTHREADPOOL_H
+#pragma once
 
 #include"eventloop.h"
 #include"tcpserver.h"
@@ -29,7 +28,3 @@ private:
 	eventloop* serverloop_;
 	std::vector<eventloop*> ioloops_;
 };
-
-
-#endif // !ELTHREADPOOL_H
-

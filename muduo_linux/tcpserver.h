@@ -1,5 +1,4 @@
-﻿#ifndef TCPSERVER_H
-#define TCPSERVER_H
+﻿#pragma once
 
 #include"elthreadpool.h"
 #include"eventloop.h"
@@ -50,6 +49,4 @@ private:
 	event_callback close_callback_;
 	msg_callback msg_callback_;
 };
-
-#endif // !ACCEPTOR_H
 

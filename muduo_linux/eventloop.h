@@ -1,5 +1,4 @@
-#ifndef EVENTLOOP_H
-#define EVENTLOOP_H
+#pragma once
 
 #include"channel.h"
 #include"epoller.h"
@@ -61,6 +60,4 @@ private:
 	pthread_t thread_id_;	
 
 };
-
-#endif // !MUDUO_NET_CHANNEL_H
 
