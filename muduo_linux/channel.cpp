@@ -15,11 +15,15 @@ channel::channel(eventloop* loop, int fd)
 }
 
 channel::~channel() {
-	loop_->removeChannel(this);
+	assert(mark_ == -1);
 }
 
 void channel::update() {
 	loop_->updateChannel(this);
+}
+
+void channel::remove() {
+	loop_->removeChannel(this);
 }
 
 void channel::handleEvent() {

@@ -36,7 +36,7 @@ public:
 	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
 
-	static void createQueue(eventloop* loop);
+	static void createQueue(eventloop* loop,bool n);//n为ture时，创建m_pool_
 	static eventloop* get_eventloop();
 
 private:
@@ -51,7 +51,7 @@ private:
 	std::vector<functor> pending_functors_;
 	int eventfd_ = 0;
 
-	memorypool* m_pool_;
+	memorypool* m_pool_ = nullptr;
 
 	int epoll_timeout_;
 	bool quit_ = 0;

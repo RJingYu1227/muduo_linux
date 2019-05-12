@@ -74,11 +74,10 @@ void tcpconnection::sendBuffer() {
 
 void tcpconnection::handleRead() {
 	if (state_ == 1) {
-		loop_->assertInLoopThread();
 		size_t n = input_buff_.readFd(fd_);
 		if (n > 0)
 			msg_callback_(shared_from_this(), &input_buff_, n);
-		else if (n == 0 && state_ == 1)
+		else if (n == 0)
 			handleClose();
 	}
 }
@@ -86,6 +85,7 @@ void tcpconnection::handleRead() {
 void tcpconnection::handleClose() {
 	if (state_ == 1 || state_ == 2) {
 		state_ = 3;
+		channel_->remove();
 		close_callback_(shared_from_this());
 	}
 }

@@ -73,6 +73,7 @@ void epoller::removeChannel(channel* ch) {
 	assert(channels_[fd_] = ch);
 	channels_.erase(fd_);
 	epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd_, &ev);
+	ch->setMark(-1);
 
 }
 

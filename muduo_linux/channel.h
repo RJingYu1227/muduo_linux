@@ -38,6 +38,7 @@ public:
 	//epoller
 	int mark() { return mark_; }
 	void setMark(int mark_) { this->mark_ = mark_; }
+	void remove();
 
 private:
 	void update();

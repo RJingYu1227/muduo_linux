@@ -62,8 +62,7 @@ void eventloop::loop() {
 		epoller_->epoll(epoll_timeout_, &active_channels_);
 		for (channel* ch : active_channels_)
 			ch->handleEvent();
-		if (eventfd_ != 0)
-			doFunctors();//注意这里的执行顺序
+		doFunctors();//注意这里的执行顺序
 	}
 
 	cout << "事件循环" << this << "停止" << endl;
@@ -103,20 +102,21 @@ void eventloop::doFunctors() {
 }
 
 void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
+	assert(m_pool_);//server线程调用
 	channel* ch = m_pool_->setAddr(conn);
 	new(conn)tcpconnection(this, ch, fd, cliaddr);
 }
 
 void eventloop::destoryConn(tcpconnection* conn) {
-	assertInLoopThread();
+	assert(m_pool_);//I/O线程调用
 	m_pool_->deleteConn(conn);
 }
 
-void eventloop::createQueue(eventloop* loop) {
-	loop->m_pool_ = new memorypool();
+void eventloop::createQueue(eventloop* loop, bool n) {
+	if (n)
+		loop->m_pool_ = new memorypool();
 	loop->eventfd_ = eventfd(0, 0);
 	channel* channel_ = new channel(loop, loop->eventfd_);
-	channel_->setReadCallback(std::bind(&eventloop::doFunctors, loop));
+	channel_->setReadCallback(std::bind(&eventloop::handleRead, loop));
 	channel_->enableReading();
-	loop->lock_ = PTHREAD_MUTEX_INITIALIZER;
 }

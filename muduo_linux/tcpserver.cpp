@@ -10,7 +10,7 @@
 tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 	:pool_(pool), 
 	listening_(0){
-	loop_ = pool_->getServerLoop();
+	server_loop_ = pool_->getServerLoop();
 
 	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (listenfd_ == -1) {
@@ -26,7 +26,7 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 		exit(1);
 	}
 
-	channel_ = new channel(loop_, listenfd_);
+	channel_ = new channel(server_loop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn,this));
 	//返回时tcp三次握手已经完成，双方都已经确认连接（系统调用），存在syn队列和accept队列
 }
@@ -37,15 +37,13 @@ tcpserver::~tcpserver() {
 }
 
 void tcpserver::start() {
-	loop_->assertInLoopThread();
+	server_loop_->assertInLoopThread();
 	listen(listenfd_, SOMAXCONN);
 	channel_->enableReading();
 	listening_ = 1;
 }
 
 void tcpserver::acceptConn() {
-	loop_->assertInLoopThread();
-
 	sockaddr_in cliaddr_;
 	socklen_t cliaddrlen_=sizeof cliaddr_;
 	int clifd_ = accept(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_);
@@ -63,19 +61,15 @@ void tcpserver::acceptConn() {
 	new_->setConnCallback(conn_callback_);
 	new_->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
 	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
-	pthread_mutex_lock(&lock_);
 
 	conns_[clifd_] = new_;
-
-	pthread_mutex_unlock(&lock_);
-
 }
 
-void tcpserver::removeConn(const tcpconn_ptr conn) {
+void tcpserver::removeConn(const tcpconn_ptr &conn) {
+	server_loop_->runInLoop(std::bind(&tcpserver::removeConnInLoop, this, conn));
+}
+
+void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	close_callback_(conn);
-	pthread_mutex_lock(&lock_);
-
 	conns_.erase(conn->fd());
-
-	pthread_mutex_unlock(&lock_);
 }
