@@ -31,7 +31,6 @@ private:
 	pthread_mutex_t lock_;
 	int size_;
 
-	map<addr, int> head_map_;
 	queue<addr> queue_;
 };
 

@@ -43,7 +43,6 @@ void memorypool::makeSpace() {
 	allocator<channel>* ch_ = new allocator<channel>;
 	head_.conn_ = conn_->allocate(size_);
 	head_.ch_ = ch_->allocate(size_);
-	head_map_[head_] = size_;
 	for (int i = 0; i < size_; ++i) {
 		queue_.push(head_);
 		head_.conn_ += 1;
