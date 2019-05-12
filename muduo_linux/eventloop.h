@@ -49,7 +49,7 @@ private:
 	pthread_mutex_t lock_;
 	eventfd_t count_;
 	std::vector<functor> pending_functors_;
-	int eventfd_;
+	int eventfd_ = 0;
 
 	memorypool* m_pool_;
 

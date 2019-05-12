@@ -62,7 +62,8 @@ void eventloop::loop() {
 		epoller_->epoll(epoll_timeout_, &active_channels_);
 		for (channel* ch : active_channels_)
 			ch->handleEvent();
-		doFunctors();
+		if (eventfd_ != 0)
+			doFunctors();
 	}
 
 	cout << "事件循环" << this << "停止" << endl;
