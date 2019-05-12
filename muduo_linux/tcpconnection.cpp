@@ -6,7 +6,7 @@
 #include<arpa/inet.h>
 
 void tcpconnection::deleter(tcpconnection* conn) {
-	conn->loop_->removeConn(conn);
+	conn->loop_->destoryConn(conn);
 	conn = nullptr;
 }
 

@@ -63,7 +63,7 @@ void eventloop::loop() {
 		for (channel* ch : active_channels_)
 			ch->handleEvent();
 		if (eventfd_ != 0)
-			doFunctors();
+			doFunctors();//注意这里的执行顺序
 	}
 
 	cout << "事件循环" << this << "停止" << endl;
@@ -107,7 +107,7 @@ void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
 	new(conn)tcpconnection(this, ch, fd, cliaddr);
 }
 
-void eventloop::removeConn(tcpconnection* conn) {
+void eventloop::destoryConn(tcpconnection* conn) {
 	assertInLoopThread();
 	m_pool_->deleteConn(conn);
 }

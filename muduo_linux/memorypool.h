@@ -4,7 +4,6 @@
 #include<memory>
 #include<queue>
 #include<pthread.h>
-#include<map>
 using namespace::std;
 
 class channel;

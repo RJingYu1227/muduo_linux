@@ -34,7 +34,7 @@ public:
 	bool isInLoopThread()const; 
 	void runInLoop(const functor& cb);
 	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
-	void removeConn(tcpconnection* conn);
+	void destoryConn(tcpconnection* conn);
 
 	static void createQueue(eventloop* loop);
 	static eventloop* get_eventloop();
