@@ -26,7 +26,7 @@ eventloop::eventloop() :
 eventloop::~eventloop() {
 	assert(!looping_);
 	delete epoller_;
-	close(wakeupfd_);
+	close(eventfd_);
 	loop_inthisthread_ = nullptr;
 }
 
@@ -79,7 +79,7 @@ void eventloop::runInLoop(const functor& cb) {
 		pthread_mutex_lock(&lock_);
 
 		pending_functors_.push_back(cb);
-		eventfd_write(wakeupfd_, 1);//如果使用count_，可能会造成死锁（write被阻塞）。
+		eventfd_write(eventfd_, 1);//如果使用count_，可能会造成死锁（write被阻塞）。
 
 		pthread_mutex_unlock(&lock_);
 	}
@@ -89,7 +89,7 @@ void eventloop::doFunctors() {
 	std::vector<functor> temp_;
 	pthread_mutex_lock(&lock_);
 
-	eventfd_read(wakeupfd_, &count_);
+	eventfd_read(eventfd_, &count_);
 	temp_.swap(pending_functors_);
 
 	pthread_mutex_unlock(&lock_);
@@ -109,8 +109,8 @@ void eventloop::removeConn(tcpconnection* conn) {
 
 void eventloop::createQueue(eventloop* loop) {
 	loop->m_pool_ = new memorypool();
-	loop->wakeupfd_ = eventfd(0, 0);
-	channel* channel_ = new channel(loop, loop->wakeupfd_);
+	loop->eventfd_ = eventfd(0, 0);
+	channel* channel_ = new channel(loop, loop->eventfd_);
 	channel_->setReadCallback(std::bind(&eventloop::doFunctors, loop));
 	channel_->enableReading();
 	loop->lock_ = PTHREAD_MUTEX_INITIALIZER;

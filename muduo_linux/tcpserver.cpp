@@ -60,6 +60,11 @@ void tcpserver::acceptConn() {
 	new_conn->setMsgCallback(msg_callback_);
 	new_conn->setConnCallback(conn_callback_);
 	new_conn->setCloseCallback(close_callback_);
+	//pthread_mutex_lock(&lock_);
+
+	//conns_[clifd_] = new_conn;
+
+	//pthread_mutex_unlock(&lock_);
 	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_conn));
 
 }
@@ -67,5 +72,10 @@ void tcpserver::acceptConn() {
 /*
 void tcpserver::removeConn(tcpconnection* conn) {
 	close_callback_(conn);
+	pthread_mutex_lock(&lock_);
+
+	conns_.erase(conn->fd());
+
+	pthread_mutex_unlock(&lock_);
 }
 */

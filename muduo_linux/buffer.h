@@ -10,6 +10,7 @@ class buffer
 public:
 	static const size_t kCheapPrepend = 8;
 	static const size_t kInitialSize = 1024;
+	const char kCRLF[3] = "\r\n";
 
 	explicit buffer(size_t initial_size = kInitialSize)
 		:buffer_(kCheapPrepend + initial_size),
@@ -39,6 +40,9 @@ public:
 	size_t readFd(int fd);
 	const char* beginPtr()const { return headPtr() + begin_index_; }
 	std::string toString();
+
+	const char* findCRLF()const;
+	const char* findCRLF(const char* start)const;
 
 private:
 	char* headPtr() { return &*buffer_.begin(); }

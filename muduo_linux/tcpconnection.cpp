@@ -42,8 +42,14 @@ void tcpconnection::stopRead() {
 }
 
 void tcpconnection::activeClosure() {
-	handleClose();
-	perror("服务器主动断开一个连接");
+	if (loop_->isInLoopThread() && state_ == 1) {
+		state_ = 2;
+		handleClose();
+	}
+	else if (state_ == 1) {
+		state_ = 2;
+		loop_->runInLoop(std::bind(&tcpconnection::handleClose, this));
+	}
 }
 
 void tcpconnection::sendBuffer() {
@@ -69,18 +75,17 @@ void tcpconnection::handleRead() {
 		size_t n = input_buff_.readFd(fd_);
 		if (n > 0)
 			msg_callback_(this, &input_buff_, n);
-		else if (n == 0) {
+		else if (n == 0 && state_ == 1) {
+			state_ = 2;
 			handleClose();
-			perror("客户端主动断开一个连接");
 		}
 	}
 }
 
 void tcpconnection::handleClose() {
-	if (state_ == 1 && (state_ = 2)) {
-		close_callback_(this);
-		loop_->removeConn(this);
-	}
+	assert(state_ == 2);
+	close_callback_(this);
+	loop_->removeConn(this);
 }
 
 void tcpconnection::handleWrite() {

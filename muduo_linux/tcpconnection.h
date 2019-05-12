@@ -7,6 +7,7 @@
 #include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
+#include<atomic>
 
 class eventloop;
 class channel;
@@ -18,8 +19,6 @@ class tcpconnection {
 	friend class memorypool;
 public:
 	//typedef std::shared_ptr<tcpconnection> tcpconnection;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
-	//enum state { kconnecting = 0, kconnected, kdisconnecting, kdisconnected };
-	//typedef std::function<void(tcpconnection* conn)> conn_callback;
 	typedef std::function<void(tcpconnection* conn)> event_callback;
 	typedef std::function<void(tcpconnection* conn, buffer* data, ssize_t len)> msg_callback;
 
@@ -49,7 +48,7 @@ public:
 	char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
-	int state_;
+	std::atomic<int> state_;//
 
 private:
 	void handleRead();

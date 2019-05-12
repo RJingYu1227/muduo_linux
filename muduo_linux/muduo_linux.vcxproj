@@ -85,6 +85,7 @@
     <ClCompile Include="memorypool.cpp" />
     <ClCompile Include="tcpconnection.cpp" />
     <ClCompile Include="tcpserver.cpp" />
+    <ClCompile Include="timerqueue.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.h" />
@@ -95,6 +96,7 @@
     <ClInclude Include="memorypool.h" />
     <ClInclude Include="tcpconnection.h" />
     <ClInclude Include="tcpserver.h" />
+    <ClInclude Include="timerqueue.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>

@@ -89,3 +89,15 @@ std::string buffer::toString() {
 	std::string s(beginPtr(), usedBytes());
 	return s;
 }
+
+//search为左闭右开区间
+const char* buffer::findCRLF()const {
+	const char* crlf = std::search(beginPtr(), endPtr(), kCRLF, kCRLF + 2);
+	return crlf == endPtr() ? NULL : crlf;
+}
+
+const char* buffer::findCRLF(const char* start)const {
+	assert(start >= beginPtr() && start <= endPtr());
+	const char* crlf = std::search(start, endPtr(), kCRLF, kCRLF + 2);
+	return crlf == endPtr() ? NULL : crlf;
+}
