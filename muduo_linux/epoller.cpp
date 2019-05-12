@@ -15,13 +15,16 @@ epoller::~epoller() {
 }
 
 void epoller::epoll(int timeoutms, channellist* active_channels_) {
-	size_t numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
+	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
 		fillActiveChannels(numevents, active_channels_);
-		if (numevents == events_.size())
-			events_.resize(numevents * 2);
+		if (static_cast<size_t>(numevents) == events_.size())
+			events_.resize(events_.size() * 2);
 	}
+	else
+		perror("epoll调用出错");
+
 }
 
 void epoller::assertInLoopThread() {
@@ -74,7 +77,7 @@ void epoller::removeChannel(channel* ch) {
 }
 
 void epoller::fillActiveChannels(int numevents_, channellist* active_channels_)const {
-	assert(numevents_ <= events_.size());
+	assert(static_cast<size_t>(numevents_) <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = static_cast<channel*>(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);

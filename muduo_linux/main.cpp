@@ -14,7 +14,7 @@ void on_message(const tcpconn_ptr conn, buffer* buff, ssize_t len) {
 	out->append(buff->beginPtr(), len);
 	out->hasUsed(len);
 	buff->retrieve(len);
-	conn->sendBuffer();
+	//conn->sendBuffer();
 	conn->activeClosure();
 }
 
