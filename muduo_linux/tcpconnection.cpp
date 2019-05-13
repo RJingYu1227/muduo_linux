@@ -32,8 +32,8 @@ tcpconnection::~tcpconnection() {
 
 void tcpconnection::start() {
 	assert(state_ == 0);
-	channel_->enableReading();
 	state_ = 1;
+	channel_->enableReading();
 	conn_callback_(shared_from_this());
 }
 
@@ -48,11 +48,13 @@ void tcpconnection::stopRead() {
 }
 
 void tcpconnection::activeClosure() {
-	if (loop_->isInLoopThread() && state_ == 1)
-		handleClose();//有没有可能在这之后loop的activechannels还存在该tcpconnection的channel
-	else if (state_ == 1)
+	if (state_ == 1) {
+		state_ = 2;
 		loop_->runInLoop(std::bind(&tcpconnection::handleClose, shared_from_this()));
-		//在执行该函数前，tcpconnection不会被析构
+	}
+	//在执行该函数前，tcpconnection不会被析构
+	//本线程，前面的activechannel调用了后面activechannel所属的tcpconn的这个函数，那么就GG了
+	//但这只是妄想，哈哈
 }
 
 void tcpconnection::sendBuffer() {
@@ -61,7 +63,7 @@ void tcpconnection::sendBuffer() {
 			perror("输出缓冲区为空");
 			return;
 		}
-		ssize_t nwrote = send(fd_, output_buff_.beginPtr(), output_buff_.usedBytes(), 0);
+		ssize_t nwrote = send(fd_, output_buff_.beginPtr(), output_buff_.usedBytes(), MSG_NOSIGNAL);
 		if (nwrote >= 0) {
 			output_buff_.retrieve(nwrote);
 			if (output_buff_.usedBytes() != 0)
@@ -85,7 +87,7 @@ void tcpconnection::handleRead() {
 void tcpconnection::handleClose() {
 	if (state_ == 1 || state_ == 2) {
 		state_ = 3;
-		channel_->remove();
+		channel_->remove();//注意
 		close_callback_(shared_from_this());
 	}
 }

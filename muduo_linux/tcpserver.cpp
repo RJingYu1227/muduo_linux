@@ -19,7 +19,8 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 	}
 	bzero(&serveraddr_, sizeof serveraddr_);
 	serveraddr_.sin_family = AF_INET;
-	inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
+	serveraddr_.sin_addr.s_addr = INADDR_ANY;
+	//inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
 	serveraddr_.sin_port = htons(port);
 	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
 		perror("绑定监听端口失败");

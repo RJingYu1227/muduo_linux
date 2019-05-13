@@ -71,6 +71,8 @@ void eventloop::loop() {
 
 void eventloop::quit() {
 	quit_ = 1;
+	if (!isInLoopThread())
+		eventfd_write(eventfd_, 1);
 }
 
 void eventloop::runInLoop(const functor& cb) {
@@ -79,7 +81,7 @@ void eventloop::runInLoop(const functor& cb) {
 	else {
 		pthread_mutex_lock(&lock_);
 
-		pending_functors_.push_back(cb);
+		pending_functors_.push_back(std::move(cb));//std::move
 
 		pthread_mutex_unlock(&lock_);
 		eventfd_write(eventfd_, 1);

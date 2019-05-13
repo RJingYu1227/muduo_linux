@@ -6,7 +6,6 @@
 #include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
-#include<atomic>
 
 class eventloop;
 class channel;
@@ -16,7 +15,8 @@ class memorypool;
 class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
 	friend class memorypool;
 public:
-	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
+	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
+	//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
 	typedef std::function<void(const tcpconn_ptr)> event_callback;
 	typedef std::function<void(const tcpconn_ptr, buffer*, ssize_t)> msg_callback;
 
@@ -29,11 +29,11 @@ public:
 	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
 	void setMsgCallback(const msg_callback& cb) { msg_callback_ = cb; }
 
-	//tcp选项
+	//tcp选项，注意线程安全
 	void setTcpNoDelay(bool on);
 	void setTcpKeepAlive(bool on);
 
-	//channel选项
+	//channel选项，如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
 	void startRead();
 	void stopRead();
 	void sendBuffer();
@@ -48,9 +48,14 @@ public:
 	char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
-	std::atomic<int> state_;//
+	int state_;
 
 private:
+	//channel选项，建议使用shared_from_this()，不然不是线程安全的
+	//void startReadInLoop();
+	//void stopReadInLoop();
+	//void sendBufferInLoop();
+
 	void handleRead();
 	void handleClose();
 	void handleWrite();
