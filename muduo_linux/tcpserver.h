@@ -19,15 +19,15 @@ typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
 class tcpserver {
 public:
-	typedef std::function<void(const tcpconn_ptr)> event_callback;//客户端事件回调
-	typedef std::function<void(const tcpconn_ptr, buffer*, ssize_t)> msg_callback;
+	typedef std::function<void(const tcpconn_ptr&)> event_callback;//客户端事件回调
 
 	tcpserver(elthreadpool* loop, const char* ip, int port);
 	~tcpserver();
 
-	void setConnCallback(const event_callback& cb) { conn_callback_ = cb; }
-	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
-	void setMsgCallback(const msg_callback& cb) { msg_callback_ = cb; }
+	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
+	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
+	void setMsgCallback(const event_callback& cb) { recvMsgCallback = cb; }
+	void setWriteCallback(const event_callback& cb) { writeCompleteCallback = cb; }
 	bool listening() { return listening_; }
 	void start();
 
@@ -45,8 +45,9 @@ private:
 	conn_map conns_;
 	bool listening_;
 
-	event_callback conn_callback_;
-	event_callback close_callback_;
-	msg_callback msg_callback_;
+	event_callback newConnCallback;
+	event_callback closeConnCallback;
+	event_callback recvMsgCallback;
+	event_callback writeCompleteCallback;
 };
 

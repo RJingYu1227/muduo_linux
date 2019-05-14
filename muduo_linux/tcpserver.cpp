@@ -58,8 +58,9 @@ void tcpserver::acceptConn() {
 	ioloop_->newConn(temp_, clifd_, &cliaddr_);
 
 	tcpconn_ptr new_(temp_, tcpconnection::deleter);
-	new_->setMsgCallback(msg_callback_);
-	new_->setConnCallback(conn_callback_);
+	new_->setMsgCallback(recvMsgCallback);
+	new_->setConnCallback(newConnCallback);
+	new_->setWriteCallback(writeCompleteCallback);
 	new_->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
 	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
 
@@ -71,6 +72,6 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 }
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
-	close_callback_(conn);
+	closeConnCallback(conn);
 	conns_.erase(conn->fd());
 }

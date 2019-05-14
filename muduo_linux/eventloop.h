@@ -31,7 +31,10 @@ public:
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
 	bool isInLoopThread()const; 
+
 	void runInLoop(const functor cb);
+	void queueInLoop(const functor cb);
+
 	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
 

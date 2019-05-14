@@ -11,6 +11,7 @@ void buffer::swap(buffer& rhs) {
 void buffer::append(const char* data, size_t len) {
 	ensureLeftBytes(len);
 	std::copy(data, data + len, endPtr());
+	hasUsed(len);
 }
 
 void buffer::prepend(const void* data, size_t len) {

@@ -29,7 +29,7 @@ void memorypool::deleteConn(tcpconnection* conn) {
 	addr temp_;
 	temp_.conn_ = conn;
 	temp_.ch_ = conn->channel_;
-	conn->~tcpconnection();
+	conn->~tcpconnection();//析构之后再收回地址
 	pthread_mutex_lock(&lock_);
 
 	addr_queue_.push(temp_);

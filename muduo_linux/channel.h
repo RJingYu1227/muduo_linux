@@ -14,10 +14,10 @@ public:
 
 	void handleEvent();
 
-	void setReadCallback(const event_callback& cb) { read_callback_ = cb; }
-	void setWriteCallback(const event_callback& cb) { write_callback_ = cb; }
-	void setErrorCallback(const event_callback& cb) { error_callback_ = cb; }
-	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
+	void setReadCallback(const event_callback& cb) { readCallback = cb; }
+	void setWriteCallback(const event_callback& cb) { writeCallback = cb; }
+	void setErrorCallback(const event_callback& cb) { errorCallback = cb; }
+	void setCloseCallback(const event_callback& cb) { closeCallback = cb; }
 
 	int fd()const { return fd_; }
 	int getEvent()const { return event_; }
@@ -52,9 +52,9 @@ private:
 	int revent_;
 	int mark_;
 
-	event_callback read_callback_;
-	event_callback write_callback_;
-	event_callback close_callback_;
-	event_callback error_callback_;
+	event_callback readCallback;
+	event_callback writeCallback;
+	event_callback closeCallback;
+	event_callback errorCallback;
 };
 

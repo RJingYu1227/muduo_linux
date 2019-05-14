@@ -42,13 +42,13 @@ bool eventloop::isInLoopThread()const {
 void eventloop::updateChannel(channel* ch) {
 	assert(ch->ownerLoop() == this);
 	assertInLoopThread();
-	epoller_->updateChannel(ch);
+	epoller_->updateChannel(std::move(ch));
 }
 
 void eventloop::removeChannel(channel* ch) {
 	assert(ch->ownerLoop() == this);
 	assertInLoopThread();
-	epoller_->removeChannel(ch);
+	epoller_->removeChannel(std::move(ch));
 }
 
 void eventloop::loop() {
@@ -78,14 +78,17 @@ void eventloop::quit() {
 void eventloop::runInLoop(const functor cb) {
 	if (isInLoopThread())
 		cb();
-	else {
-		pthread_mutex_lock(&lock_);
+	else
+		queueInLoop(std::move(cb));
+}
 
-		pending_functors_.push_back(std::move(cb));//std::move
+void eventloop::queueInLoop(const functor cb) {
+	pthread_mutex_lock(&lock_);
 
-		pthread_mutex_unlock(&lock_);
-		eventfd_write(eventfd_, 1);
-	}
+	pending_functors_.push_back(std::move(cb));//std::move
+
+	pthread_mutex_unlock(&lock_);
+	eventfd_write(eventfd_, 1);
 }
 
 void eventloop::handleRead() {
