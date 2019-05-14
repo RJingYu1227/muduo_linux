@@ -27,6 +27,7 @@ public:
 
 	void setConnCallback(const event_callback& cb) { conn_callback_ = cb; }
 	void setCloseCallback(const event_callback& cb) { close_callback_ = cb; }
+	void setWriteCallback(const event_callback& cb) { write_callback_ = cb; }
 	void setMsgCallback(const msg_callback& cb) { msg_callback_ = cb; }
 
 	//tcp选项，注意线程安全
@@ -36,10 +37,10 @@ public:
 	//channel选项，如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
 	void startRead();
 	void stopRead();
-	void sendBuffer();
+	void sendBuffer(const buffer* data);
 
-	buffer* inputBuffer() { return &input_buff_; }
-	buffer* outputBuffer() { return &output_buff_; }
+	buffer* inputBuffer() { return &inbuffer_; }
+	buffer* outputBuffer() { return &outbuffer_; }
 
 	void start();
 	void activeClosure();//并非立即关闭
@@ -56,6 +57,8 @@ private:
 	//void stopReadInLoop();
 	//void sendBufferInLoop();
 
+	void sendBufferInLoop();
+
 	void handleRead();
 	void handleClose();
 	void handleWrite();
@@ -66,11 +69,12 @@ private:
 	channel* channel_;
 	char* ip_;
 	int port_;
-	buffer input_buff_;
-	buffer output_buff_;
+	buffer inbuffer_;
+	buffer outbuffer_;
 
 	event_callback conn_callback_;
 	event_callback close_callback_;
+	event_callback write_callback_;
 	msg_callback msg_callback_;
 };
 

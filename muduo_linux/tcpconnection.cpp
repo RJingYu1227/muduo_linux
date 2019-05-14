@@ -57,17 +57,36 @@ void tcpconnection::activeClosure() {
 	//但这只是妄想，哈哈
 }
 
-void tcpconnection::sendBuffer() {
+void tcpconnection::sendBuffer(const buffer* data) {
+	if (loop_->isInLoopThread()) {
+		outbuffer_.append(data->beginPtr(), data->usedBytes());
+		outbuffer_.hasUsed(data->usedBytes());
+		sendBufferInLoop();
+	}
+	else {
+		void (tcpconnection::*fp)(const buffer* data) = &tcpconnection::sendBuffer;
+		//注意这里
+		loop_->runInLoop(std::bind(fp, shared_from_this(), std::move(data)));
+	}
+}
+
+void tcpconnection::sendBufferInLoop() {
 	if (state_ == 1) {
-		if (output_buff_.usedBytes() == 0) {
+		if (outbuffer_.usedBytes() == 0) {
 			perror("输出缓冲区为空");
 			return;
 		}
-		ssize_t nwrote = send(fd_, output_buff_.beginPtr(), output_buff_.usedBytes(), MSG_NOSIGNAL);
+		ssize_t nwrote = send(fd_, outbuffer_.beginPtr(), outbuffer_.usedBytes(), MSG_NOSIGNAL);
 		if (nwrote >= 0) {
-			output_buff_.retrieve(nwrote);
-			if (output_buff_.usedBytes() != 0)
-				sendBuffer();
+			outbuffer_.retrieve(nwrote);
+			if (outbuffer_.usedBytes() != 0 && !channel_->isWriting())
+				channel_->enableWriting();
+			else if (outbuffer_.usedBytes() == 0) {
+				if (channel_->isWriting())
+					channel_->disableWrting();
+				if (write_callback_)
+					loop_->runInLoop(std::bind(&tcpconnection::write_callback_, shared_from_this()));
+			}
 		}
 		else
 			perror("发送数据时出错");
@@ -76,9 +95,9 @@ void tcpconnection::sendBuffer() {
 
 void tcpconnection::handleRead() {
 	if (state_ == 1) {
-		size_t n = input_buff_.readFd(fd_);
+		size_t n = inbuffer_.readFd(fd_);
 		if (n > 0)
-			msg_callback_(shared_from_this(), &input_buff_, n);
+			msg_callback_(shared_from_this(), &inbuffer_, n);
 		else if (n == 0)
 			handleClose();
 	}
@@ -93,7 +112,8 @@ void tcpconnection::handleClose() {
 }
 
 void tcpconnection::handleWrite() {
-
+	if (state_ == 1)
+		sendBufferInLoop();
 }
 
 void tcpconnection::handleError() {

@@ -10,11 +10,8 @@ void on_connection(const tcpconn_ptr conn){
 
 void on_message(const tcpconn_ptr conn, buffer* buff, ssize_t len) {
 	std::cout << buff->toString() << std::endl;
-	buffer* out = conn->outputBuffer();
-	out->append(buff->beginPtr(), len);
-	out->hasUsed(len);
+	conn->sendBuffer(buff);
 	buff->retrieve(len);
-	//conn->sendBuffer();
 	conn->activeClosure();
 }
 

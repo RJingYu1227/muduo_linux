@@ -75,7 +75,7 @@ void eventloop::quit() {
 		eventfd_write(eventfd_, 1);
 }
 
-void eventloop::runInLoop(const functor& cb) {
+void eventloop::runInLoop(const functor cb) {
 	if (isInLoopThread())
 		cb();
 	else {
