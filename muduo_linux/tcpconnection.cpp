@@ -63,11 +63,8 @@ void tcpconnection::sendBuffer(const buffer* data) {
 		outbuffer_.hasUsed(data->usedBytes());
 		sendBufferInLoop();
 	}
-	else {
-		void (tcpconnection::*fp)(const buffer* data) = &tcpconnection::sendBuffer;
-		//注意这里
-		loop_->runInLoop(std::bind(fp, shared_from_this(), std::move(data)));
-	}
+	else
+		loop_->runInLoop(std::bind(&tcpconnection::sendBuffer, shared_from_this(), std::move(data)));
 }
 
 void tcpconnection::sendBufferInLoop() {
