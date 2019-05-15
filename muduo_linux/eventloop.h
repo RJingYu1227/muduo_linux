@@ -35,7 +35,7 @@ public:
 	void runInLoop(const functor& cb);
 	void queueInLoop(const functor& cb);//const左值引用
 
-	void newConn(tcpconnection* conn, int fd, sockaddr_in* cliaddr);
+	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
 
 	static void createQueue(eventloop* loop, bool n);//n为ture时，创建m_pool_
