@@ -26,8 +26,8 @@ void on_writemsg(const tcpconn_ptr& conn) {
 
 int main() {
 	elthreadpool test(4);
-
 	tcpserver server(&test, "127.0.0.1", 6666);
+
 	server.setConnCallback(on_connection);
 	server.setCloseCallback(on_closeclient);
 	server.setMsgCallback(on_message);

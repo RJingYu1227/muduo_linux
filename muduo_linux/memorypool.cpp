@@ -35,6 +35,8 @@ void memorypool::makeSpace() {
 	allocator<channel>* ch_ = new allocator<channel>;
 	addr_.conn_ = conn_->allocate(size_);
 	addr_.ch_ = ch_->allocate(size_);
+	delete conn_;
+	delete ch_;
 
 	head head_(addr_, size_);
 	head_queue_.push(head_);

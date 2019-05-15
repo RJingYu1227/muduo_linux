@@ -29,6 +29,7 @@ void elthreadpool::start() {
 		ret = pthread_create(&temp, NULL, ioThread, ioloop);
 		if (ret)
 			perror("线程创建失败");
+		//pthread_detach(temp);
 	}
 	
 	start_ = 1;
