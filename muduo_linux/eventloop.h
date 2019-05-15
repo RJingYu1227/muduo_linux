@@ -32,13 +32,13 @@ public:
 	void removeChannel(channel* ch);
 	bool isInLoopThread()const; 
 
-	void runInLoop(const functor cb);
-	void queueInLoop(const functor cb);//这里不能用引用
+	void runInLoop(functor cb);
+	void queueInLoop(functor cb);//指针对象没必要使用std::move
 
-	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
+	void newConn(tcpconnection* conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
 
-	static void createQueue(eventloop* loop,bool n);//n为ture时，创建m_pool_
+	static void createQueue(eventloop* loop, bool n);//n为ture时，创建m_pool_
 	static eventloop* get_eventloop();
 
 private:

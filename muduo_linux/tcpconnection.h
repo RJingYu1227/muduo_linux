@@ -56,7 +56,7 @@ private:
 	//void startReadInLoop();
 	//void stopReadInLoop();
 	void sendBufferInLoop(const char* data,size_t len);
-	void sendBufferInLoop(const std::string &data);
+	void sendBufferInLoop(const std::string &data);//右值引用
 
 	void handleRead();
 	void handleClose();

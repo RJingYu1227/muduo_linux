@@ -75,17 +75,17 @@ void eventloop::quit() {
 		eventfd_write(eventfd_, 1);
 }
 
-void eventloop::runInLoop(const functor cb) {
+void eventloop::runInLoop(functor cb) {
 	if (isInLoopThread())
 		cb();
 	else
-		queueInLoop(std::move(cb));
+		queueInLoop(cb);
 }
 
-void eventloop::queueInLoop(const functor cb) {
+void eventloop::queueInLoop(functor cb) {
 	pthread_mutex_lock(&lock_);
 
-	pending_functors_.push_back(std::move(cb));//std::move
+	pending_functors_.push_back(cb);//std::move
 
 	pthread_mutex_unlock(&lock_);
 	eventfd_write(eventfd_, 1);
@@ -106,7 +106,7 @@ void eventloop::doFunctors() {
 		cb();
 }
 
-void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
+void eventloop::newConn(tcpconnection* conn, int fd, sockaddr_in* cliaddr) {
 	assert(m_pool_);//server线程调用
 	channel* ch = m_pool_->setAddr(conn);
 	new(conn)tcpconnection(this, ch, fd, cliaddr);

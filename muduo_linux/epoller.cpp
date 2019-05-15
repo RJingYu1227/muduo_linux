@@ -18,7 +18,7 @@ void epoller::epoll(int timeoutms, channellist* active_channels_) {
 	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
-		fillActiveChannels(numevents, std::move(active_channels_));
+		fillActiveChannels(numevents, active_channels_);
 		if (static_cast<size_t>(numevents) == events_.size())
 			events_.resize(events_.size() * 2);
 	}
