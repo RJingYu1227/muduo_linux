@@ -4,7 +4,7 @@
 #include"eventloop.h"
 #include"channel.h"
 #include"tcpconnection.h"
-#include"buffer.h"
+#include"memorypool.h"
 #include<netinet/in.h>
 #include<functional>
 #include<unordered_map>
@@ -13,7 +13,7 @@ class elthreadpool;
 class eventloop;
 class channel;
 class tcpconnection;
-class buffer;
+class memorypool;
 
 typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
@@ -36,8 +36,10 @@ private:
 	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);
 	void acceptConn();
+	void deleter(tcpconnection* conn);
 
-	elthreadpool* pool_;
+	memorypool* m_pool_;
+	elthreadpool* loop_pool_;
 	eventloop* server_loop_;
 	int listenfd_;
 	sockaddr_in serveraddr_;

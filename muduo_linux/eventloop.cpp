@@ -20,6 +20,10 @@ eventloop::eventloop() :
 	epoll_timeout_(-1),
 	thread_id_(pthread_self()),
 	epoller_(new epoller(this)) {
+	eventfd_ = eventfd(0, 0);
+	channel* channel_ = new channel(this, eventfd_);
+	channel_->setReadCallback(std::bind(&eventloop::handleRead, this));
+	channel_->enableReading();
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
 }
 
@@ -107,22 +111,3 @@ void eventloop::doFunctors() {
 		cb();
 }
 
-void eventloop::newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr) {
-	assert(m_pool_);//server线程调用
-	channel* ch = m_pool_->setAddr(conn);
-	new(conn)tcpconnection(this, ch, fd, cliaddr);
-}
-
-void eventloop::destoryConn(tcpconnection* conn) {
-	assert(m_pool_);//I/O线程调用
-	m_pool_->deleteConn(conn);
-}
-
-void eventloop::createQueue(eventloop* loop, bool n) {
-	if (n)
-		loop->m_pool_ = new memorypool();
-	loop->eventfd_ = eventfd(0, 0);
-	channel* channel_ = new channel(loop, loop->eventfd_);
-	channel_->setReadCallback(std::bind(&eventloop::handleRead, loop));
-	channel_->enableReading();
-}

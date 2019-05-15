@@ -4,7 +4,6 @@
 #include"channel.h"
 #include<memory>
 #include<queue>
-#include<pthread.h>
 using namespace::std;
 
 class channel;
@@ -32,14 +31,13 @@ public:
 	memorypool(int init = 64);
 	~memorypool();
 
-	channel* setAddr(tcpconnection* &conn);
+	void setAddr(tcpconnection* &conn, channel* &ch);
 	void deleteConn(tcpconnection* conn);
 	int size() { return size_; }
 
 private:
 	void makeSpace();
 
-	pthread_mutex_t lock_;
 	int size_;
 
 	queue<head> head_queue_;

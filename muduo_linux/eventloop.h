@@ -3,7 +3,6 @@
 #include"channel.h"
 #include"epoller.h"
 #include"tcpconnection.h"
-#include"memorypool.h"
 #include<netinet/in.h>
 #include<pthread.h>
 #include<vector>
@@ -14,7 +13,6 @@
 class channel;
 class epoller;
 class tcpconnection;
-class memorypool;
 
 //typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 typedef std::function<void()> functor;
@@ -35,10 +33,6 @@ public:
 	void runInLoop(const functor& cb);
 	void queueInLoop(const functor& cb);//const左值引用
 
-	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
-	void destoryConn(tcpconnection* conn);
-
-	static void createQueue(eventloop* loop, bool n);//n为ture时，创建m_pool_
 	static eventloop* get_eventloop();
 
 private:
@@ -52,8 +46,6 @@ private:
 	eventfd_t count_;
 	std::vector<functor> pending_functors_;
 	int eventfd_ = 0;
-
-	memorypool* m_pool_ = nullptr;
 
 	int epoll_timeout_;
 	bool quit_ = 0;

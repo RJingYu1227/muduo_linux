@@ -5,11 +5,6 @@
 #include<assert.h>
 #include<arpa/inet.h>
 
-void tcpconnection::deleter(tcpconnection* conn) {
-	close(conn->fd_);//到这里才能close
-	conn->loop_->queueInLoop(std::bind(&eventloop::destoryConn, conn->loop_, conn));
-}
-
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:loop_(loop),
 	fd_(fd),
@@ -26,6 +21,7 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);
+	channel_->~channel();
 }
 
 void tcpconnection::start() {

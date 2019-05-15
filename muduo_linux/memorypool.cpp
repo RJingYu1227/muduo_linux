@@ -10,19 +10,14 @@ memorypool::~memorypool(){
 
 }
 
-channel* memorypool::setAddr(tcpconnection* &conn) {
+void memorypool::setAddr(tcpconnection* &conn, channel* &ch) {
 	addr temp_;
-	pthread_mutex_lock(&lock_);
-
 	if (addr_queue_.empty())
 		makeSpace();
 	temp_ = addr_queue_.front();
 	addr_queue_.pop();
-
-	pthread_mutex_unlock(&lock_);
 	conn = temp_.conn_;
-	return temp_.ch_;
-	
+	ch = temp_.ch_;
 }
 
 void memorypool::deleteConn(tcpconnection* conn) {
@@ -30,11 +25,8 @@ void memorypool::deleteConn(tcpconnection* conn) {
 	temp_.conn_ = conn;
 	temp_.ch_ = conn->channel_;
 	conn->~tcpconnection();//析构之后再收回地址
-	pthread_mutex_lock(&lock_);
-
 	addr_queue_.push(temp_);
 
-	pthread_mutex_unlock(&lock_);
 }
 
 void memorypool::makeSpace() {

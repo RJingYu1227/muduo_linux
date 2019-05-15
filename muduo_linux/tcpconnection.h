@@ -23,8 +23,6 @@ public:
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
 
-	static void deleter(tcpconnection* conn);
-
 	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
 	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
 	void setWriteCallback(const event_callback& cb) { writeCompleteCallback = cb; }

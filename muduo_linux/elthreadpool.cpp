@@ -9,10 +9,8 @@ elthreadpool::elthreadpool(int loops)
 	loop_num_(loops - 1),
 	loop_index_(0) {
 	serverloop_ = new eventloop();
-	eventloop::createQueue(serverloop_, 0);//主线程退出时会被delete
 	for (int i = 1; i <= loop_num_; ++i) {
 		eventloop* ioloop_ = new eventloop();
-		eventloop::createQueue(ioloop_, 1);
 		ioloops_.push_back(ioloop_);
 	}
 }

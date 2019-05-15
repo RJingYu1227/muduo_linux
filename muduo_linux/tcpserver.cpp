@@ -8,9 +8,9 @@
 #include<errno.h>
 
 tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
-	:pool_(pool), 
+	:loop_pool_(pool), 
 	listening_(0){
-	server_loop_ = pool_->getServerLoop();
+	server_loop_ = loop_pool_->getServerLoop();
 
 	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (listenfd_ == -1) {
@@ -30,10 +30,13 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 	channel_ = new channel(server_loop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn,this));
 	//返回时tcp三次握手已经完成，双方都已经确认连接（系统调用），存在syn队列和accept队列
+	m_pool_ = new memorypool();
 }
 
 tcpserver::~tcpserver() {
+	channel_->remove();
 	delete channel_;
+	delete m_pool_;
 	close(listenfd_);
 }
 
@@ -53,25 +56,33 @@ void tcpserver::acceptConn() {
 		exit(1);
 	}
 
-	eventloop* ioloop_ = pool_->getIoLoop();
+	eventloop* ioloop_ = loop_pool_->getIoLoop();
 	tcpconnection* temp_;
-	ioloop_->newConn(temp_, clifd_, &cliaddr_);
+	channel* ch_;
+	m_pool_->setAddr(temp_, ch_);
+	new(temp_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
 
-	tcpconn_ptr new_(temp_, tcpconnection::deleter);
+	tcpconn_ptr new_(temp_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
 	new_->setMsgCallback(recvMsgCallback);
 	new_->setConnCallback(newConnCallback);
 	new_->setWriteCallback(writeCompleteCallback);
 	new_->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
-	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
+	ioloop_->queueInLoop(std::bind(&tcpconnection::start, new_));
 
 	conns_[clifd_] = new_;
 }
 
+void tcpserver::deleter(tcpconnection* conn) {
+	server_loop_->runInLoop(std::bind(&memorypool::deleteConn, m_pool_, conn));
+	conn = nullptr;
+}
+
 void tcpserver::removeConn(const tcpconn_ptr &conn) {
-	server_loop_->runInLoop(std::bind(&tcpserver::removeConnInLoop, this, conn));
+	server_loop_->queueInLoop(std::bind(&tcpserver::removeConnInLoop, this, conn));
 }
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	closeConnCallback(conn);
 	conns_.erase(conn->fd());
+	close(conn->fd());
 }
