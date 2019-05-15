@@ -6,8 +6,8 @@
 #include<arpa/inet.h>
 
 void tcpconnection::deleter(tcpconnection* conn) {
-	conn->loop_->destoryConn(conn);
-	conn = nullptr;
+	close(conn->fd_);//到这里才能close
+	conn->loop_->queueInLoop(std::bind(&eventloop::destoryConn, conn->loop_, conn));
 }
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
@@ -108,7 +108,6 @@ void tcpconnection::handleClose() {
 	if (state_ == 1 || state_ == 2) {
 		state_ = 3;
 		channel_->remove();//注意
-		close(fd_);
 		closeConnCallback(shared_from_this());
 	}
 }

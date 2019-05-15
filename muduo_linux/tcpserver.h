@@ -33,7 +33,7 @@ public:
 
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
-	void removeConn(const tcpconn_ptr &conn);//为什么是引用？
+	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);
 	void acceptConn();
 

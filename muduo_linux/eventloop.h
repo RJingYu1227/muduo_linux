@@ -33,7 +33,7 @@ public:
 	bool isInLoopThread()const; 
 
 	void runInLoop(const functor cb);
-	void queueInLoop(const functor cb);
+	void queueInLoop(const functor cb);//这里不能用引用
 
 	void newConn(tcpconnection* &conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
