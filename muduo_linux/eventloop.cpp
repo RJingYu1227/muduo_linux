@@ -75,17 +75,18 @@ void eventloop::quit() {
 		eventfd_write(eventfd_, 1);
 }
 
-void eventloop::runInLoop(functor cb) {
+void eventloop::runInLoop(const functor& cb) {
 	if (isInLoopThread())
 		cb();
 	else
 		queueInLoop(cb);
 }
 
-void eventloop::queueInLoop(functor cb) {
+//std::move没必要
+void eventloop::queueInLoop(const functor& cb) {
 	pthread_mutex_lock(&lock_);
 
-	pending_functors_.push_back(cb);//std::move
+	pending_functors_.push_back(cb);
 
 	pthread_mutex_unlock(&lock_);
 	eventfd_write(eventfd_, 1);

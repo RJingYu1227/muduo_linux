@@ -8,7 +8,6 @@
 void tcpconnection::deleter(tcpconnection* conn) {
 	close(conn->fd_);//到这里才能close
 	conn->loop_->queueInLoop(std::bind(&eventloop::destoryConn, conn->loop_, conn));
-	//使用move？
 }
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)

@@ -32,8 +32,8 @@ public:
 	void removeChannel(channel* ch);
 	bool isInLoopThread()const; 
 
-	void runInLoop(functor cb);
-	void queueInLoop(functor cb);//指针对象没必要使用std::move
+	void runInLoop(const functor& cb);
+	void queueInLoop(const functor& cb);//const左值引用
 
 	void newConn(tcpconnection* conn, int fd, sockaddr_in* cliaddr);
 	void destoryConn(tcpconnection* conn);
