@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include"channel.h"
 #include"epoller.h"
@@ -31,7 +31,7 @@ public:
 	bool isInLoopThread()const; 
 
 	void runInLoop(const functor& cb);
-	void queueInLoop(const functor& cb);//const×óÖµÒıÓÃ
+	void queueInLoop(const functor& cb);//constå·¦å€¼å¼•ç”¨
 
 	static eventloop* get_eventloop();
 
@@ -39,7 +39,7 @@ private:
 	typedef std::vector<channel*> channel_list;
 	//typedef std::vector<tcpconn_ptr> tcpconn_queue;
 
-	//ÏûÏ¢¶ÓÁĞ
+	//æ¶ˆæ¯é˜Ÿåˆ—
 	void handleRead();
 	void doFunctors();
 	pthread_mutex_t lock_;
