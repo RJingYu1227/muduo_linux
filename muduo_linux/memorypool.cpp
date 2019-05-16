@@ -31,12 +31,8 @@ void memorypool::deleteConn(tcpconnection* conn) {
 
 void memorypool::makeSpace() {
 	addr addr_;
-	allocator<tcpconnection>* conn_ = new allocator<tcpconnection>;
-	allocator<channel>* ch_ = new allocator<channel>;
-	addr_.conn_ = conn_->allocate(size_);
-	addr_.ch_ = ch_->allocate(size_);
-	delete conn_;
-	delete ch_;
+	addr_.conn_ = conn_.allocate(size_);
+	addr_.ch_ = ch_.allocate(size_);
 
 	head head_(addr_, size_);
 	head_queue_.push(head_);

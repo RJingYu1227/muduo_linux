@@ -1,4 +1,4 @@
-#include"elthreadpool.h"
+ï»¿#include"elthreadpool.h"
 #include<assert.h>
 #include<stdio.h>
 #include<errno.h>
@@ -28,7 +28,7 @@ void elthreadpool::start() {
 	for (eventloop* ioloop : ioloops_) {
 		ret = pthread_create(&temp, NULL, ioThread, ioloop);
 		if (ret)
-			perror("Ïß³Ì´´½¨Ê§°Ü");
+			perror("çº¿ç¨‹åˆ›å»ºå¤±è´¥");
 		//pthread_detach(temp);
 	}
 	

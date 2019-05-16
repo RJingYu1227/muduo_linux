@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include"eventloop.h"
 #include"tcpserver.h"
@@ -19,7 +19,7 @@ public:
 	int loopNum() { return loop_num_; }
 
 private:
-	//static void* serverThread(void* loop);//ÎªÁËÏß³Ìµ÷ÓÃ£¬Ó¦¸ÃÊÇ¾²Ì¬³ÉÔ±º¯Êı
+	//static void* serverThread(void* loop);//ä¸ºäº†çº¿ç¨‹è°ƒç”¨ï¼Œåº”è¯¥æ˜¯é™æ€æˆå‘˜å‡½æ•°
 	static void* ioThread(void* loop);
 
 	bool start_;

@@ -3,7 +3,7 @@
 #include"eventloop.h"
 #include"channel.h"
 #include"buffer.h"
-#include"memorypool.h"
+#include<memory>
 #include<netinet/in.h>
 #include<functional>
 #include<string>
@@ -61,11 +61,12 @@ private:
 	void handleWrite();
 	void handleError();
 
-	eventloop* loop_;
 	int fd_;
-	channel* channel_;
-	char* ip_;
 	int port_;
+	char* ip_;
+	eventloop* loop_;
+	channel* channel_;
+
 	buffer inbuffer_;
 	buffer outbuffer_;
 
@@ -73,5 +74,6 @@ private:
 	event_callback closeConnCallback;
 	event_callback writeCompleteCallback;
 	event_callback recvMsgCallback;
+	//成员变量声明顺序因为字节对齐原因会影响类的大小
 };
 

@@ -6,11 +6,11 @@
 #include<arpa/inet.h>
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
-	:loop_(loop),
+	:state_(0),
 	fd_(fd),
-	state_(0),
-	ip_(inet_ntoa(cliaddr->sin_addr)),
 	port_(cliaddr->sin_port),
+	ip_(inet_ntoa(cliaddr->sin_addr)),
+	loop_(loop),
 	channel_(ch) {
 	new(channel_)channel(loop_, fd_);
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
@@ -18,6 +18,7 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
 	channel_->setErrorCallback(std::bind(&tcpconnection::handleError, this));
 }
+//列表初始化顺序应与类内声明顺序一致
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);

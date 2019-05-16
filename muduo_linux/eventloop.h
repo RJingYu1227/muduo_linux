@@ -45,14 +45,14 @@ private:
 	pthread_mutex_t lock_;
 	eventfd_t count_;
 	std::vector<functor> pending_functors_;
-	int eventfd_ = 0;
+	int eventfd_;
 
-	int epoll_timeout_;
 	bool quit_ = 0;
-	channel_list active_channels_;
-	epoller* epoller_;
 	bool looping_ = 0;
+	int epoll_timeout_;
+	epoller* epoller_;
 	pthread_t thread_id_;	
+	channel_list active_channels_;
 
 };
 

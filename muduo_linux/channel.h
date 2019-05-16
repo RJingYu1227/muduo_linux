@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include"eventloop.h"
 #include<functional>
@@ -27,7 +27,7 @@ public:
 	bool isReading() const { return event_ & kReadEvent; }
 	eventloop* ownerLoop() { return loop_; }
 
-	//�޸�event_
+	//修改event_
 	void enableReading() { event_ |= kReadEvent; update(); }
 	void enableWriting() { event_ |= kWriteEvent; update(); }
 	void disableWrting() { event_ &= ~kWriteEvent; update(); }

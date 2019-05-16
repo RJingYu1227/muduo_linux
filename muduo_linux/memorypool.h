@@ -2,8 +2,8 @@
 
 #include"tcpconnection.h"
 #include"channel.h"
-#include<memory>
 #include<queue>
+#include<memory>
 using namespace::std;
 
 class channel;
@@ -39,6 +39,8 @@ private:
 	void makeSpace();
 
 	int size_;
+	allocator<tcpconnection> conn_;
+	allocator<channel> ch_;
 
 	queue<head> head_queue_;
 	queue<addr> addr_queue_;

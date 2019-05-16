@@ -17,10 +17,10 @@ void eventloop::updateThread() {
 }
 
 eventloop::eventloop() :
+	eventfd_(eventfd(0, 0)),
 	epoll_timeout_(-1),
-	thread_id_(pthread_self()),
-	epoller_(new epoller(this)) {
-	eventfd_ = eventfd(0, 0);
+	epoller_(new epoller(this)),
+	thread_id_(pthread_self()) {
 	channel* channel_ = new channel(this, eventfd_);
 	channel_->setReadCallback(std::bind(&eventloop::handleRead, this));
 	channel_->enableReading();
