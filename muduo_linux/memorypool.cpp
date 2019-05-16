@@ -24,7 +24,8 @@ void memorypool::deleteConn(tcpconnection* conn) {
 	addr temp_;
 	temp_.conn_ = conn;
 	temp_.ch_ = conn->channel_;
-	conn->~tcpconnection();//析构之后再收回地址
+	conn_.destroy(conn);
+	ch_.destroy(conn->channel_);//析构之后再收回地址
 	addr_queue_.push(temp_);
 
 }

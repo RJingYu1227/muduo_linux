@@ -22,7 +22,6 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);
-	channel_->~channel();
 }
 
 void tcpconnection::start() {

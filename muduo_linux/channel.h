@@ -47,7 +47,7 @@ private:
 	static const int kWriteEvent;
 
 	eventloop* loop_;
-	const int fd_;
+	int fd_;
 	int event_;
 	int revent_;
 	int mark_;
