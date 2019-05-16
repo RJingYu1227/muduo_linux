@@ -10,8 +10,6 @@
 
 class eventloop;
 class channel;
-class buffer;
-class memorypool;
 
 class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
 	friend class memorypool;
@@ -47,13 +45,11 @@ public:
 	char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
-	int state_;
-
 private:
 	//channel选项，建议使用shared_from_this()，不然不是线程安全的
 	//void startReadInLoop();
 	//void stopReadInLoop();
-	void sendBufferInLoop(const char* data,size_t len);
+	void sendBufferInLoop(const char* data, size_t len);
 	void sendBufferInLoop(const std::string &data);//const左值引用
 
 	void handleRead();
@@ -61,6 +57,7 @@ private:
 	void handleWrite();
 	void handleError();
 
+	int state_;
 	int fd_;
 	int port_;
 	char* ip_;

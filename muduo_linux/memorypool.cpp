@@ -1,4 +1,5 @@
 ﻿#include "memorypool.h"
+#include<assert.h>
 
 memorypool::memorypool(int init) {
 	size_ = init;
@@ -7,7 +8,14 @@ memorypool::memorypool(int init) {
 }
 
 memorypool::~memorypool(){
-
+	/*assert(addr_queue_.size() == size_);
+	head temp_;
+	while (!head_queue_.empty()) {
+		temp_ = head_queue_.front();
+		head_queue_.pop();
+		conn_.deallocate(temp_.conn_, temp_.size_);
+		ch_.deallocate(temp_.ch_, temp_.size_);
+	}*/
 }
 
 void memorypool::setAddr(tcpconnection* &conn, channel* &ch) {
@@ -20,12 +28,14 @@ void memorypool::setAddr(tcpconnection* &conn, channel* &ch) {
 	ch = temp_.ch_;
 }
 
-void memorypool::deleteConn(tcpconnection* conn) {
+void memorypool::destroyConn(tcpconnection* conn) {
 	addr temp_;
 	temp_.conn_ = conn;
 	temp_.ch_ = conn->channel_;
-	conn_.destroy(conn);
-	ch_.destroy(conn->channel_);//析构之后再收回地址
+
+	conn_.destroy(temp_.conn_);
+	ch_.destroy(temp_.ch_);
+	//析构之后再收回地址
 	addr_queue_.push(temp_);
 
 }

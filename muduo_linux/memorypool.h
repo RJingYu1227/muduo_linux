@@ -15,6 +15,7 @@ struct  addr {
 };
 
 struct head {
+	head() {}
 	head(const addr &addr_, const int &size_) {
 		conn_ = addr_.conn_;
 		ch_ = addr_.ch_;
@@ -32,7 +33,7 @@ public:
 	~memorypool();
 
 	void setAddr(tcpconnection* &conn, channel* &ch);
-	void deleteConn(tcpconnection* conn);
+	void destroyConn(tcpconnection* conn);
 	int size() { return size_; }
 
 private:

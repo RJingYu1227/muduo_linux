@@ -12,7 +12,6 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 	ip_(inet_ntoa(cliaddr->sin_addr)),
 	loop_(loop),
 	channel_(ch) {
-	new(channel_)channel(loop_, fd_);
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));

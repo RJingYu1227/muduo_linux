@@ -57,12 +57,13 @@ void tcpserver::acceptConn() {
 	}
 
 	eventloop* ioloop_ = loop_pool_->getIoLoop();
-	tcpconnection* temp_;
+	tcpconnection* conn_;
 	channel* ch_;
-	m_pool_->setAddr(temp_, ch_);
-	new(temp_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
+	m_pool_->setAddr(conn_, ch_);
+	new(ch_)channel(ioloop_, clifd_);
+	new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
 
-	tcpconn_ptr new_(temp_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
+	tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
 	new_->setMsgCallback(recvMsgCallback);
 	new_->setConnCallback(newConnCallback);
 	new_->setWriteCallback(writeCompleteCallback);
@@ -73,7 +74,7 @@ void tcpserver::acceptConn() {
 }
 
 void tcpserver::deleter(tcpconnection* conn) {
-	server_loop_->runInLoop(std::bind(&memorypool::deleteConn, m_pool_, conn));
+	server_loop_->runInLoop(std::bind(&memorypool::destroyConn, m_pool_, conn));
 	conn = nullptr;
 }
 
