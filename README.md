@@ -10,3 +10,4 @@ tcpserver线程负责新建tcpconnection，完成相应的初始化，然后通�
 I/O线程负责监听并处理tcpconnection的各种epoll_event，处理过程中会调用自定义的回调函数。
 
 2019/5/10 更新了内存池。
+2019/5/17 更新了定时器。
