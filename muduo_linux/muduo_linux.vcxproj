@@ -83,7 +83,6 @@
     <ClCompile Include="epoller.cpp" />
     <ClCompile Include="eventloop.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="memorypool.cpp" />
     <ClCompile Include="tcpconnection.cpp" />
     <ClCompile Include="tcpserver.cpp" />
     <ClCompile Include="timerqueue.cpp" />

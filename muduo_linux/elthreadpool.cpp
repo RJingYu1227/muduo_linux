@@ -2,6 +2,7 @@
 #include<assert.h>
 #include<stdio.h>
 #include<errno.h>
+#include<pthread.h>
 
 
 elthreadpool::elthreadpool(int loops)

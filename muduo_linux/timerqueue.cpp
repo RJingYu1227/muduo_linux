@@ -12,19 +12,21 @@ timerqueue::timerqueue(eventloop* loop)
 	channel_ = new channel(loop_, fd_);
 	channel_->setReadCallback(std::bind(&timerqueue::handleRead, this));
 	channel_->enableReading();
+	mpool_ = new memorypool<timer>();
 }
 
 
 timerqueue::~timerqueue() {
 	channel_->remove();
 	delete channel_;
+	delete mpool_;
 	close(fd_);
-	for (const entry &timer1 : timers_)
-		delete timer1.second;
 }
 
 timer* timerqueue::addTimer(const event_callback &cb, int64_t time) {
-	timer* timer1 = new timer(cb, time);
+	timer* timer1;
+	mpool_->setPtr(timer1);
+	new(timer1)timer(cb, time);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, timer1));
 	return timer1;
 }
@@ -49,12 +51,12 @@ void timerqueue::cancelTimerInLoop(timer* timer1) {
 void timerqueue::handleRead() {
 	int64_t now_;
 	read(fd_, &now_, sizeof now_);
-	now_ = getUnixTime();
+	now_ = getMicroUnixTime();
 	entry_vec temp_;
 	getTimers(now_, temp_);
 	for (const entry& timer_ : temp_) {
 		timer_.second->run();
-		delete timer_.second;
+		mpool_->destroyPtr(timer_.second);
 		timers_.erase(timer_);
 	}
 
@@ -79,14 +81,14 @@ void timerqueue::getTimers(int64_t now, timerqueue::entry_vec& temp) {
 	std::copy(timers_.begin(), end, std::back_inserter(temp));
 }
 
-int64_t timerqueue::getUnixTime() {
+int64_t timerqueue::getMicroUnixTime() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 void timerqueue::setTimespec(int64_t now, timespec& temp) {
-	int64_t microseconds_ = now - getUnixTime();
+	int64_t microseconds_ = now - getMicroUnixTime();
 	if (microseconds_ < 100)
 		microseconds_ = 100;
 	temp.tv_sec = microseconds_ / 1000000;

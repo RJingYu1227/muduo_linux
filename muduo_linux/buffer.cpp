@@ -1,5 +1,6 @@
 ﻿#include "buffer.h"
 #include<stdio.h>
+#include<assert.h>
 #include<sys/uio.h>
 
 void buffer::swap(buffer& rhs) {

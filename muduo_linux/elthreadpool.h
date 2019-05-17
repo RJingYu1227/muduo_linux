@@ -2,7 +2,6 @@
 
 #include"eventloop.h"
 #include"tcpserver.h"
-#include<pthread.h>
 #include<vector>
 
 class eventloop;

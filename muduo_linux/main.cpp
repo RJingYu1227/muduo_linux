@@ -13,6 +13,7 @@ void on_message(const tcpconn_ptr& conn) {
 	std::cout << buff->toString() << std::endl;
 	conn->sendBuffer(buff);
 	buff->retrieveAll();
+	conn->activeClosureWithDelay(6.666);
 	//conn->activeClosure();
 }
 
@@ -22,6 +23,7 @@ void on_closeclient(const tcpconn_ptr& conn) {
 
 void on_writemsg(const tcpconn_ptr& conn) {
 	std::cout << "信息已发送" << std::endl;
+	conn->activeClosureWithDelay(6.66);
 }
 
 int main() {

@@ -24,6 +24,7 @@ eventloop::eventloop() :
 	channel* channel_ = new channel(this, eventfd_);
 	channel_->setReadCallback(std::bind(&eventloop::handleRead, this));
 	channel_->enableReading();
+	timerq_ = new timerqueue(this);
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
 }
 
@@ -94,6 +95,11 @@ void eventloop::queueInLoop(const functor& cb) {
 
 	pthread_mutex_unlock(&lock_);
 	eventfd_write(eventfd_, 1);
+}
+
+timer* eventloop::runAfter(const functor &cb, int64_t time) {
+	time += timerq_->getMicroUnixTime();
+	return timerq_->addTimer(cb, time);
 }
 
 void eventloop::handleRead() {

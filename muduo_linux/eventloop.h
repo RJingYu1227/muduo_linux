@@ -3,16 +3,17 @@
 #include"channel.h"
 #include"epoller.h"
 #include"tcpconnection.h"
-#include<netinet/in.h>
+#include"timerqueue.h"
 #include<pthread.h>
 #include<vector>
-#include<memory>
-#include<sys/eventfd.h>
 #include<functional>
+#include<sys/eventfd.h>
 
 class channel;
 class epoller;
 class tcpconnection;
+class timer;
+class timerqueue;
 
 //typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 typedef std::function<void()> functor;
@@ -33,6 +34,10 @@ public:
 	void runInLoop(const functor& cb);
 	void queueInLoop(const functor& cb);//const左值引用
 
+	//timer* runAt(const functor& cb, int64_t time);
+	timer* runAfter(const functor& cb, int64_t time);
+	//timer* runEvery(const functor& cb, int64_t time);
+
 	static eventloop* get_eventloop();
 
 private:
@@ -51,6 +56,7 @@ private:
 	bool looping_ = 0;
 	int epoll_timeout_;
 	epoller* epoller_;
+	timerqueue* timerq_;
 	pthread_t thread_id_;	
 	channel_list active_channels_;
 

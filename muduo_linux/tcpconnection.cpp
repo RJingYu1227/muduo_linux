@@ -4,6 +4,7 @@
 #include<stdio.h>
 #include<assert.h>
 #include<arpa/inet.h>
+#include<string>
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:state_(0),
@@ -48,21 +49,25 @@ void tcpconnection::activeClosure() {
 	//但这只是妄想，哈哈
 }
 
+void tcpconnection::activeClosureWithDelay(double time) {
+	int64_t time_ = static_cast<int64_t>(time * 1000000);
+	if (state_ == 1)
+		loop_->runAfter(std::bind(&tcpconnection::handleClose, shared_from_this()), time_);
+		
+}
+
 void tcpconnection::sendBuffer(buffer* data) {
 	if (loop_->isInLoopThread())
-		sendBufferInLoop(data->beginPtr(), data->usedBytes());
-	else {
-		void (tcpconnection::*fp)(const std::string &) = &tcpconnection::sendBufferInLoop;
-		//注意
-		loop_->queueInLoop(std::bind(fp, shared_from_this(), data->toString()));
-	}
+		sendBufferInLoop2(data->beginPtr(), data->usedBytes());
+	else
+		loop_->queueInLoop(std::bind(&tcpconnection::sendBufferInLoop1, shared_from_this(), data->toString()));
 }
 
-void tcpconnection::sendBufferInLoop(const std::string &data) {
-	sendBufferInLoop(&data[0], data.size());
+void tcpconnection::sendBufferInLoop1(const std::string &data) {
+	sendBufferInLoop2(&data[0], data.size());
 }
 
-void tcpconnection::sendBufferInLoop(const char* data, size_t len) {
+void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 	if (state_ == 3)
 		return;
 

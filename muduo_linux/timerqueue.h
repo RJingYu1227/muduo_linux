@@ -2,10 +2,10 @@
 
 #include"channel.h"
 #include"eventloop.h"
+#include"memorypool.h"
 #include<functional>
 #include<set>
 #include<vector>
-//#include<memory>
 
 class eventloop;
 class channel;
@@ -27,6 +27,7 @@ private:
 	int64_t time_;
 };
 
+template class memorypool<timer>;
 
 class timerqueue
 {
@@ -36,6 +37,7 @@ public:
 
 	timer* addTimer(const event_callback& cb, int64_t time);
 	void cancelTimer(timer* timer1);
+	int64_t getMicroUnixTime();//微秒为单位
 
 private:
 	typedef std::pair<int64_t, timer*> entry;
@@ -51,13 +53,13 @@ private:
 	bool insert(const entry& temp);
 	void getTimers(int64_t now, entry_vec &temp);
 
-	int64_t getUnixTime();
 	void setTimespec(int64_t now, timespec& temp);
 	void resetTimerfd(int64_t time);
 
-	eventloop* loop_;
 	int fd_;
+	eventloop* loop_;
 	channel* channel_;
+	memorypool<timer>* mpool_;
 	
 	timer_list timers_;
 	timer_list active_timers_;

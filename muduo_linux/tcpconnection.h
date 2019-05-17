@@ -6,13 +6,12 @@
 #include<memory>
 #include<netinet/in.h>
 #include<functional>
-#include<string>
 
 class eventloop;
 class channel;
 
 class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
-	friend class memorypool;
+	friend class tcpserver;
 public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 	//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
@@ -39,7 +38,8 @@ public:
 	buffer* outputBuffer() { return &outbuffer_; }
 
 	void start();
-	void activeClosure();//并非立即关闭
+	void activeClosure();
+	void activeClosureWithDelay(double time);//秒为单位
 	int fd() { return fd_; }
 	//bool connected() { return state_ == 1; }
 	char* getIp() { return ip_; }
@@ -49,8 +49,8 @@ private:
 	//channel选项，建议使用shared_from_this()，不然不是线程安全的
 	//void startReadInLoop();
 	//void stopReadInLoop();
-	void sendBufferInLoop(const char* data, size_t len);
-	void sendBufferInLoop(const std::string &data);//const左值引用
+	void sendBufferInLoop1(const std::string &data);//const左值引用
+	void sendBufferInLoop2(const char* data, size_t len);
 
 	void handleRead();
 	void handleClose();

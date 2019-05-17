@@ -30,13 +30,15 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 	channel_ = new channel(server_loop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn,this));
 	//返回时tcp三次握手已经完成，双方都已经确认连接（系统调用），存在syn队列和accept队列
-	m_pool_ = new memorypool();
+	mpool_1_ = new memorypool<tcpconnection>();
+	mpool_2_ = new memorypool<channel>();
 }
 
 tcpserver::~tcpserver() {
 	channel_->remove();
 	delete channel_;
-	delete m_pool_;
+	delete mpool_1_;
+	delete mpool_2_;
 	close(listenfd_);
 }
 
@@ -59,7 +61,8 @@ void tcpserver::acceptConn() {
 	eventloop* ioloop_ = loop_pool_->getIoLoop();
 	tcpconnection* conn_;
 	channel* ch_;
-	m_pool_->setAddr(conn_, ch_);
+	mpool_1_->setPtr(conn_);
+	mpool_2_->setPtr(ch_);
 	new(ch_)channel(ioloop_, clifd_);
 	new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
 
@@ -74,12 +77,20 @@ void tcpserver::acceptConn() {
 }
 
 void tcpserver::deleter(tcpconnection* conn) {
-	server_loop_->runInLoop(std::bind(&memorypool::destroyConn, m_pool_, conn));
+	if (server_loop_->isInLoopThread())
+		deleterInLoop(conn);
+	else
+		server_loop_->queueInLoop(std::bind(&tcpserver::deleterInLoop, this, conn));
 	conn = nullptr;
 }
 
+void tcpserver::deleterInLoop(tcpconnection* conn) {
+	mpool_2_->destroyPtr(conn->channel_);
+	mpool_1_->destroyPtr(conn);
+}
+
 void tcpserver::removeConn(const tcpconn_ptr &conn) {
-	server_loop_->queueInLoop(std::bind(&tcpserver::removeConnInLoop, this, conn));
+	server_loop_->runInLoop(std::bind(&tcpserver::removeConnInLoop, this, conn));
 }
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
