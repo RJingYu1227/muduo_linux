@@ -49,10 +49,9 @@ void tcpconnection::activeClosure() {
 	//但这只是妄想，哈哈
 }
 
-void tcpconnection::activeClosureWithDelay(double time) {
-	int64_t time_ = static_cast<int64_t>(time * 1000000);
+void tcpconnection::activeClosureWithDelay(double seconds) {
 	if (state_ == 1)
-		loop_->runAfter(std::bind(&tcpconnection::handleClose, shared_from_this()), time_);
+		loop_->runAfter(std::bind(&tcpconnection::handleClose, shared_from_this()), seconds);
 		
 }
 

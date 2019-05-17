@@ -34,9 +34,10 @@ public:
 	void runInLoop(const functor& cb);
 	void queueInLoop(const functor& cb);//const左值引用
 
-	//timer* runAt(const functor& cb, int64_t time);
-	timer* runAfter(const functor& cb, int64_t time);
-	//timer* runEvery(const functor& cb, int64_t time);
+	timer* runAt(const functor& cb, int64_t time);
+	timer* runAfter(const functor& cb, double seconds);
+	timer* runEvery(const functor& cb, double seconds);
+	void cancelTimer(timer* timer1);
 
 	static eventloop* get_eventloop();
 
@@ -56,7 +57,7 @@ private:
 	bool looping_ = 0;
 	int epoll_timeout_;
 	epoller* epoller_;
-	timerqueue* timerq_;
+	timerqueue* timer_q_;
 	pthread_t thread_id_;	
 	channel_list active_channels_;
 

@@ -20,6 +20,7 @@ public:
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
 
+	eventloop* getLoop() { return loop_; }
 	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
 	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
 	void setWriteCallback(const event_callback& cb) { writeCompleteCallback = cb; }
@@ -39,7 +40,7 @@ public:
 
 	void start();
 	void activeClosure();
-	void activeClosureWithDelay(double time);//秒为单位
+	void activeClosureWithDelay(double seconds);//秒为单位
 	int fd() { return fd_; }
 	//bool connected() { return state_ == 1; }
 	char* getIp() { return ip_; }

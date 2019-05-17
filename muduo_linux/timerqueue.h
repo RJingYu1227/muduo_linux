@@ -6,6 +6,7 @@
 #include<functional>
 #include<set>
 #include<vector>
+#include<pthread.h>
 
 class eventloop;
 class channel;
@@ -13,21 +14,35 @@ class channel;
 typedef std::function<void()> event_callback;
 
 class timer {
+	friend class timerqueue;
 public:
-	timer(const event_callback &cb, int64_t time) {
+	timer(const event_callback &cb, int64_t time, double seconds) {
 		Callback = cb;
 		time_ = time;
+		useconds_ = static_cast<int64_t>(seconds * 1000000);
+		repeat_ = (useconds_ > 0);
+		handling_ = 0;
 	}
 	~timer() {}
 
 	int64_t getTime() { return time_; }
-	void run() { Callback(); }
+	void run() { 
+		handling_ = 1;
+		Callback(); 
+		handling_ = 0;
+	}
+
 private:
+	void restart(int64_t now) { time_ = now + useconds_; }
+
 	event_callback Callback;
 	int64_t time_;
+	int64_t useconds_;
+	bool repeat_;
+	bool handling_;
 };
 
-template class memorypool<timer>;
+//template class memorypool<timer>;
 
 class timerqueue
 {
@@ -35,7 +50,7 @@ public:
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
-	timer* addTimer(const event_callback& cb, int64_t time);
+	timer* addTimer(const event_callback& cb, int64_t time, double seconds = 0.0);
 	void cancelTimer(timer* timer1);
 	int64_t getMicroUnixTime();//微秒为单位
 
@@ -56,10 +71,11 @@ private:
 	void setTimespec(int64_t now, timespec& temp);
 	void resetTimerfd(int64_t time);
 
-	int fd_;
 	eventloop* loop_;
+	int fd_;
+	pthread_mutex_t lock_;
 	channel* channel_;
-	memorypool<timer>* mpool_;
+	//memorypool<timer>* mpool_;//线程不安全，考虑使用锁的性能再说
 	
 	timer_list timers_;
 	timer_list active_timers_;

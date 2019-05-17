@@ -17,6 +17,7 @@ void eventloop::updateThread() {
 }
 
 eventloop::eventloop() :
+	lock_(PTHREAD_MUTEX_INITIALIZER),
 	eventfd_(eventfd(0, 0)),
 	epoll_timeout_(-1),
 	epoller_(new epoller(this)),
@@ -24,7 +25,7 @@ eventloop::eventloop() :
 	channel* channel_ = new channel(this, eventfd_);
 	channel_->setReadCallback(std::bind(&eventloop::handleRead, this));
 	channel_->enableReading();
-	timerq_ = new timerqueue(this);
+	timer_q_ = new timerqueue(this);
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
 }
 
@@ -97,9 +98,22 @@ void eventloop::queueInLoop(const functor& cb) {
 	eventfd_write(eventfd_, 1);
 }
 
-timer* eventloop::runAfter(const functor &cb, int64_t time) {
-	time += timerq_->getMicroUnixTime();
-	return timerq_->addTimer(cb, time);
+timer* eventloop::runAt(const functor& cb, int64_t time) {
+	return timer_q_->addTimer(cb, time);
+}
+
+timer* eventloop::runAfter(const functor &cb, double seconds) {
+	int64_t time = static_cast<int64_t>(seconds * 1000000);
+	time += timer_q_->getMicroUnixTime();
+	return timer_q_->addTimer(cb, time);
+}
+
+timer* eventloop::runEvery(const functor &cb, double seconds) {
+	return timer_q_->addTimer(cb, timer_q_->getMicroUnixTime(), seconds);
+}
+
+void eventloop::cancelTimer(timer* timer1) {
+	timer_q_->cancelTimer(timer1);
 }
 
 void eventloop::handleRead() {

@@ -25,6 +25,7 @@ public:
 	tcpserver(elthreadpool* loop, const char* ip, int port);
 	~tcpserver();
 
+	eventloop* getLoop() { return server_loop_; }
 	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
 	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
 	void setMsgCallback(const event_callback& cb) { recvMsgCallback = cb; }
