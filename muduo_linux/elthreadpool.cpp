@@ -38,6 +38,8 @@ void elthreadpool::start() {
 }
 
 eventloop* elthreadpool::getIoLoop() {
+	if (loop_num_ == 0)
+		return serverloop_;
 	++loop_index_;
 	loop_index_ %= loop_num_;
 	return ioloops_[loop_index_];
