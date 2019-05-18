@@ -69,8 +69,7 @@ private:
 	eventloop* loop_;
 	int fd_;
 	channel* channel_;
-	//pthread_mutex_t lock_;
-	//memorypool<timer>* mpool_;//线程不安全，考虑使用锁的性能再说
+	//memorypool<timer>* mpool_;
 	
 	timer_set timers_;
 	std::vector<entry> expire_timers_;

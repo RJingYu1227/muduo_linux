@@ -2,7 +2,6 @@
 
 #include"channel.h"
 #include"epoller.h"
-#include"tcpconnection.h"
 #include"timerqueue.h"
 #include<pthread.h>
 #include<vector>
@@ -11,11 +10,9 @@
 
 class channel;
 class epoller;
-class tcpconnection;
 class timer;
 class timerqueue;
 
-//typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 typedef std::function<void()> functor;
 
 class eventloop {
