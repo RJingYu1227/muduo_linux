@@ -1,11 +1,13 @@
 ﻿#include<iostream>
 #include<string>
 #include<pthread.h>
+#include<functional>
 #include"elthreadpool.h"
 #include"tcpserver.h"
+using namespace std;
 
 void onNewConn(const tcpconn_ptr& conn){
-	std::cout << "收到一个连接" << conn->getIp() << " " << conn->getPort() << std::endl;
+	cout << "收到一个连接" << conn->getIp() << " " << conn->getPort() << endl;
 }
 
 void onRecvMsg(const tcpconn_ptr& conn) {
@@ -18,11 +20,11 @@ void onRecvMsg(const tcpconn_ptr& conn) {
 }
 
 void onCloseConn(const tcpconn_ptr& conn) {
-	std::cout << "断开一个连接" << conn->getIp() << " " << conn->getPort() << std::endl;
+	cout << "断开一个连接" << conn->getIp() << " " << conn->getPort() << endl;
 }
 
 void onWriteMsg(const tcpconn_ptr& conn) {
-	std::cout << "信息已发送" << std::endl;
+	cout << "信息已发送" << endl;
 	//conn->activeClosureWithDelay(6.666);
 }
 
@@ -37,5 +39,7 @@ int main() {
 
 	server.start();	
 	test.start();
+
+	return 0;
 }
 

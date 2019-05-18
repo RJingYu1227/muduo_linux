@@ -17,22 +17,22 @@ void eventloop::updateThread() {
 }
 
 eventloop::eventloop() :
-	lock_(PTHREAD_MUTEX_INITIALIZER),
-	eventfd_(eventfd(0, 0)),
+	thread_id_(pthread_self()),
+	quit_(0),
+	looping_(0),
 	epoll_timeout_(-1),
 	epoller_(new epoller(this)),
-	thread_id_(pthread_self()) {
-	channel* channel_ = new channel(this, eventfd_);
-	channel_->setReadCallback(std::bind(&eventloop::handleRead, this));
-	channel_->enableReading();
-	timer_q_ = new timerqueue(this);
+	eventque_(new eventqueue(this)),
+	timerque_(new timerqueue(this)) {
+
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
 }
 
 eventloop::~eventloop() {
 	assert(!looping_);
+	delete timerque_;
+	delete eventque_;
 	delete epoller_;
-	close(eventfd_);
 	loop_inthisthread_ = nullptr;
 }
 
@@ -78,56 +78,44 @@ void eventloop::loop() {
 void eventloop::quit() {
 	quit_ = 1;
 	if (!isInLoopThread())
-		eventfd_write(eventfd_, 1);
+		eventque_->wakeup();
 }
 
-void eventloop::runInLoop(const functor& cb) {
+void eventloop::runInLoop(const functor& func) {
 	if (isInLoopThread())
-		cb();
+		func();
 	else
-		queueInLoop(cb);
+		queueInLoop(func);
 }
 
 //std::move没必要
-void eventloop::queueInLoop(const functor& cb) {
-	pthread_mutex_lock(&lock_);
-
-	pending_functors_.push_back(cb);
-
-	pthread_mutex_unlock(&lock_);
-	eventfd_write(eventfd_, 1);
+void eventloop::queueInLoop(const functor& func) {
+	eventque_->addFunctor(func);
 }
 
 void eventloop::runAt(const functor& cb, int64_t time) {
-	timer_q_->addTimer(cb, time);
+	timerque_->addTimer(cb, time);
 }
 
 void eventloop::runAfter(const functor &cb, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
 	time += timerqueue::getMicroUnixTime();
-	timer_q_->addTimer(cb, time);
+	timerque_->addTimer(cb, time);
 }
 
 timer* eventloop::runEvery(const functor &cb, double seconds) {
-	return timer_q_->addTimer(cb, timerqueue::getMicroUnixTime(), seconds);
+	return timerque_->addTimer(cb, timerqueue::getMicroUnixTime(), seconds);
 }
 
 void eventloop::cancelTimer(timer* timer1) {
-	timer_q_->cancelTimer(timer1);
-}
-
-void eventloop::handleRead() {
-	eventfd_read(eventfd_, &count_);
+	if (timer1)
+		timerque_->cancelTimer(timer1);
 }
 
 void eventloop::doFunctors() {
-	std::vector<functor> temp_;
-	pthread_mutex_lock(&lock_);
-
-	temp_.swap(pending_functors_);
-
-	pthread_mutex_unlock(&lock_);
-	for (functor cb : temp_)
-		cb();
+	std::vector<functor> functors_;
+	eventque_->getFunctors(functors_);
+	for (functor& func : functors_)
+		func();
 }
 

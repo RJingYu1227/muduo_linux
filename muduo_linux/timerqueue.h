@@ -25,9 +25,7 @@ public:
 	~timer() {}
 
 	int64_t getTime() { return time_; }
-	void run() { 
-		Callback(); 
-	}
+	void run() { Callback(); }
 
 private:
 	void restart(int64_t now) { time_ = now + useconds_; }
@@ -55,6 +53,7 @@ private:
 	typedef std::pair<int64_t, timer*> entry;
 	typedef std::set<entry> timer_set;
 
+	//为了尽快处理handleRead
 	void addTimerInLoop(timer* timer1);
 	void cancelTimerInLoop(timer* timer1);
 

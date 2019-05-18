@@ -41,19 +41,19 @@ private:
 	void deleter(tcpconnection* conn);
 	void deleterInLoop(tcpconnection* conn);
 
-	memorypool<tcpconnection>* mpool_1_;
-	memorypool<channel>* mpool_2_;
 	elthreadpool* loop_pool_;
 	eventloop* server_loop_;
 	int listenfd_;
 	sockaddr_in serveraddr_;
+	memorypool<tcpconnection>* mpool1_;
+	memorypool<channel>* mpool2_;
 	channel* channel_;
 	conn_map conns_;
-	bool listening_;
 
 	event_callback newConnCallback;
 	event_callback closeConnCallback;
 	event_callback recvMsgCallback;
 	event_callback writeCompleteCallback;
+	bool listening_;
 };
 

@@ -82,6 +82,7 @@
     <ClCompile Include="elthreadpool.cpp" />
     <ClCompile Include="epoller.cpp" />
     <ClCompile Include="eventloop.cpp" />
+    <ClCompile Include="eventqueue.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tcpconnection.cpp" />
     <ClCompile Include="tcpserver.cpp" />
@@ -93,6 +94,7 @@
     <ClInclude Include="elthreadpool.h" />
     <ClInclude Include="epoller.h" />
     <ClInclude Include="eventloop.h" />
+    <ClInclude Include="eventqueue.h" />
     <ClInclude Include="memorypool.h" />
     <ClInclude Include="tcpconnection.h" />
     <ClInclude Include="tcpserver.h" />

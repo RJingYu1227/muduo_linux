@@ -5,6 +5,18 @@
 #include<assert.h>
 
 template<typename T>
+struct head {
+	head() {}
+	head(T* ptr_, int size_) {
+		this->ptr_ = ptr_;
+		this->size_ = size_;
+	}
+	T* ptr_ = nullptr;
+	int size_ = 0;
+};
+
+
+template<typename T>
 class memorypool//这是在堆上申请空间，地址从低到高
 {
 public:
@@ -20,18 +32,7 @@ private:
 
 	int size_;
 	std::allocator<T> manager_;
-
-	struct head {
-		head() {}
-		head(T* ptr_, int size_) {
-			this->ptr_ = ptr_;
-			this->size_ = size_;
-		}
-		T* ptr_ = nullptr;
-		int size_ = 0;
-	};
-
-	std::queue<head> head_queue_;
+	std::queue<head<T>> head_queue_;
 	std::queue<T*> ptr_queue_;
 };
 
@@ -44,7 +45,12 @@ memorypool<T>::memorypool(int init) {
 
 template<typename T>
 memorypool<T>::~memorypool() {
-
+	head<T> temp_;
+	while (!head_queue_.empty()) {
+		temp_ = head_queue_.front();
+		head_queue_.pop();
+		manager_.deallocate(temp_.ptr_, temp_.size_);
+	}
 }
 
 template<typename T>
@@ -65,7 +71,7 @@ void memorypool<T>::destroyPtr(T* ptr) {
 template<typename T>
 void memorypool<T>::makeSpace() {
 	T* ptr_ = manager_.allocate(size_);
-	head head_(ptr_, size_);
+	head<T> head_(ptr_, size_);
 	head_queue_.push(head_);
 
 	for (int i = 0; i < size_; ++i) {

@@ -46,6 +46,7 @@ void timerqueue::cancelTimerInLoop(timer* timer1) {
 	}
 	else
 		timer1->repeat_ = 0;
+	timer1 = nullptr;
 	//只有取消重复事件才是指针安全的，建议修改handleRead
 	//也就是说一次性timer无法安全的取消
 	//muduo解决的方式是加中间层

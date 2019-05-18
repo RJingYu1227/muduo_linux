@@ -7,10 +7,9 @@
 #include<stdio.h>
 #include<errno.h>
 
-tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
-	:loop_pool_(pool), 
-	listening_(0){
-	server_loop_ = loop_pool_->getServerLoop();
+tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
+	loop_pool_ = pool;
+	server_loop_ = pool->getServerLoop();
 
 	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (listenfd_ == -1) {
@@ -27,18 +26,19 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 		exit(1);
 	}
 
+	mpool1_ = new memorypool<tcpconnection>();
+	mpool2_ = new memorypool<channel>();
+
 	channel_ = new channel(server_loop_, listenfd_);
-	channel_->setReadCallback(std::bind(&tcpserver::acceptConn,this));
-	//返回时tcp三次握手已经完成，双方都已经确认连接（系统调用），存在syn队列和accept队列
-	mpool_1_ = new memorypool<tcpconnection>();
-	mpool_2_ = new memorypool<channel>();
+	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
+	listening_ = 0;
 }
 
 tcpserver::~tcpserver() {
 	channel_->remove();
 	delete channel_;
-	delete mpool_1_;
-	delete mpool_2_;
+	delete mpool1_;
+	delete mpool2_;
 	close(listenfd_);
 }
 
@@ -55,14 +55,14 @@ void tcpserver::acceptConn() {
 	int clifd_ = accept(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_);
 	if (clifd_ == -1) {
 		perror("建立连接失败");
-		exit(1);
+		return;
 	}
 
 	eventloop* ioloop_ = loop_pool_->getIoLoop();
 	tcpconnection* conn_;
 	channel* ch_;
-	mpool_1_->setPtr(conn_);
-	mpool_2_->setPtr(ch_);
+	mpool1_->setPtr(conn_);
+	mpool2_->setPtr(ch_);
 	new(ch_)channel(ioloop_, clifd_);
 	new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
 
@@ -85,8 +85,8 @@ void tcpserver::deleter(tcpconnection* conn) {
 }
 
 void tcpserver::deleterInLoop(tcpconnection* conn) {
-	mpool_2_->destroyPtr(conn->channel_);
-	mpool_1_->destroyPtr(conn);
+	mpool2_->destroyPtr(conn->channel_);
+	mpool1_->destroyPtr(conn);
 }
 
 void tcpserver::removeConn(const tcpconn_ptr &conn) {

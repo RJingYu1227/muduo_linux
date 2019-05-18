@@ -3,6 +3,7 @@
 #include"channel.h"
 #include"epoller.h"
 #include"timerqueue.h"
+#include"eventqueue.h"
 #include<pthread.h>
 #include<vector>
 #include<functional>
@@ -12,6 +13,7 @@ class channel;
 class epoller;
 class timer;
 class timerqueue;
+class eventqueue;
 
 typedef std::function<void()> functor;
 
@@ -28,8 +30,8 @@ public:
 	void removeChannel(channel* ch);
 	bool isInLoopThread()const; 
 
-	void runInLoop(const functor& cb);
-	void queueInLoop(const functor& cb);//const左值引用
+	void runInLoop(const functor& func);
+	void queueInLoop(const functor& func);//const左值引用
 
 	void runAt(const functor& cb, int64_t time);
 	void runAfter(const functor& cb, double seconds);
@@ -40,22 +42,16 @@ public:
 
 private:
 	typedef std::vector<channel*> channel_list;
-	//typedef std::vector<tcpconn_ptr> tcpconn_queue;
 
-	//消息队列
-	void handleRead();
 	void doFunctors();
-	pthread_mutex_t lock_;
-	eventfd_t count_;
-	std::vector<functor> pending_functors_;
-	int eventfd_;
 
-	bool quit_ = 0;
-	bool looping_ = 0;
+	pthread_t thread_id_;//第一个初始化
+	bool quit_;
+	bool looping_;
 	int epoll_timeout_;
 	epoller* epoller_;
-	timerqueue* timer_q_;
-	pthread_t thread_id_;	
+	eventqueue* eventque_;//最后执行
+	timerqueue* timerque_;//尽快执行
 	channel_list active_channels_;
 
 };
