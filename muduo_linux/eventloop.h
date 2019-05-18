@@ -34,10 +34,10 @@ public:
 	void runInLoop(const functor& cb);
 	void queueInLoop(const functor& cb);//const左值引用
 
-	timer* runAt(const functor& cb, int64_t time);
-	timer* runAfter(const functor& cb, double seconds);
+	void runAt(const functor& cb, int64_t time);
+	void runAfter(const functor& cb, double seconds);
 	timer* runEvery(const functor& cb, double seconds);
-	void cancelTimer(timer* timer1);
+	void cancelTimer(timer* timer1);//一个timer只能调用一次
 
 	static eventloop* get_eventloop();
 

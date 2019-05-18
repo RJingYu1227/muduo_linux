@@ -66,7 +66,7 @@ private:
 	channel* channel_;
 
 	buffer inbuffer_;
-	buffer outbuffer_;
+	buffer outbuffer_;//这里的buffer不是指针
 
 	event_callback newConnCallback;
 	event_callback closeConnCallback;

@@ -98,18 +98,18 @@ void eventloop::queueInLoop(const functor& cb) {
 	eventfd_write(eventfd_, 1);
 }
 
-timer* eventloop::runAt(const functor& cb, int64_t time) {
-	return timer_q_->addTimer(cb, time);
+void eventloop::runAt(const functor& cb, int64_t time) {
+	timer_q_->addTimer(cb, time);
 }
 
-timer* eventloop::runAfter(const functor &cb, double seconds) {
+void eventloop::runAfter(const functor &cb, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += timer_q_->getMicroUnixTime();
-	return timer_q_->addTimer(cb, time);
+	time += timerqueue::getMicroUnixTime();
+	timer_q_->addTimer(cb, time);
 }
 
 timer* eventloop::runEvery(const functor &cb, double seconds) {
-	return timer_q_->addTimer(cb, timer_q_->getMicroUnixTime(), seconds);
+	return timer_q_->addTimer(cb, timerqueue::getMicroUnixTime(), seconds);
 }
 
 void eventloop::cancelTimer(timer* timer1) {
