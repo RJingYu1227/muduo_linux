@@ -23,7 +23,6 @@ public:
 	void getFunctors(std::vector<functor>& vec);
 
 private:
-
 	void handleRead();
 
 	int fd_;
@@ -32,7 +31,6 @@ private:
 	eventloop* loop_;
 	channel* channel_;
 	std::vector<functor> functors_;
-
 
 };
 

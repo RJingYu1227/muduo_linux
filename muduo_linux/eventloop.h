@@ -38,7 +38,7 @@ public:
 	timer* runEvery(const functor& cb, double seconds);
 	void cancelTimer(timer* timer1);//一个timer只能调用一次
 
-	static eventloop* get_eventloop();
+	static eventloop* getEventLoop();
 
 private:
 	typedef std::vector<channel*> channel_list;

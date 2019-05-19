@@ -16,7 +16,7 @@ public:
 	epoller(eventloop* loop);
 	~epoller();
 
-	void epoll(int timeoutms, channellist* active_channels_);
+	void doEpoll(int timeoutms, channellist* active_channels_);
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
 	void assertInLoopThread();

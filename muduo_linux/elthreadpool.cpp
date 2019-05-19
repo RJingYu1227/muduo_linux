@@ -5,12 +5,12 @@
 #include<pthread.h>
 
 
-elthreadpool::elthreadpool(int loops)
+elthreadpool::elthreadpool(int num)
 	:start_(0),
-	loop_num_(loops - 1),
-	loop_index_(0) {
+	num_(num - 1),
+	index_(0) {
 	serverloop_ = new eventloop();
-	for (int i = 1; i <= loop_num_; ++i) {
+	for (int i = 1; i <= num_; ++i) {
 		eventloop* ioloop_ = new eventloop();
 		ioloops_.push_back(ioloop_);
 	}
@@ -38,11 +38,11 @@ void elthreadpool::start() {
 }
 
 eventloop* elthreadpool::getIoLoop() {
-	if (loop_num_ == 0)
+	if (num_ == 0)
 		return serverloop_;
-	++loop_index_;
-	loop_index_ %= loop_num_;
-	return ioloops_[loop_index_];
+	++index_;
+	index_ %= num_;
+	return ioloops_[index_];
 }
 
 void* elthreadpool::ioThread(void* a) {

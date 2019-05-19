@@ -14,7 +14,7 @@ epoller::~epoller() {
 	close(epollfd_);
 }
 
-void epoller::epoll(int timeoutms, channellist* active_channels_) {
+void epoller::doEpoll(int timeoutms, channellist* active_channels_) {
 	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
@@ -44,7 +44,7 @@ void epoller::updateChannel(channel* ch) {
 	if (ch->mark() == -1) {
 		assert(channels_.find(fd_) == channels_.end());
 		epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd_, &ev);
-		channels_[fd_] = ch;
+		channels_.emplace(fd_, ch);
 		ch->setMark(1);
 	}
 	else {

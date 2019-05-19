@@ -4,9 +4,9 @@
 #include<unistd.h>
 using namespace::std;
 
-__thread eventloop* loop_inthisthread_ = 0;
+__thread eventloop* loop_inthisthread_ = nullptr;
 
-eventloop* eventloop::get_eventloop() {
+eventloop* eventloop::getEventLoop() {
 	return loop_inthisthread_;
 }
 
@@ -25,6 +25,7 @@ eventloop::eventloop() :
 	eventque_(new eventqueue(this)),
 	timerque_(new timerqueue(this)) {
 
+	loop_inthisthread_ = this;
 	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
 }
 
@@ -48,13 +49,13 @@ bool eventloop::isInLoopThread()const {
 void eventloop::updateChannel(channel* ch) {
 	assert(ch->ownerLoop() == this);
 	assertInLoopThread();
-	epoller_->updateChannel(std::move(ch));
+	epoller_->updateChannel(ch);
 }
 
 void eventloop::removeChannel(channel* ch) {
 	assert(ch->ownerLoop() == this);
 	assertInLoopThread();
-	epoller_->removeChannel(std::move(ch));
+	epoller_->removeChannel(ch);
 }
 
 void eventloop::loop() {
@@ -65,7 +66,7 @@ void eventloop::loop() {
 
 	while (!quit_) {
 		active_channels_.clear();
-		epoller_->epoll(epoll_timeout_, &active_channels_);
+		epoller_->doEpoll(epoll_timeout_, &active_channels_);
 		for (channel* ch : active_channels_)
 			ch->handleEvent();
 		doFunctors();//注意这里的执行顺序

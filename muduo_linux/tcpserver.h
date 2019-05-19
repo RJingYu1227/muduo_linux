@@ -25,7 +25,7 @@ public:
 	tcpserver(elthreadpool* loop, const char* ip, int port);
 	~tcpserver();
 
-	eventloop* getLoop() { return server_loop_; }
+	eventloop* getLoop() { return serverloop_; }
 	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
 	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
 	void setMsgCallback(const event_callback& cb) { recvMsgCallback = cb; }
@@ -41,8 +41,8 @@ private:
 	void deleter(tcpconnection* conn);
 	void deleterInLoop(tcpconnection* conn);
 
-	elthreadpool* loop_pool_;
-	eventloop* server_loop_;
+	elthreadpool* loops_;
+	eventloop* serverloop_;
 	int listenfd_;
 	sockaddr_in serveraddr_;
 	memorypool<tcpconnection>* mpool1_;
