@@ -25,7 +25,7 @@ private:
 	typedef std::unordered_map<int, channel*> channel_map;
 	typedef std::vector<epoll_event> event_list;
 
-	static const int kInitEventListSize = 16;
+	static const int kInitEventListSize = 1024;
 
 	void fillActiveChannels(int numevents, channellist* active_channels_)const;
 	

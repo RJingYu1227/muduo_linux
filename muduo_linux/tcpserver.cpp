@@ -26,8 +26,8 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
 		exit(1);
 	}
 
-	mpool1_ = new memorypool<tcpconnection>();
-	mpool2_ = new memorypool<channel>();
+	mpool1_ = new memorypool<tcpconnection>(1024);
+	mpool2_ = new memorypool<channel>(1024);
 
 	channel_ = new channel(serverloop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));

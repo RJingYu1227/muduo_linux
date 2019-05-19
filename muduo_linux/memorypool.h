@@ -20,7 +20,7 @@ template<typename T>
 class memorypool//这是在堆上申请空间，地址从低到高
 {
 public:
-	memorypool(int init = 64);
+	memorypool(int init = 1024);
 	~memorypool();
 
 	void setPtr(T* &ptr);

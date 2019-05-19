@@ -13,9 +13,9 @@ void onNewConn(const tcpconn_ptr& conn){
 void onRecvMsg(const tcpconn_ptr& conn) {
 	buffer* buff = conn->inputBuffer();
 	std::cout << buff->toString() << std::endl;
-	conn->sendBuffer(buff);
+	//conn->sendBuffer(buff);
 	buff->retrieveAll();
-	//conn->activeClosureWithDelay(6.666);
+	conn->activeClosureWithDelay(6.666);
 	//conn->activeClosure();
 }
 
