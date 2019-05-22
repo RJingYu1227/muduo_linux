@@ -108,7 +108,6 @@ void timerqueue::resetTimerfd(int64_t time) {
 	itimerspec new_value_;
 	itimerspec old_value_;
 	bzero(&new_value_, sizeof new_value_);
-	//bzero(&old_value_, sizeof old_value_);
 	setTimespec(time, new_value_.it_value);
 	int ret = timerfd_settime(fd_, 0, &new_value_, &old_value_);
 	if (ret)

@@ -2,7 +2,7 @@
 
 #include"channel.h"
 #include"eventloop.h"
-#include"memorypool.h"
+#include"timer.h"
 #include<memory>
 #include<functional>
 #include<set>
@@ -10,38 +10,13 @@
 
 class eventloop;
 class channel;
-
-typedef std::function<void()> event_callback;
-
-class timer {
-	friend class timerqueue;
-public:
-	timer(const event_callback &cb, int64_t time, double seconds) {
-		Callback = cb;
-		time_ = time;
-		useconds_ = static_cast<int64_t>(seconds * 1000000);
-		repeat_ = (useconds_ > 0);
-	}
-	~timer() {}
-
-	int64_t getTime() { return time_; }
-	void run() { Callback(); }
-
-private:
-	void restart(int64_t now) { time_ = now + useconds_; }
-
-	event_callback Callback;
-	int64_t time_;
-	int64_t useconds_;
-	bool repeat_;
-	//bool handling_;
-};
-
-//template class memorypool<timer>;
+class timer;
 
 class timerqueue
 {
 public:
+	typedef std::function<void()> event_callback;
+
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
@@ -68,7 +43,6 @@ private:
 	eventloop* loop_;
 	int fd_;
 	channel* channel_;
-	//memorypool<timer>* mpool_;
 	
 	timer_set timers_;
 	std::vector<entry> expire_timers_;

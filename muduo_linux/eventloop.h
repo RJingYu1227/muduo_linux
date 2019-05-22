@@ -2,6 +2,7 @@
 
 #include"channel.h"
 #include"epoller.h"
+#include"timer.h"
 #include"timerqueue.h"
 #include"eventqueue.h"
 #include<pthread.h>
@@ -15,10 +16,10 @@ class timer;
 class timerqueue;
 class eventqueue;
 
-typedef std::function<void()> functor;
-
 class eventloop {
 public:
+	typedef std::function<void()> functor;
+
 	eventloop();
 	~eventloop();
 

@@ -10,11 +10,11 @@
 class eventloop;
 class channel;
 
-typedef std::function<void()> functor;
-
 class eventqueue
 {
 public:
+	typedef std::function<void()> functor;
+
 	eventqueue(eventloop* loop);
 	~eventqueue();
 

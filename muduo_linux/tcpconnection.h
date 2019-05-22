@@ -14,7 +14,6 @@ class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
 	friend class tcpserver;
 public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
-	//const tcpconn_ptr 指的是指针的值是一个常量 tcpconnection* const
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
