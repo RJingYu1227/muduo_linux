@@ -100,12 +100,12 @@ void eventloop::runAt(const functor& cb, int64_t time) {
 
 void eventloop::runAfter(const functor &cb, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += timerqueue::getMicroUnixTime();
+	time += timer::getMicroUnixTime();
 	timerque_->addTimer(cb, time);
 }
 
 timer* eventloop::runEvery(const functor &cb, double seconds) {
-	return timerque_->addTimer(cb, timerqueue::getMicroUnixTime(), seconds);
+	return timerque_->addTimer(cb, timer::getMicroUnixTime(), seconds);
 }
 
 void eventloop::cancelTimer(timer* timer1) {

@@ -1,6 +1,5 @@
 ﻿#include "timerqueue.h"
 #include<sys/timerfd.h>
-#include<sys/time.h>
 #include<unistd.h>
 #include<strings.h>
 #include<assert.h>
@@ -54,13 +53,13 @@ void timerqueue::cancelTimerInLoop(timer* timer1) {
 void timerqueue::handleRead() {
 	int64_t now_;
 	read(fd_, &now_, sizeof now_);
-	now_ = getMicroUnixTime();
+	now_ = timer::getMicroUnixTime();
 	expire_timers_.clear();
 	getTimers(now_);
 	for (entry& ey : expire_timers_) {
 		ey.second->run();
 		if (ey.second->repeat_) {
-			ey.second->restart(getMicroUnixTime());
+			ey.second->restart(timer::getMicroUnixTime());
 			ey.first = ey.second->time_;
 			timers_.insert(ey);
 		}
@@ -90,14 +89,8 @@ void timerqueue::getTimers(int64_t now) {
 	timers_.erase(timers_.begin(),end);
 }
 
-int64_t timerqueue::getMicroUnixTime() {
-	timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
-}
-
 void timerqueue::setTimespec(int64_t now, timespec& temp) {
-	int64_t microseconds_ = now - getMicroUnixTime();
+	int64_t microseconds_ = now - timer::getMicroUnixTime();
 	if (microseconds_ < 100)
 		microseconds_ = 100;
 	temp.tv_sec = microseconds_ / 1000000;

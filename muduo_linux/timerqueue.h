@@ -22,7 +22,6 @@ public:
 
 	timer* addTimer(const event_callback& cb, int64_t time, double seconds = 0.0);
 	void cancelTimer(timer* timer1);//只限于取消重复事件
-	static int64_t getMicroUnixTime();//微秒为单位
 
 private:
 	typedef std::pair<int64_t, timer*> entry;

@@ -1,7 +1,6 @@
 #include"timer.h"
 #include<string>
 #include<sys/time.h>
-#include<unistd.h>
 
 timer::timer(const event_callback &cb, int64_t time, double seconds) {
 	Callback = cb;
@@ -10,15 +9,13 @@ timer::timer(const event_callback &cb, int64_t time, double seconds) {
 	repeat_ = (useconds_ > 0);
 }
 
-std::string timer::timeToString(int64_t time_) {
-	char buf[64] = { 0 };
-	time_t seconds = static_cast<time_t>(time_ / 1000000);
-	tm tm_time;
-	gmtime_r(&seconds, &tm_time);
-	snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d",
-		tm_time.tm_year + 1900, tm_time.tm_mon + 1, tm_time.tm_mday,
-		tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec);
-	return buf;
+std::string timer::timeToString(int64_t time) {
+	time_t seconds = static_cast<time_t>(time / 1000000);
+	return ctime(&seconds);
+	//gmtime
+	//localtime
+	//ctime
+	//asctime
 }
 
 int64_t timer::getMicroUnixTime() {

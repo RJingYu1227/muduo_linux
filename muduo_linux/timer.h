@@ -12,7 +12,7 @@ public:
 
 	int64_t getTime() { return time_; }
 	void run() { Callback(); }
-	static std::string timeToString(int64_t time_);
+	static std::string timeToString(int64_t time);
 	static int64_t getMicroUnixTime();//Î¢ÃëÎªµ¥Î»
 
 private:
