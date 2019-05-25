@@ -1,10 +1,10 @@
 ﻿#include"tcpserver.h"
+#include"logging.h"
 #include<strings.h>
 #include<unistd.h>
 #include<sys/socket.h>
 #include<sys/types.h>
 #include<arpa/inet.h>
-#include<stdio.h>
 #include<errno.h>
 
 tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
@@ -13,7 +13,7 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
 
 	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
 	if (listenfd_ == -1) {
-		perror("创建listenfd失败");
+		LOG << "创建listenfd失败";
 		exit(1);
 	}
 	bzero(&serveraddr_, sizeof serveraddr_);
@@ -22,7 +22,7 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
 	//inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
 	serveraddr_.sin_port = htons(static_cast<uint16_t>(port));
 	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
-		perror("绑定监听端口失败");
+		LOG << "绑定监听端口失败";
 		exit(1);
 	}
 
@@ -54,7 +54,7 @@ void tcpserver::acceptConn() {
 	socklen_t cliaddrlen_ = sizeof cliaddr_;
 	int clifd_ = accept(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_);
 	if (clifd_ == -1) {
-		perror("建立连接失败");
+		LOG << "建立连接失败";
 		return;
 	}
 

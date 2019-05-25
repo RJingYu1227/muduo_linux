@@ -1,7 +1,6 @@
 ﻿#include"elthreadpool.h"
+#include"logging.h"
 #include<assert.h>
-#include<stdio.h>
-#include<errno.h>
 #include<pthread.h>
 
 
@@ -29,7 +28,7 @@ void elthreadpool::start() {
 	for (eventloop* ioloop : ioloops_) {
 		ret = pthread_create(&temp, NULL, ioThread, ioloop);
 		if (ret)
-			perror("线程创建失败");
+			LOG << "线程创建失败";
 		//pthread_detach(temp);
 	}
 	

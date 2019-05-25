@@ -1,4 +1,4 @@
-#include "logfile.h"
+﻿#include "logfile.h"
 #include<assert.h>
 
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)
@@ -10,28 +10,29 @@ logfile::logfile(const char* basename, off_t rollsize, int count_limit)
 	lock_(PTHREAD_MUTEX_INITIALIZER),
 	file_(nullptr) {
 
-	assert(basename_.find('/') == std::string::npos);
+	//assert(basename_.find('/') == std::string::npos);
 	rollfile();
 }
 
 logfile::~logfile() {
-	delete file_;
+	if (file_ != nullptr)
+		delete file_;
 }
 
 void logfile::append(const char* data, size_t len) {
-	pthread_mutex_lock(&lock_);
+	//pthread_mutex_lock(&lock_);
 
 	append_unlock(data, len);
 
-	pthread_mutex_unlock(&lock_);
+	//pthread_mutex_unlock(&lock_);
 }
 
 void logfile::flush() {
-	pthread_mutex_lock(&lock_);
+	//pthread_mutex_lock(&lock_);
 
 	file_->flush();
 
-	pthread_mutex_unlock(&lock_);
+	//pthread_mutex_unlock(&lock_);
 }
 
 void logfile::append_unlock(const char* data, size_t len) {
@@ -48,22 +49,25 @@ void logfile::append_unlock(const char* data, size_t len) {
 }
 
 bool logfile::rollfile() {
-	std::string filename = getLogFileName();
-	if (file_) {
-		delete file_;
+	std::string filename; 
+	setLogFileName(filename);
+	if (file_ == nullptr) {
 		file_ = new appendfile(filename.c_str());
+		return 1;
+	}
+	if (file_) {
+		file_->~appendfile();
+		new(file_)appendfile(filename.c_str());
 		return 1;
 	}
 	return 0;
 }
 
-std::string logfile::getLogFileName() {
-	std::string filename = basename_;
+void logfile::setLogFileName(std::string& str) {
+	str = basename_;
 
 	time_ = time(NULL);
-	filename += ctime(&time_);
+	str += ctime(&time_);
 
-	filename += ".log";
-
-	return filename;
+	str += ".log";
 }

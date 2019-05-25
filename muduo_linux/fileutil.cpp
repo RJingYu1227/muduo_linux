@@ -1,9 +1,10 @@
-#include "fileutil.h"
+﻿#include "fileutil.h"
 #include<assert.h>
 
 appendfile::appendfile(const char* filename)
 	:fp_(fopen(filename, "ae")),
 	written_bytes_(0) {
+
 	assert(fp_);
 	setbuffer(fp_, buffer_, sizeof(buffer_));
 }

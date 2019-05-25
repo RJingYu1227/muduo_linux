@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include"fileutil.h"
 #include<pthread.h>
@@ -18,7 +18,7 @@ public:
 private:
 	
 	static const int kRollPerSeconds = 60 * 60 * 24;
-	std::string getLogFileName();
+	void setLogFileName(std::string& str);
 
 	void append_unlock(const char* data, size_t len);
 

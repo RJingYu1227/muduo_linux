@@ -76,7 +76,7 @@ size_t buffer::readFd(int fd) {
 	const int iovcnt = (writeable_ < sizeof extrabuf) ? 2 : 1;
 	const size_t n = readv(fd, vec, iovcnt);
 	if (n < 0)
-		perror("数据接收错误");
+		;//完善这里
 	else if (n <= writeable_)
 		end_index_ += n;
 	else {

@@ -1,8 +1,8 @@
 ﻿#include"eventloop.h"
+#include"logging.h"
 #include<iostream>
 #include<assert.h>
 #include<unistd.h>
-using namespace::std;
 
 __thread eventloop* loop_inthisthread_ = nullptr;
 
@@ -13,7 +13,7 @@ eventloop* eventloop::getEventLoop() {
 void eventloop::updateThread() {
 	thread_id_ = pthread_self();
 	loop_inthisthread_ = this;
-	cout << "事件循环" << loop_inthisthread_ << "的新线程" << thread_id_ << endl;
+	LOG << "事件循环" << loop_inthisthread_ << "的新线程" << thread_id_;
 }
 
 eventloop::eventloop() :
@@ -26,7 +26,7 @@ eventloop::eventloop() :
 	timerque_(new timerqueue(this)) {
 
 	loop_inthisthread_ = this;
-	cout << "在主线程" << thread_id_ << "创建事件循环" << this << endl;
+	LOG << "在主线程" << thread_id_ << "创建事件循环" << this;
 }
 
 eventloop::~eventloop() {
@@ -39,7 +39,7 @@ eventloop::~eventloop() {
 
 void eventloop::assertInLoopThread() {
 	if (thread_id_ != pthread_self())
-		cout << "事件循环" << this << "属于线程" << thread_id_ << "目前线程为" << pthread_self() << endl;
+		LOG << "事件循环" << this << "属于线程" << thread_id_ << "目前线程为" << pthread_self();
 }
 
 bool eventloop::isInLoopThread()const {
@@ -72,7 +72,7 @@ void eventloop::loop() {
 		doFunctors();//注意这里的执行顺序
 	}
 
-	cout << "事件循环" << this << "停止" << endl;
+	LOG << "事件循环" << this << "停止";
 	looping_ = 0;
 }
 

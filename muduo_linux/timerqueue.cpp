@@ -1,4 +1,5 @@
 ﻿#include "timerqueue.h"
+#include"logging.h"
 #include<sys/timerfd.h>
 #include<unistd.h>
 #include<strings.h>
@@ -104,6 +105,6 @@ void timerqueue::resetTimerfd(int64_t time) {
 	setTimespec(time, new_value_.it_value);
 	int ret = timerfd_settime(fd_, 0, &new_value_, &old_value_);
 	if (ret)
-		perror("定时器设置出错");
+		LOG << "定时器设置出错";
 }
 

@@ -1,7 +1,7 @@
 ﻿#include"tcpconnection.h"
+#include"logging.h"
 #include<sys/socket.h>
 #include<unistd.h>
-#include<stdio.h>
 #include<assert.h>
 #include<arpa/inet.h>
 #include<string>
@@ -83,7 +83,7 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 			}
 		}
 		else {
-			perror("发送数据时出错");
+			LOG << "发送数据时出错";
 			senderror = 1;
 		}
 	}
@@ -123,13 +123,13 @@ void tcpconnection::handleWrite() {
 			}
 		}
 		else
-			perror("数据发送错误");
+			LOG << "数据发送错误";
 	}
 }
 
 void tcpconnection::handleError() {
 	if (state_ == 1)
-		perror("tcp连接出现错误");
+		LOG << "tcp连接出现错误";
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {

@@ -1,4 +1,5 @@
 ﻿#include"epoller.h"
+#include"logging.h"
 #include<assert.h>
 #include<unistd.h>
 #include<strings.h>
@@ -23,7 +24,7 @@ void epoller::doEpoll(int timeoutms, channellist* active_channels_) {
 			events_.resize(events_.size() * 2);
 	}
 	else
-		perror("epoll调用出错");
+		LOG << "epoll调用出错";
 
 }
 
