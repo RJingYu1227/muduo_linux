@@ -13,7 +13,7 @@ void logger::asyncInit() {
 }
 
 void* logger::asyncFunc(void* a) {
-	async_ = new asynclogging(log_filename_.c_str(), 1024 * 1024);
+	async_ = new asynclogging(log_filename_.c_str(), logstream::kLargeBuffer * 2);
 	async_->start();
 
 	return (void*)0;

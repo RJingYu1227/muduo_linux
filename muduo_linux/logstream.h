@@ -41,7 +41,7 @@ public:
 	typedef logstream self;
 
 	static const int kSmallBuffer = 2048;
-	static const int kLargeBuffer = 1024 * 1024;
+	static const int kLargeBuffer = 2048 * 1024;
 	static const int kMaxNumericSize = 32;
 
 	self& operator<<(bool v) {
