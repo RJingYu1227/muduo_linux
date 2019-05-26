@@ -4,7 +4,7 @@
 
 pthread_once_t logger::async_once_ = PTHREAD_ONCE_INIT;
 asynclogging* logger::async_ = nullptr;
-std::string logger::log_filename_ = "./RJingYu_LOG ";
+std::string logger::log_filename_ = "./RJingYu_LOG.";
 
 void logger::asyncInit() {
 	pthread_t temp;

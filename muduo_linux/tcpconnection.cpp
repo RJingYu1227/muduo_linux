@@ -28,6 +28,8 @@ void tcpconnection::start() {
 	assert(state_ == 0);
 	state_ = 1;
 	channel_->enableReading();
+
+	LOG << "建立一个新连接 " << ip_ << ' ' << port_;
 	newConnCallback(shared_from_this());
 }
 
@@ -78,12 +80,13 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
 			if (remaing == 0 && writeCompleteCallback) {
+				LOG << "完整发送一次信息" << ip_ << ' ' << port_;
 				loop_->queueInLoop(std::bind(writeCompleteCallback, shared_from_this()));
 				return;
 			}
 		}
 		else {
-			LOG << "发送数据时出错";
+			LOG << "发送信息时出错" << ip_ << ' ' << port_;
 			senderror = 1;
 		}
 	}
@@ -97,10 +100,14 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 
 void tcpconnection::handleRead() {
 	size_t n = inbuffer_.readFd(fd_);
-	if (n > 0)
+	if (n > 0) {
 		recvMsgCallback(shared_from_this());
+		LOG << "接收信息" << ip_ << ' ' << port_;
+	}
 	else if (n == 0)
 		handleClose();
+	else
+		LOG << "接收信息时出错" << ip_ << ' ' << port_;
 }
 
 void tcpconnection::handleClose() {
@@ -119,17 +126,18 @@ void tcpconnection::handleWrite() {
 			if (outbuffer_.usedBytes() == 0) {
 				channel_->disableWrting();
 				if (writeCompleteCallback)
+					LOG << "完整发送一次信息" << ip_ << ' ' << port_;
 					loop_->queueInLoop(std::bind(writeCompleteCallback, shared_from_this()));
 			}
 		}
 		else
-			LOG << "数据发送错误";
+			LOG << "发送信息时出错" << ip_ << ' ' << port_;
 	}
 }
 
 void tcpconnection::handleError() {
 	if (state_ == 1)
-		LOG << "tcp连接出现错误";
+		LOG << "Tcp连接出错" << ip_ << ' ' << port_;
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {

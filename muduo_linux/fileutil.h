@@ -13,7 +13,6 @@ public:
 	void flush();
 	off_t writtenBytes() { return written_bytes_; }
 
-
 private:
 
 	FILE* fp_;

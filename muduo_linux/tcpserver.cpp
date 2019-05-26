@@ -32,6 +32,8 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
 	channel_ = new channel(serverloop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
 	listening_ = 0;
+
+	LOG << "创建TcpServer：" << ip << ' ' << port;
 }
 
 tcpserver::~tcpserver() {
@@ -47,6 +49,8 @@ void tcpserver::start() {
 	listen(listenfd_, SOMAXCONN);
 	channel_->enableReading();
 	listening_ = 1;
+
+	LOG << "TcpServer开始监听";
 }
 
 void tcpserver::acceptConn() {
@@ -95,6 +99,8 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	closeConnCallback(conn);
+	LOG << "断开一个连接 " << conn->getIp() << ' ' << conn->getPort();
+
 	conns_.erase(conn->fd());
 	close(conn->fd());
 }

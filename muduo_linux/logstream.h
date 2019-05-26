@@ -56,7 +56,7 @@ public:
 	self& operator<<(unsigned long);
 	self& operator<<(long long);
 	self& operator<<(unsigned long long);
-	//self& operator<<(const void*);
+	self& operator<<(const void*);
 	self& operator<<(float v)
 	{
 		*this << static_cast<double>(v);
@@ -78,7 +78,6 @@ public:
 		buffer_.append(v.c_str(), v.size());
 		return *this;
 	}
-	self& operator<<(const void*);
 
 	void append(const char* data, size_t len) { buffer_.append(data, len); }
 	const logbuffer<kSmallBuffer>& getBuffer() { return buffer_; }

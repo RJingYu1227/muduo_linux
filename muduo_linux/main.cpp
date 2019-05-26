@@ -6,24 +6,22 @@
 #include<functional>
 
 void onNewConn(const tcpconn_ptr& conn){
-	LOG << "收到一个连接 " << conn->getIp() << " " << conn->getPort();
+
 }
 
 void onRecvMsg(const tcpconn_ptr& conn) {
 	buffer* buff = conn->inputBuffer();
-	LOG << buff->toString();
 	//conn->sendBuffer(buff);
 	buff->retrieveAll();
-	//conn->activeClosureWithDelay(6.666);
+	conn->activeClosureWithDelay(6.666);
 	//conn->activeClosure();
 }
 
 void onCloseConn(const tcpconn_ptr& conn) {
-	LOG << "断开一个连接 " << conn->getIp() << " " << conn->getPort();
+	
 }
 
 void onWriteMsg(const tcpconn_ptr& conn) {
-	LOG << "信息已发送";
 	//conn->activeClosureWithDelay(6.666);
 }
 

@@ -25,7 +25,7 @@ size_t logConvert(char buf[], T value){
 	return p - buf;
 }
 
-size_t convertHex(char buf[], uintptr_t value) {
+size_t logConvertHex(char buf[], uintptr_t value) {
 	uintptr_t i = value;
 	char* p = buf;
 
@@ -120,7 +120,7 @@ logstream& logstream::operator<<(const void* p) {
 		char* buf = buffer_.current();
 		buf[0] = '0';
 		buf[1] = 'x';
-		size_t len = convertHex(buf + 2, v);
+		size_t len = logConvertHex(buf + 2, v);
 		buffer_.add(len + 2);
 	}
 	return *this;
