@@ -11,10 +11,9 @@ void onNewConn(const tcpconn_ptr& conn){
 
 void onRecvMsg(const tcpconn_ptr& conn) {
 	buffer* buff = conn->inputBuffer();
-	//conn->sendBuffer(buff);
+	conn->sendBuffer(buff);
 	buff->retrieveAll();
 	conn->activeClosureWithDelay(6.666);
-	//conn->activeClosure();
 }
 
 void onCloseConn(const tcpconn_ptr& conn) {
@@ -22,7 +21,7 @@ void onCloseConn(const tcpconn_ptr& conn) {
 }
 
 void onWriteMsg(const tcpconn_ptr& conn) {
-	//conn->activeClosureWithDelay(6.666);
+	conn->activeClosureWithDelay(6.666);
 }
 
 int main() {
