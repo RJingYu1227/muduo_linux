@@ -3,7 +3,6 @@
 #include"logstream.h"
 #include"asynclogging.h"
 #include<string>
-#include<pthread.h>
 
 class logstream;
 class asynclogging;
@@ -18,15 +17,18 @@ public:
 
 	static void setLogFilename(const char* filename) { log_filename_ = filename; }
 	static std::string getLogFilenname() { return log_filename_; }
+	static bool createAsyncLogging();
 
 private:
-	
-	static void output(const char* data, size_t len);
-	static void asyncInit();
-	static void* asyncFunc(void* a);
-	static pthread_once_t async_once_;
+	typedef void(*outputFunc)(const char* data, size_t len);
+
+	static outputFunc output;
+	static void defaultOutput(const char* data, size_t len);
+	static void asyncOutput(const char* data, size_t len);
+
 	static asynclogging* async_;
 	static std::string log_filename_;
+	static void* asyncFunc(void* a);
 
 	struct impl {
 

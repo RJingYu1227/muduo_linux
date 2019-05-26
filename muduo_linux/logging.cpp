@@ -1,15 +1,19 @@
 ﻿#include "logging.h"
 #include<time.h>
 #include<unistd.h>
+#include<pthread.h>
 
-pthread_once_t logger::async_once_ = PTHREAD_ONCE_INIT;
+logger::outputFunc logger::output = logger::defaultOutput;
 asynclogging* logger::async_ = nullptr;
 std::string logger::log_filename_ = "./RJingYu_LOG.";
 
-void logger::asyncInit() {
-	pthread_t temp;
-	pthread_create(&temp, NULL, asyncFunc, NULL);
-	while (async_ == nullptr);
+void logger::defaultOutput(const char* data, size_t len) {
+	fwrite(data, 1, len, stdout);
+	fflush(stdout);
+}
+
+void logger::asyncOutput(const char* data, size_t len) {
+	async_->append(data, len);
 }
 
 void* logger::asyncFunc(void* a) {
@@ -19,9 +23,20 @@ void* logger::asyncFunc(void* a) {
 	return (void*)0;
 }
 
-void logger::output(const char* data, size_t len) {
-	pthread_once(&async_once_, asyncInit);
-	async_->append(data, len);
+bool logger::createAsyncLogging() {
+	if (output == asyncOutput)
+		return 0;
+
+	pthread_t temp;
+	int ret = pthread_create(&temp, NULL, asyncFunc, NULL);
+	if (ret) {
+		LOG << "日志线程创建失败";
+		return 0;
+	}
+	while (async_ == nullptr);
+
+	output = asyncOutput;
+	return 1;
 }
 
 logger::impl::impl(const char* basename, int line)

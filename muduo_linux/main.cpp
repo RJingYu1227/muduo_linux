@@ -25,6 +25,7 @@ void onWriteMsg(const tcpconn_ptr& conn) {
 }
 
 int main() {
+	logger::createAsyncLogging();
 	elthreadpool test(3);
 	tcpserver server(&test, "127.0.0.1", 6666);
 

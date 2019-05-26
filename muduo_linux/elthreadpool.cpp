@@ -28,7 +28,7 @@ void elthreadpool::start() {
 	for (eventloop* ioloop : ioloops_) {
 		ret = pthread_create(&temp, NULL, ioThread, ioloop);
 		if (ret)
-			LOG << "线程创建失败";
+			LOG << "I/O线程创建失败";
 		//pthread_detach(temp);
 	}
 	
