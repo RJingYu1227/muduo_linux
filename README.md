@@ -1,14 +1,10 @@
 # muduo_linux
-该项目深度借鉴了陈硕先生的muduo网络库，目前还在开发中（主要目的是学习）。
+该项目深度借鉴了陈硕先生的muduo网络库，目前处于完善阶段。
+使用c++11编写，依赖于标准库。
 
-这是一个多线程服务器。
+这是一个多线程服务器网络库。
 多路I/O复用模型为epoll。
-目前一个线程负责处理连接，一个或多个线程负责I/O。
 
-tcpserver线程负责新建tcpconnection，完成相应的初始化，然后通知I/O线程将其channel注册到I/O线程的epoller当中。
-线程间通信通过eventloop的runInLoop,queueInLoop和eventfd实现，需要加锁。
-I/O线程负责监听并处理tcpconnection的各种epoll_event，处理过程中会调用自定义的回调函数。
-
-2019/5/10 更新了内存池。
-2019/5/17 更新了定时器。
+2019/5/10 更新了基于allocator的简易内存池。
+2019/5/17 更新了基于timerfd的定时器。
 2019/5/24 更新了日志系统。
