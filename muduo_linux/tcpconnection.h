@@ -6,6 +6,7 @@
 #include<memory>
 #include<netinet/in.h>
 #include<functional>
+#include<signal.h>
 
 class eventloop;
 class channel;
@@ -18,6 +19,8 @@ public:
 
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
+
+	static void ignoreSigPipe() { signal(SIGPIPE, SIG_IGN); }
 
 	eventloop* getLoop() { return loop_; }
 	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
@@ -41,7 +44,7 @@ public:
 	void activeClosure();
 	void activeClosureWithDelay(double seconds);//秒为单位
 	int fd() { return fd_; }
-	//bool connected() { return state_ == 1; }
+	bool connected() { return state_ == 1; }
 	char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
@@ -70,6 +73,7 @@ private:
 	event_callback newConnCallback;
 	event_callback closeConnCallback;
 	event_callback writeCompleteCallback;
+	//event_callback highWaterCallback;
 	event_callback recvMsgCallback;
 	//成员变量声明顺序因为字节对齐原因会影响类的大小
 };

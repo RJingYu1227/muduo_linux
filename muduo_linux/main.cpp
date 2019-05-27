@@ -1,9 +1,6 @@
 ﻿#include"elthreadpool.h"
 #include"tcpserver.h"
 #include"logging.h"
-#include<string>
-#include<pthread.h>
-#include<functional>
 
 void onNewConn(const tcpconn_ptr& conn){
 
@@ -26,6 +23,7 @@ void onWriteMsg(const tcpconn_ptr& conn) {
 
 int main() {
 	logger::createAsyncLogging();
+	tcpconnection::ignoreSigPipe();
 	elthreadpool test(3);
 	tcpserver server(&test, "127.0.0.1", 6666);
 

@@ -76,7 +76,7 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 	size_t remaing = 0;
 	bool senderror = 0;
 	if (!channel_->isWriting() && outbuffer_.usedBytes() == 0) {
-		nwrote = send(fd_, data, len, MSG_NOSIGNAL);
+		nwrote = write(fd_, data, len);
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
 			if (remaing == 0 && writeCompleteCallback) {
@@ -120,7 +120,7 @@ void tcpconnection::handleClose() {
 
 void tcpconnection::handleWrite() {
 	if (outbuffer_.usedBytes() != 0) {
-		ssize_t nwrote = send(fd_, outbuffer_.beginPtr(), outbuffer_.usedBytes(), MSG_NOSIGNAL);
+		ssize_t nwrote = write(fd_, outbuffer_.beginPtr(), outbuffer_.usedBytes());
 		if (nwrote >= 0) {
 			outbuffer_.retrieve(nwrote);
 			if (outbuffer_.usedBytes() == 0) {
