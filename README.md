@@ -8,3 +8,8 @@
 2019/5/10 更新了基于allocator的简易内存池。
 2019/5/17 更新了基于timerfd的定时器。
 2019/5/24 更新了日志系统。
+
+一个典型的使用场景为：
+tcpserver占用一个线程处理连接；
+多个线程处理tcpconnection的epoll事件；
+asynclogging占用一个线程处理日志写入磁盘。
