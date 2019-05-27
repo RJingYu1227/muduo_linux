@@ -1,7 +1,6 @@
 # muduo_linux
 该项目深度借鉴了陈硕先生的muduo网络库，目前处于完善阶段。
 使用c++11编写，依赖于STL库。
-多线程基于原生的pthread，考虑切换到std::thread。
 
 这是一个多线程服务器网络库。
 多路I/O复用模型为epoll。
