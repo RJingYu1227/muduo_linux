@@ -71,10 +71,10 @@ void tcpserver::acceptConn() {
 	new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
 
 	tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
-	new_->setMsgCallback(recvMsgCallback);
-	new_->setConnCallback(newConnCallback);
-	new_->setWriteCallback(writeCompleteCallback);
-	new_->setCloseCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+	new_->setConnectedCallback(connectedCallback);
+	new_->setClosedCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+	new_->setReadDoneCallback(readDoneCallback);
+	new_->setWriteDoneCallback(writeDoneCallback);
 
 	ioloop_->queueInLoop(std::bind(&tcpconnection::start, new_));
 	conns_.emplace(clifd_, new_);
@@ -98,7 +98,7 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 }
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
-	closeConnCallback(conn);
+	closedCallback(conn);
 	LOG << "断开一个连接 " << conn->getIp() << ' ' << conn->getPort();
 
 	conns_.erase(conn->fd());

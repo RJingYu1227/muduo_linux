@@ -3,6 +3,8 @@
 #include<assert.h>
 #include<sys/uio.h>
 
+const char buffer::kCRLF[3] = "\r\n";
+
 void buffer::swap(buffer& rhs) {
 	buffer_.swap(rhs.buffer_);
 	std::swap(begin_index_, rhs.begin_index_);
@@ -64,7 +66,7 @@ void buffer::retrieveAll() {
 	end_index_ = kCheapPrepend;
 }
 
-size_t buffer::readFd(int fd) {
+ssize_t buffer::readFd(int fd) {
 	char extrabuf[65536];
 	iovec vec[2];
 	const size_t writeable_ = leftBytes();
@@ -74,10 +76,10 @@ size_t buffer::readFd(int fd) {
 	vec[1].iov_len = sizeof extrabuf;
 	
 	const int iovcnt = (writeable_ < sizeof extrabuf) ? 2 : 1;
-	const size_t n = readv(fd, vec, iovcnt);
+	const ssize_t n = readv(fd, vec, iovcnt);
 	if (n < 0)
 		;//完善这里
-	else if (n <= writeable_)
+	else if (static_cast<size_t>(n) <= writeable_)
 		end_index_ += n;
 	else {
 		end_index_ = buffer_.size();

@@ -27,16 +27,16 @@ void channel::remove() {
 }
 
 void channel::handleEvent() {
-	if (revent_ & EPOLLHUP)
-		if (closeCallback)
-			closeCallback();
-	if (revent_ & EPOLLERR)
-		if (errorCallback)
-			errorCallback();
 	if (revent_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP))
 		if (readCallback)
 			readCallback();
 	if (revent_ & EPOLLOUT)
 		if (writeCallback)
 			writeCallback();
+	if (revent_ & EPOLLERR)
+		if (errorCallback)
+			errorCallback();
+	if (revent_ & EPOLLHUP)
+		if (closeCallback)
+			closeCallback();
 }

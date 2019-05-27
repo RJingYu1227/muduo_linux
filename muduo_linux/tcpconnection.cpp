@@ -5,18 +5,26 @@
 #include<assert.h>
 #include<arpa/inet.h>
 #include<string>
+#include<signal.h>
+
+void tcpconnection::ignoreSigPipe() {
+	signal(SIGPIPE, SIG_IGN);
+	LOG << "忽略SIGPIPE";
+}
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:state_(0),
 	fd_(fd),
 	port_(cliaddr->sin_port),
 	ip_(inet_ntoa(cliaddr->sin_addr)),
+	highwater_(64*1024*1024),
 	loop_(loop),
 	channel_(ch) {
+
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
-	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
 	channel_->setErrorCallback(std::bind(&tcpconnection::handleError, this));
+	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 }
 //列表初始化顺序应与类内声明顺序一致
 
@@ -30,7 +38,7 @@ void tcpconnection::start() {
 	channel_->enableReading();
 
 	LOG << "建立一个新连接 " << ip_ << ' ' << port_;
-	newConnCallback(shared_from_this());
+	connectedCallback(shared_from_this());
 }
 
 void tcpconnection::startRead() {
@@ -53,7 +61,9 @@ void tcpconnection::activeClosure() {
 
 void tcpconnection::activeClosureWithDelay(double seconds) {
 	if (state_ == 1)
-		loop_->runAfter(std::bind(&tcpconnection::handleClose, shared_from_this()), seconds);
+		loop_->runAfter(std::bind(&tcpconnection::handleClose, 
+			shared_from_this()), 
+			seconds);
 		
 }
 
@@ -61,7 +71,9 @@ void tcpconnection::sendBuffer(buffer* data) {
 	if (loop_->isInLoopThread())
 		sendBufferInLoop2(data->beginPtr(), data->usedBytes());
 	else
-		loop_->queueInLoop(std::bind(&tcpconnection::sendBufferInLoop1, shared_from_this(), data->toString()));
+		loop_->queueInLoop(std::bind(&tcpconnection::sendBufferInLoop1, 
+			shared_from_this(), 
+			data->toString()));
 }
 
 void tcpconnection::sendBufferInLoop1(const std::string &data) {
@@ -73,35 +85,38 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 		return;
 
 	ssize_t nwrote = 0;
-	size_t remaing = 0;
-	bool senderror = 0;
-	if (!channel_->isWriting() && outbuffer_.usedBytes() == 0) {
+	size_t remaing = len;
+	if (!channel_->isWriting() && writebuffer_.usedBytes() == 0) {
 		nwrote = write(fd_, data, len);
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
-			if (remaing == 0 && writeCompleteCallback) {
+			if (remaing == 0 && writeDoneCallback) {
 				LOG << "完整发送一次信息" << ip_ << ' ' << port_;
-				loop_->queueInLoop(std::bind(writeCompleteCallback, shared_from_this()));
-				return;
+				loop_->queueInLoop(std::bind(writeDoneCallback, shared_from_this()));
 			}
 		}
 		else {
 			LOG << "发送信息时出错" << ip_ << ' ' << port_;
-			senderror = 1;
+			return;
 		}
 	}
 
-	if (!senderror) {
-		outbuffer_.append(data + nwrote, remaing);
-		if (!channel_->isWriting())
-			channel_->enableWriting();
-	}
+	if (remaing == 0)
+		return;
+
+	if (writebuffer_.usedBytes() + remaing >= highwater_ 
+		&& highWaterCallback)
+		loop_->queueInLoop(std::bind(highWaterCallback, shared_from_this()));
+
+	writebuffer_.append(data + nwrote, remaing);
+	if (!channel_->isWriting())
+		channel_->enableWriting();
 }
 
 void tcpconnection::handleRead() {
-	size_t n = inbuffer_.readFd(fd_);
+	ssize_t n = readbuffer_.readFd(fd_);
 	if (n > 0) {
-		recvMsgCallback(shared_from_this());
+		readDoneCallback(shared_from_this());
 		LOG << "接收信息" << ip_ << ' ' << port_;
 	}
 	else if (n == 0)
@@ -114,20 +129,20 @@ void tcpconnection::handleClose() {
 	if (state_ == 1 || state_ == 2) {
 		state_ = 3;
 		channel_->remove();//注意
-		closeConnCallback(shared_from_this());
+		closedCallback(shared_from_this());
 	}
 }
 
 void tcpconnection::handleWrite() {
-	if (outbuffer_.usedBytes() != 0) {
-		ssize_t nwrote = write(fd_, outbuffer_.beginPtr(), outbuffer_.usedBytes());
+	if (writebuffer_.usedBytes() != 0) {
+		ssize_t nwrote = write(fd_, writebuffer_.beginPtr(), writebuffer_.usedBytes());
 		if (nwrote >= 0) {
-			outbuffer_.retrieve(nwrote);
-			if (outbuffer_.usedBytes() == 0) {
+			writebuffer_.retrieve(nwrote);
+			if (writebuffer_.usedBytes() == 0) {
 				channel_->disableWrting();
-				if (writeCompleteCallback)
+				if (writeDoneCallback)
 					LOG << "完整发送一次信息" << ip_ << ' ' << port_;
-					loop_->queueInLoop(std::bind(writeCompleteCallback, shared_from_this()));
+					loop_->queueInLoop(std::bind(writeDoneCallback, shared_from_this()));
 			}
 		}
 		else

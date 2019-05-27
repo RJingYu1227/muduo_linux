@@ -2,22 +2,22 @@
 #include"tcpserver.h"
 #include"logging.h"
 
-void onNewConn(const tcpconn_ptr& conn){
+void onConnected(const tcpconn_ptr& conn){
 
 }
 
-void onRecvMsg(const tcpconn_ptr& conn) {
+void onRecvDone(const tcpconn_ptr& conn) {
 	buffer* buff = conn->inputBuffer();
 	conn->sendBuffer(buff);
 	buff->retrieveAll();
 	conn->activeClosureWithDelay(6.666);
 }
 
-void onCloseConn(const tcpconn_ptr& conn) {
+void onClosed(const tcpconn_ptr& conn) {
 	
 }
 
-void onWriteMsg(const tcpconn_ptr& conn) {
+void onSendDone(const tcpconn_ptr& conn) {
 	conn->activeClosureWithDelay(6.666);
 }
 
@@ -27,10 +27,10 @@ int main() {
 	elthreadpool test(3);
 	tcpserver server(&test, "127.0.0.1", 6666);
 
-	server.setConnCallback(onNewConn);
-	server.setCloseCallback(onCloseConn);
-	server.setMsgCallback(onRecvMsg);
-	server.setWriteCallback(onWriteMsg);
+	server.setConnectedCallback(onConnected);
+	server.setClosedCallback(onClosed);
+	server.setRecvDoneCallback(onRecvDone);
+	server.setSendDoneCallback(onSendDone);
 
 	server.start();	
 	test.start();

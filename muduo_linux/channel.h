@@ -54,7 +54,7 @@ private:
 
 	event_callback readCallback;
 	event_callback writeCallback;
-	event_callback closeCallback;
 	event_callback errorCallback;
+	event_callback closeCallback;
 };
 

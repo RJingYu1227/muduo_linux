@@ -26,12 +26,13 @@ public:
 	~tcpserver();
 
 	eventloop* getLoop() { return serverloop_; }
-	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
-	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
-	void setMsgCallback(const event_callback& cb) { recvMsgCallback = cb; }
-	void setWriteCallback(const event_callback& cb) { writeCompleteCallback = cb; }
 	bool listening() { return listening_; }
 	void start();
+
+	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
+	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
+	void setRecvDoneCallback(const event_callback& cb) { readDoneCallback = cb; }
+	void setSendDoneCallback(const event_callback& cb) { writeDoneCallback = cb; }
 
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
@@ -50,10 +51,11 @@ private:
 	channel* channel_;
 	conn_map conns_;
 
-	event_callback newConnCallback;
-	event_callback closeConnCallback;
-	event_callback recvMsgCallback;
-	event_callback writeCompleteCallback;
+	event_callback connectedCallback;
+	event_callback closedCallback;
+	event_callback readDoneCallback;
+	event_callback writeDoneCallback;
+
 	bool listening_;
 };
 

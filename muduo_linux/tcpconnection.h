@@ -6,7 +6,6 @@
 #include<memory>
 #include<netinet/in.h>
 #include<functional>
-#include<signal.h>
 
 class eventloop;
 class channel;
@@ -17,16 +16,20 @@ public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
+	static void ignoreSigPipe();
+
 	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
 
-	static void ignoreSigPipe() { signal(SIGPIPE, SIG_IGN); }
-
 	eventloop* getLoop() { return loop_; }
-	void setConnCallback(const event_callback& cb) { newConnCallback = cb; }
-	void setCloseCallback(const event_callback& cb) { closeConnCallback = cb; }
-	void setWriteCallback(const event_callback& cb) { writeCompleteCallback = cb; }
-	void setMsgCallback(const event_callback& cb) { recvMsgCallback = cb; }
+	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
+	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
+	void setReadDoneCallback(const event_callback& cb) { readDoneCallback = cb; }
+	void setWriteDoneCallback(const event_callback& cb) { writeDoneCallback = cb; }
+	void setHighWaterCallback(const event_callback& cb, size_t highwater) {
+		highWaterCallback = cb;
+		highwater_ = highwater;
+	}
 
 	//tcp选项，注意线程安全
 	void setTcpNoDelay(bool on);
@@ -37,8 +40,8 @@ public:
 	void stopRead();
 	void sendBuffer(buffer* data);
 
-	buffer* inputBuffer() { return &inbuffer_; }
-	buffer* outputBuffer() { return &outbuffer_; }
+	buffer* inputBuffer() { return &readbuffer_; }
+	buffer* outputBuffer() { return &writebuffer_; }
 
 	void start();
 	void activeClosure();
@@ -64,17 +67,19 @@ private:
 	int fd_;
 	int port_;
 	char* ip_;
+	size_t highwater_;
+
 	eventloop* loop_;
 	channel* channel_;
 
-	buffer inbuffer_;
-	buffer outbuffer_;//这里的buffer不是指针
+	buffer readbuffer_;
+	buffer writebuffer_;//这里的buffer不是指针
 
-	event_callback newConnCallback;
-	event_callback closeConnCallback;
-	event_callback writeCompleteCallback;
-	//event_callback highWaterCallback;
-	event_callback recvMsgCallback;
+	event_callback connectedCallback;
+	event_callback closedCallback;
+	event_callback readDoneCallback;
+	event_callback writeDoneCallback;
+	event_callback highWaterCallback;
 	//成员变量声明顺序因为字节对齐原因会影响类的大小
 };
 
