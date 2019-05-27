@@ -7,8 +7,8 @@ void onConnected(const tcpconn_ptr& conn){
 }
 
 void onRecvDone(const tcpconn_ptr& conn) {
-	buffer* buff = conn->inputBuffer();
-	conn->sendBuffer(buff);
+	buffer* buff = conn->getRecvBuffer();
+	conn->send(buff);
 	buff->retrieveAll();
 	conn->activeClosureWithDelay(6.666);
 }

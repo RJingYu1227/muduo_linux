@@ -24,8 +24,8 @@ public:
 	eventloop* getLoop() { return loop_; }
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
-	void setReadDoneCallback(const event_callback& cb) { readDoneCallback = cb; }
-	void setWriteDoneCallback(const event_callback& cb) { writeDoneCallback = cb; }
+	void setRecvDoneCallback(const event_callback& cb) { recvDoneCallback = cb; }
+	void setSendDoneCallback(const event_callback& cb) { sendDoneCallback = cb; }
 	void setHighWaterCallback(const event_callback& cb, size_t highwater) {
 		highWaterCallback = cb;
 		highwater_ = highwater;
@@ -38,10 +38,10 @@ public:
 	//channel选项，如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
 	void startRead();
 	void stopRead();
-	void sendBuffer(buffer* data);
+	void send(buffer* data);
 
-	buffer* inputBuffer() { return &readbuffer_; }
-	buffer* outputBuffer() { return &writebuffer_; }
+	buffer* getRecvBuffer() { return &buffer1_; }
+	buffer* getSendBuffer() { return &buffer2_; }
 
 	void start();
 	void activeClosure();
@@ -55,8 +55,8 @@ private:
 	//channel选项，建议使用shared_from_this()，不然不是线程安全的
 	//void startReadInLoop();
 	//void stopReadInLoop();
-	void sendBufferInLoop1(const std::string &data);//const左值引用
-	void sendBufferInLoop2(const char* data, size_t len);
+	void sendInLoop1(const std::string &data);//const左值引用
+	void sendInLoop2(const char* data, size_t len);
 
 	void handleRead();
 	void handleClose();
@@ -72,13 +72,13 @@ private:
 	eventloop* loop_;
 	channel* channel_;
 
-	buffer readbuffer_;
-	buffer writebuffer_;//这里的buffer不是指针
+	buffer buffer1_;
+	buffer buffer2_;//这里的buffer不是指针
 
 	event_callback connectedCallback;
 	event_callback closedCallback;
-	event_callback readDoneCallback;
-	event_callback writeDoneCallback;
+	event_callback recvDoneCallback;
+	event_callback sendDoneCallback;
 	event_callback highWaterCallback;
 	//成员变量声明顺序因为字节对齐原因会影响类的大小
 };

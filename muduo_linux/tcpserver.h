@@ -31,8 +31,8 @@ public:
 
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
-	void setRecvDoneCallback(const event_callback& cb) { readDoneCallback = cb; }
-	void setSendDoneCallback(const event_callback& cb) { writeDoneCallback = cb; }
+	void setRecvDoneCallback(const event_callback& cb) { recvDoneCallback = cb; }
+	void setSendDoneCallback(const event_callback& cb) { sendDoneCallback = cb; }
 
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
@@ -53,8 +53,8 @@ private:
 
 	event_callback connectedCallback;
 	event_callback closedCallback;
-	event_callback readDoneCallback;
-	event_callback writeDoneCallback;
+	event_callback recvDoneCallback;
+	event_callback sendDoneCallback;
 
 	bool listening_;
 };

@@ -73,8 +73,8 @@ void tcpserver::acceptConn() {
 	tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
 	new_->setConnectedCallback(connectedCallback);
 	new_->setClosedCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
-	new_->setReadDoneCallback(readDoneCallback);
-	new_->setWriteDoneCallback(writeDoneCallback);
+	new_->setRecvDoneCallback(recvDoneCallback);
+	new_->setSendDoneCallback(sendDoneCallback);
 
 	ioloop_->queueInLoop(std::bind(&tcpconnection::start, new_));
 	conns_.emplace(clifd_, new_);

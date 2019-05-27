@@ -67,32 +67,32 @@ void tcpconnection::activeClosureWithDelay(double seconds) {
 		
 }
 
-void tcpconnection::sendBuffer(buffer* data) {
+void tcpconnection::send(buffer* data) {
 	if (loop_->isInLoopThread())
-		sendBufferInLoop2(data->beginPtr(), data->usedBytes());
+		sendInLoop2(data->beginPtr(), data->usedBytes());
 	else
-		loop_->queueInLoop(std::bind(&tcpconnection::sendBufferInLoop1, 
+		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1, 
 			shared_from_this(), 
 			data->toString()));
 }
 
-void tcpconnection::sendBufferInLoop1(const std::string &data) {
-	sendBufferInLoop2(&data[0], data.size());
+void tcpconnection::sendInLoop1(const std::string &data) {
+	sendInLoop2(&data[0], data.size());
 }
 
-void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
+void tcpconnection::sendInLoop2(const char* data, size_t len) {
 	if (state_ == 3)
 		return;
 
 	ssize_t nwrote = 0;
 	size_t remaing = len;
-	if (!channel_->isWriting() && writebuffer_.usedBytes() == 0) {
+	if (!channel_->isWriting() && buffer2_.usedBytes() == 0) {
 		nwrote = write(fd_, data, len);
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
-			if (remaing == 0 && writeDoneCallback) {
+			if (remaing == 0 && sendDoneCallback) {
 				LOG << "完整发送一次信息" << ip_ << ' ' << port_;
-				loop_->queueInLoop(std::bind(writeDoneCallback, shared_from_this()));
+				loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
 			}
 		}
 		else {
@@ -104,19 +104,19 @@ void tcpconnection::sendBufferInLoop2(const char* data, size_t len) {
 	if (remaing == 0)
 		return;
 
-	if (writebuffer_.usedBytes() + remaing >= highwater_ 
+	if (buffer2_.usedBytes() + remaing >= highwater_ 
 		&& highWaterCallback)
 		loop_->queueInLoop(std::bind(highWaterCallback, shared_from_this()));
 
-	writebuffer_.append(data + nwrote, remaing);
+	buffer2_.append(data + nwrote, remaing);
 	if (!channel_->isWriting())
 		channel_->enableWriting();
 }
 
 void tcpconnection::handleRead() {
-	ssize_t n = readbuffer_.readFd(fd_);
+	ssize_t n = buffer1_.readFd(fd_);
 	if (n > 0) {
-		readDoneCallback(shared_from_this());
+		recvDoneCallback(shared_from_this());
 		LOG << "接收信息" << ip_ << ' ' << port_;
 	}
 	else if (n == 0)
@@ -134,15 +134,15 @@ void tcpconnection::handleClose() {
 }
 
 void tcpconnection::handleWrite() {
-	if (writebuffer_.usedBytes() != 0) {
-		ssize_t nwrote = write(fd_, writebuffer_.beginPtr(), writebuffer_.usedBytes());
+	if (buffer2_.usedBytes() != 0) {
+		ssize_t nwrote = write(fd_, buffer2_.beginPtr(), buffer2_.usedBytes());
 		if (nwrote >= 0) {
-			writebuffer_.retrieve(nwrote);
-			if (writebuffer_.usedBytes() == 0) {
+			buffer2_.retrieve(nwrote);
+			if (buffer2_.usedBytes() == 0) {
 				channel_->disableWrting();
-				if (writeDoneCallback)
+				if (sendDoneCallback)
 					LOG << "完整发送一次信息" << ip_ << ' ' << port_;
-					loop_->queueInLoop(std::bind(writeDoneCallback, shared_from_this()));
+					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
 			}
 		}
 		else
