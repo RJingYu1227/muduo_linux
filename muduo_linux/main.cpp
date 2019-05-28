@@ -10,7 +10,7 @@ void onRecvDone(const tcpconn_ptr& conn) {
 	buffer* buff = conn->getRecvBuffer();
 	conn->send(buff);
 	buff->retrieveAll();
-	conn->activeClosureWithDelay(6.666);
+	conn->shutDown();
 }
 
 void onClosed(const tcpconn_ptr& conn) {
@@ -18,7 +18,7 @@ void onClosed(const tcpconn_ptr& conn) {
 }
 
 void onSendDone(const tcpconn_ptr& conn) {
-	conn->activeClosureWithDelay(6.666);
+	conn->shutDown();
 }
 
 int main() {

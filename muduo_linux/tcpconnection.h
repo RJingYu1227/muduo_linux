@@ -28,14 +28,14 @@ public:
 	void setSendDoneCallback(const event_callback& cb) { sendDoneCallback = cb; }
 	void setHighWaterCallback(const event_callback& cb, size_t highwater) {
 		highWaterCallback = cb;
-		highwater_ = highwater;
+		watermark_ = highwater;
 	}
 
 	//tcp选项，注意线程安全
 	void setTcpNoDelay(bool on);
 	void setTcpKeepAlive(bool on);
 
-	//channel选项，如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
+	//如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
 	void startRead();
 	void stopRead();
 	void send(buffer* data);
@@ -44,19 +44,23 @@ public:
 	buffer* getSendBuffer() { return &buffer2_; }
 
 	void start();
-	void activeClosure();
-	void activeClosureWithDelay(double seconds);//秒为单位
+	void forceClose();//极端情况下并非线程安全
+	void forceCloseWithDelay(double seconds);//秒为单位
+	void shutDown();//优雅关闭
+
 	int getFd() { return fd_; }
 	bool connected() { return state_ == 1; }
 	const char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
 private:
-	//channel选项，建议使用shared_from_this()，不然不是线程安全的
-	//void startReadInLoop();
-	//void stopReadInLoop();
+
+	//建议使用shared_from_this()，不然不是线程安全的
+	void startReadInLoop();
+	void stopReadInLoop();
 	void sendInLoop1(const std::string &data);
 	void sendInLoop2(const char* data, size_t len);
+	void shutDownInLoop();
 
 	void handleRead();
 	void handleClose();
@@ -70,8 +74,7 @@ private:
 	const int port_;
 	const int fd_;
 	int state_;
-	std::string info_;
-	size_t highwater_;
+	size_t watermark_;
 
 	buffer buffer1_;
 	buffer buffer2_;//这里的buffer不是指针

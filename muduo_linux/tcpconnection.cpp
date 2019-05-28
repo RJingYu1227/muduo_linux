@@ -20,7 +20,7 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 	port_(cliaddr->sin_port),
 	fd_(fd),
 	state_(0),
-	highwater_(64 * 1024 * 1024) {
+	watermark_(64 * 1024 * 1024) {
 
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
@@ -42,36 +42,62 @@ void tcpconnection::start() {
 
 void tcpconnection::startRead() {
 	if (state_ == 1)
-		channel_->enableReading();
+		loop_->runInLoop(std::bind(&tcpconnection::startReadInLoop, shared_from_this()));
 }
 
 void tcpconnection::stopRead() {
 	if (state_ == 1)
-		channel_->disableReading();
+		loop_->runInLoop(std::bind(&tcpconnection::stopReadInLoop, shared_from_this()));
 }
 
-void tcpconnection::activeClosure() {
+void tcpconnection::forceClose() {
 	if (state_ == 1)
 		loop_->runInLoop(std::bind(&tcpconnection::handleClose, shared_from_this()));
-	//在执行该函数前，tcpconnection不会被析构
-	//本线程，前面的activechannel调用了后面activechannel所属的tcpconn的这个函数，那么就GG了
 }
 
-void tcpconnection::activeClosureWithDelay(double seconds) {
+void tcpconnection::forceCloseWithDelay(double seconds) {
 	if (state_ == 1)
 		loop_->runAfter(std::bind(&tcpconnection::handleClose, 
 			shared_from_this()), 
 			seconds);
-		
+}
+
+void tcpconnection::shutDown() {
+	if (state_ == 1)
+		loop_->runInLoop(std::bind(&tcpconnection::shutDownInLoop, shared_from_this()));
 }
 
 void tcpconnection::send(buffer* data) {
+	if (state_ != 1)
+		return;
+
 	if (loop_->isInLoopThread())
 		sendInLoop2(data->beginPtr(), data->usedBytes());
 	else
-		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1, 
-			shared_from_this(), 
+		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1,
+			shared_from_this(),
 			data->toString()));
+}
+
+void tcpconnection::startReadInLoop() {
+	if (state_ == 1)
+		channel_->enableReading();
+}
+
+void tcpconnection::stopReadInLoop() {
+	if (state_ == 1)
+		channel_->disableReading();
+}
+
+void tcpconnection::shutDownInLoop() {
+	if (state_ != 1 || channel_->isWriting())
+		return;
+
+	state_ = 2;
+	if (shutdown(fd_, SHUT_WR) == 0)
+		return;
+	else
+		LOG << "TcpShutDown出错，ip = " << ip_ << " errno = " << errno;
 }
 
 void tcpconnection::sendInLoop1(const std::string &data) {
@@ -79,7 +105,7 @@ void tcpconnection::sendInLoop1(const std::string &data) {
 }
 
 void tcpconnection::sendInLoop2(const char* data, size_t len) {
-	if (state_ == 3)
+	if (state_ != 1)
 		return;
 
 	ssize_t nwrote = 0;
@@ -102,7 +128,7 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 	if (remaing == 0)
 		return;
 
-	if (buffer2_.usedBytes() + remaing >= highwater_ 
+	if (buffer2_.usedBytes() + remaing >= watermark_ 
 		&& highWaterCallback)
 		loop_->queueInLoop(std::bind(highWaterCallback, shared_from_this()));
 
@@ -124,11 +150,12 @@ void tcpconnection::handleRead() {
 }
 
 void tcpconnection::handleClose() {
-	if (state_ == 1 || state_ == 2) {
-		state_ = 3;
-		channel_->remove();//注意
-		closedCallback(shared_from_this());
-	}
+	if (state_ == 3)
+		return;
+
+	state_ = 3;
+	channel_->remove();//注意
+	closedCallback(shared_from_this());
 }
 
 void tcpconnection::handleWrite() {
@@ -149,8 +176,7 @@ void tcpconnection::handleWrite() {
 }
 
 void tcpconnection::handleError() {
-	if (state_ == 1)
-		LOG << "Tcp连接出错，ip = " << ip_ << " errno = " << errno;
+	LOG << "Tcp连接出错，ip = " << ip_ << " errno = " << errno;
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {
