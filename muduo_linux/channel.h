@@ -19,7 +19,7 @@ public:
 	void setErrorCallback(const event_callback& cb) { errorCallback = cb; }
 	void setCloseCallback(const event_callback& cb) { closeCallback = cb; }
 
-	int fd()const { return fd_; }
+	int getFd()const { return fd_; }
 	int getEvent()const { return event_; }
 	void setRevent(int revt) { revent_ = revt; }
 	bool isNoneEvent()const { return event_ == kNoneEvent; }

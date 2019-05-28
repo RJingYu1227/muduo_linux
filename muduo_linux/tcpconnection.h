@@ -48,14 +48,14 @@ public:
 	void activeClosureWithDelay(double seconds);//秒为单位
 	int getFd() { return fd_; }
 	bool connected() { return state_ == 1; }
-	char* getIp() { return ip_; }
+	const char* getIp() { return ip_; }
 	int getPort() { return port_; }
 
 private:
 	//channel选项，建议使用shared_from_this()，不然不是线程安全的
 	//void startReadInLoop();
 	//void stopReadInLoop();
-	void sendInLoop1(const std::string &data);//const左值引用
+	void sendInLoop1(const std::string &data);
 	void sendInLoop2(const char* data, size_t len);
 
 	void handleRead();
@@ -63,14 +63,15 @@ private:
 	void handleWrite();
 	void handleError();
 
-	int state_;
-	int fd_;
-	int port_;
-	char* ip_;
-	size_t highwater_;
-
 	eventloop* loop_;
 	channel* channel_;
+
+	const char* ip_;
+	const int port_;
+	const int fd_;
+	int state_;
+	std::string info_;
+	size_t highwater_;
 
 	buffer buffer1_;
 	buffer buffer2_;//这里的buffer不是指针

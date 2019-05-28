@@ -35,7 +35,7 @@ void epoller::assertInLoopThread() {
 void epoller::updateChannel(channel* ch) {
 	assertInLoopThread();
 
-	int fd_ = ch->fd();
+	int fd_ = ch->getFd();
 	epoll_event ev;
 	bzero(&ev, sizeof ev);
 	ev.events = ch->getEvent();
@@ -57,7 +57,7 @@ void epoller::updateChannel(channel* ch) {
 
 void epoller::removeChannel(channel* ch) {
 	assertInLoopThread();
-	int fd_ = ch->fd();
+	int fd_ = ch->getFd();
 
 	if (ch->mark() == -1) {
 		assert(channels_.find(fd_) == channels_.end());

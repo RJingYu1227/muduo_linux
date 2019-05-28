@@ -8,10 +8,13 @@
 #include<arpa/inet.h>
 #include<errno.h>
 
-tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
-	listenBind(ip, port);
+tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
+	:ip_(ip),
+	port_(port),
+	listenfd_(socket(AF_INET, SOCK_STREAM, 0)),
+	loops_(pool) {
 
-	loops_ = pool;
+	bindFd();
 	serverloop_ = pool->getServerLoop();
 	mpool1_ = new memorypool<tcpconnection>(1024);
 	mpool2_ = new memorypool<channel>(1024);
@@ -19,7 +22,7 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
 	listening_ = 0;
 
-	LOG << "创建TcpServer：" << ip << ' ' << port;
+	LOG << "创建TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
 tcpserver::~tcpserver() {
@@ -28,10 +31,12 @@ tcpserver::~tcpserver() {
 	delete mpool1_;
 	delete mpool2_;
 	close(listenfd_);
+	LOG << "关闭TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
 void tcpserver::start() {
 	serverloop_->assertInLoopThread();
+
 	if (listen(listenfd_, SOMAXCONN) == -1) {
 		LOG << "TcpServer监听失败，errno = " << errno;
 		exit(1);
@@ -42,18 +47,19 @@ void tcpserver::start() {
 	LOG << "TcpServer开始监听";
 }
 
-void tcpserver::listenBind(const char* ip, int port) {
-	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
+void tcpserver::bindFd() {
 	if (listenfd_ == -1) {
 		LOG << "创建listenfd失败，errno = " << errno;
 		exit(1);
 	}
+
 	sockaddr_in serveraddr_;
 	bzero(&serveraddr_, sizeof serveraddr_);
 	serveraddr_.sin_family = AF_INET;
 	//serveraddr_.sin_addr.s_addr = INADDR_ANY;
-	inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
-	serveraddr_.sin_port = htons(static_cast<uint16_t>(port));
+	inet_pton(AF_INET, ip_, &serveraddr_.sin_addr);
+	serveraddr_.sin_port = htons(static_cast<uint16_t>(port_));
+
 	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
 		LOG << "绑定监听端口失败，errno = " << errno;
 		exit(1);

@@ -14,13 +14,13 @@ void tcpconnection::ignoreSigPipe() {
 }
 
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
-	:state_(0),
-	fd_(fd),
-	port_(cliaddr->sin_port),
+	:loop_(loop),
+	channel_(ch),
 	ip_(inet_ntoa(cliaddr->sin_addr)),
-	highwater_(64*1024*1024),
-	loop_(loop),
-	channel_(ch) {
+	port_(cliaddr->sin_port),
+	fd_(fd),
+	state_(0),
+	highwater_(64 * 1024 * 1024) {
 
 	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
@@ -28,7 +28,6 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 	LOG << "建立一个新连接，ip = " << ip_;
 }
-//列表初始化顺序应与类内声明顺序一致
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);
@@ -56,7 +55,6 @@ void tcpconnection::activeClosure() {
 		loop_->runInLoop(std::bind(&tcpconnection::handleClose, shared_from_this()));
 	//在执行该函数前，tcpconnection不会被析构
 	//本线程，前面的activechannel调用了后面activechannel所属的tcpconn的这个函数，那么就GG了
-	//但这只是妄想，哈哈
 }
 
 void tcpconnection::activeClosureWithDelay(double seconds) {

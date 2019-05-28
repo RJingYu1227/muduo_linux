@@ -38,14 +38,16 @@ public:
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
 
-	void listenBind(const char* ip, int port);
+	void bindFd();
 	void acceptConn();
 	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);
 	void deleter(tcpconnection* conn);
 	void deleterInLoop(tcpconnection* conn);
 
-	int listenfd_;
+	const char* ip_;
+	const int port_;
+	const int listenfd_;
 
 	elthreadpool* loops_;
 	eventloop* serverloop_;
