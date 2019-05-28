@@ -4,8 +4,9 @@
 #include<unistd.h>
 #include<assert.h>
 #include<arpa/inet.h>
-#include<string>
 #include<signal.h>
+#include<string>
+#include<errno.h>
 
 void tcpconnection::ignoreSigPipe() {
 	signal(SIGPIPE, SIG_IGN);
@@ -25,6 +26,7 @@ tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* 
 	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
 	channel_->setErrorCallback(std::bind(&tcpconnection::handleError, this));
 	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
+	LOG << "建立一个新连接，ip = " << ip_;
 }
 //列表初始化顺序应与类内声明顺序一致
 
@@ -36,8 +38,6 @@ void tcpconnection::start() {
 	assert(state_ == 0);
 	state_ = 1;
 	channel_->enableReading();
-
-	LOG << "建立一个新连接 " << ip_ << ' ' << port_;
 	connectedCallback(shared_from_this());
 }
 
@@ -91,12 +91,12 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
 			if (remaing == 0 && sendDoneCallback) {
-				LOG << "完整发送一次信息" << ip_ << ' ' << port_;
+				LOG << "完整发送一次信息";
 				loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
 			}
 		}
 		else {
-			LOG << "发送信息时出错" << ip_ << ' ' << port_;
+			LOG << "发送信息时出错，errno = " << errno;
 			return;
 		}
 	}
@@ -117,12 +117,12 @@ void tcpconnection::handleRead() {
 	ssize_t n = buffer1_.readFd(fd_);
 	if (n > 0) {
 		recvDoneCallback(shared_from_this());
-		LOG << "接收信息" << ip_ << ' ' << port_;
+		LOG << "接收一次信息";
 	}
 	else if (n == 0)
 		handleClose();
 	else
-		LOG << "接收信息时出错" << ip_ << ' ' << port_;
+		LOG << "接收信息时出错，errno = " << errno;
 }
 
 void tcpconnection::handleClose() {
@@ -141,18 +141,18 @@ void tcpconnection::handleWrite() {
 			if (buffer2_.usedBytes() == 0) {
 				channel_->disableWrting();
 				if (sendDoneCallback)
-					LOG << "完整发送一次信息" << ip_ << ' ' << port_;
 					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
+				LOG << "完整发送一次信息";
 			}
 		}
 		else
-			LOG << "发送信息时出错" << ip_ << ' ' << port_;
+			LOG << "发送信息时出错，errno = " << errno;
 	}
 }
 
 void tcpconnection::handleError() {
 	if (state_ == 1)
-		LOG << "Tcp连接出错" << ip_ << ' ' << port_;
+		LOG << "Tcp连接出错，ip = " << ip_ << " errno = " << errno;
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {

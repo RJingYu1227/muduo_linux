@@ -78,7 +78,7 @@ ssize_t buffer::readFd(int fd) {
 	const int iovcnt = (writeable_ < sizeof extrabuf) ? 2 : 1;
 	const ssize_t n = readv(fd, vec, iovcnt);
 	if (n < 0)
-		;//完善这里
+		return n;
 	else if (static_cast<size_t>(n) <= writeable_)
 		end_index_ += n;
 	else {

@@ -46,7 +46,7 @@ public:
 	void start();
 	void activeClosure();
 	void activeClosureWithDelay(double seconds);//秒为单位
-	int fd() { return fd_; }
+	int getFd() { return fd_; }
 	bool connected() { return state_ == 1; }
 	char* getIp() { return ip_; }
 	int getPort() { return port_; }

@@ -5,6 +5,7 @@
 #include"channel.h"
 #include"memorypool.h"
 #include"tcpconnection.h"
+
 #include<netinet/in.h>
 #include<functional>
 #include<unordered_map>
@@ -36,16 +37,18 @@ public:
 
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
+
+	void listenBind(const char* ip, int port);
+	void acceptConn();
 	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);
-	void acceptConn();
 	void deleter(tcpconnection* conn);
 	void deleterInLoop(tcpconnection* conn);
 
+	int listenfd_;
+
 	elthreadpool* loops_;
 	eventloop* serverloop_;
-	int listenfd_;
-	sockaddr_in serveraddr_;
 	memorypool<tcpconnection>* mpool1_;
 	memorypool<channel>* mpool2_;
 	channel* channel_;

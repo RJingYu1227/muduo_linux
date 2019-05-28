@@ -1,5 +1,6 @@
 ﻿#include"tcpserver.h"
 #include"logging.h"
+
 #include<strings.h>
 #include<unistd.h>
 #include<sys/socket.h>
@@ -8,27 +9,12 @@
 #include<errno.h>
 
 tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port) {
+	listenBind(ip, port);
+
 	loops_ = pool;
 	serverloop_ = pool->getServerLoop();
-
-	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
-	if (listenfd_ == -1) {
-		LOG << "创建listenfd失败";
-		exit(1);
-	}
-	bzero(&serveraddr_, sizeof serveraddr_);
-	serveraddr_.sin_family = AF_INET;
-	serveraddr_.sin_addr.s_addr = INADDR_ANY;
-	//inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
-	serveraddr_.sin_port = htons(static_cast<uint16_t>(port));
-	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
-		LOG << "绑定监听端口失败";
-		exit(1);
-	}
-
 	mpool1_ = new memorypool<tcpconnection>(1024);
 	mpool2_ = new memorypool<channel>(1024);
-
 	channel_ = new channel(serverloop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
 	listening_ = 0;
@@ -46,11 +32,32 @@ tcpserver::~tcpserver() {
 
 void tcpserver::start() {
 	serverloop_->assertInLoopThread();
-	listen(listenfd_, SOMAXCONN);
+	if (listen(listenfd_, SOMAXCONN) == -1) {
+		LOG << "TcpServer监听失败，errno = " << errno;
+		exit(1);
+	}
 	channel_->enableReading();
 	listening_ = 1;
 
 	LOG << "TcpServer开始监听";
+}
+
+void tcpserver::listenBind(const char* ip, int port) {
+	listenfd_ = socket(AF_INET, SOCK_STREAM, 0);
+	if (listenfd_ == -1) {
+		LOG << "创建listenfd失败，errno = " << errno;
+		exit(1);
+	}
+	sockaddr_in serveraddr_;
+	bzero(&serveraddr_, sizeof serveraddr_);
+	serveraddr_.sin_family = AF_INET;
+	//serveraddr_.sin_addr.s_addr = INADDR_ANY;
+	inet_pton(AF_INET, ip, &serveraddr_.sin_addr);
+	serveraddr_.sin_port = htons(static_cast<uint16_t>(port));
+	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
+		LOG << "绑定监听端口失败，errno = " << errno;
+		exit(1);
+	}
 }
 
 void tcpserver::acceptConn() {
@@ -58,7 +65,7 @@ void tcpserver::acceptConn() {
 	socklen_t cliaddrlen_ = sizeof cliaddr_;
 	int clifd_ = accept(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_);
 	if (clifd_ == -1) {
-		LOG << "建立连接失败";
+		LOG << "建立连接失败，errno = " << errno;
 		return;
 	}
 
@@ -99,8 +106,8 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	closedCallback(conn);
-	LOG << "断开一个连接 " << conn->getIp() << ' ' << conn->getPort();
 
-	conns_.erase(conn->fd());
-	close(conn->fd());
+	conns_.erase(conn->getFd());
+	close(conn->getFd());
+	LOG << "关闭一个连接，ip = " << conn->getIp();
 }
