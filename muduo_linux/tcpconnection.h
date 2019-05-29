@@ -55,6 +55,8 @@ public:
 
 private:
 
+	void froceDestory();
+
 	//建议使用shared_from_this()，不然不是线程安全的
 	void startReadInLoop();
 	void stopReadInLoop();

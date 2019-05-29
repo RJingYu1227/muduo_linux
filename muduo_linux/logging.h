@@ -18,6 +18,7 @@ public:
 	static void setLogFilename(const char* filename) { log_filename_ = filename; }
 	static std::string getLogFilenname() { return log_filename_; }
 	static bool createAsyncLogging();
+	static bool deleteAsyncLogging();
 
 private:
 	typedef void(*outputFunc)(const char* data, size_t len);

@@ -4,47 +4,57 @@
 #include<pthread.h>
 
 
-elthreadpool::elthreadpool(int num)
+elthreadpool::elthreadpool(eventloop* baseloop, int num)
 	:start_(0),
-	num_(num - 1),
-	index_(0) {
-	serverloop_ = new eventloop();
-	for (int i = 1; i <= num_; ++i) {
-		eventloop* ioloop_ = new eventloop();
-		ioloops_.push_back(ioloop_);
+	num_(num),
+	index_(0),
+	baseloop_(baseloop) {
+	for (int i = 1; i <= num; ++i) {
+		eventloop* loop_ = new eventloop();
+		loops_.push_back(loop_);
 	}
 }
 
 elthreadpool::~elthreadpool() {
-	delete serverloop_;
-	for (eventloop* ioloop : ioloops_)
-		delete ioloop;
+	start_ = 0;
+
+	for (eventloop* loop_ : loops_)
+		loop_->quit();
+
+	for (eventloop* loop_ : loops_) {
+		while (loop_->isLooping());
+
+		loop_->updateThread();
+		delete loop_;
+	}
 }
 
 void elthreadpool::start() {
 	assert(!start_);
 	int ret;
 	pthread_t temp;
-	for (eventloop* ioloop : ioloops_) {
-		ret = pthread_create(&temp, NULL, ioThread, ioloop);
-		if (ret)
-			LOG << "I/O线程创建失败";
-		//pthread_detach(temp);
+	for (eventloop* ioloop : loops_) {
+		ret = pthread_create(&temp, NULL, loopThreadFunc, ioloop);
+		if (ret) {
+			LOG << "eventloop线程创建失败";
+			exit(1);
+		}
+		//tids_.push_back(temp);
+		pthread_detach(temp);
 	}
 	
 	start_ = 1;
-	serverloop_->loop();
 }
 
-eventloop* elthreadpool::getIoLoop() {
+eventloop* elthreadpool::getLoop() {
 	if (num_ == 0)
-		return serverloop_;
+		return baseloop_;
 	++index_;
 	index_ %= num_;
-	return ioloops_[index_];
+	return loops_[index_];
 }
 
-void* elthreadpool::ioThread(void* a) {
+void* elthreadpool::loopThreadFunc(void* a) {
 	eventloop* b = (eventloop*)a;
 	b->updateThread();
 	b->loop();

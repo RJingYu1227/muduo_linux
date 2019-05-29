@@ -1,4 +1,4 @@
-﻿#include"elthreadpool.h"
+﻿#include"eventloop.h"
 #include"tcpserver.h"
 #include"logging.h"
 
@@ -24,16 +24,20 @@ void onSendDone(const tcpconn_ptr& conn) {
 int main() {
 	logger::createAsyncLogging();
 	tcpconnection::ignoreSigPipe();
-	elthreadpool test(3);
-	tcpserver server(&test, "127.0.0.1", 6666);
+	eventloop* loop = new eventloop();
+	tcpserver* server = new tcpserver(loop, "127.0.0.1", 6666, 2);
 
-	server.setConnectedCallback(onConnected);
-	server.setClosedCallback(onClosed);
-	server.setRecvDoneCallback(onRecvDone);
-	server.setSendDoneCallback(onSendDone);
+	server->setConnectedCallback(onConnected);
+	server->setClosedCallback(onClosed);
+	server->setRecvDoneCallback(onRecvDone);
+	server->setSendDoneCallback(onSendDone);
 
-	server.start();	
-	test.start();
+	server->start();	
+	loop->loop();
+
+	delete server;
+	delete loop;
+	logger::deleteAsyncLogging();
 
 	return 0;
 }

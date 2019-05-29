@@ -26,6 +26,7 @@ public:
 	void updateThread();
 	void loop();
 	void quit();
+	bool isLooping()const { return looping_; }
 	void assertInLoopThread();
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);

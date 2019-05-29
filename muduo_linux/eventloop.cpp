@@ -72,6 +72,7 @@ void eventloop::loop() {
 		doFunctors();//注意这里的执行顺序
 	}
 
+	doFunctors();//注意这里
 	LOG << "事件循环" << this << "停止";
 	looping_ = 0;
 }

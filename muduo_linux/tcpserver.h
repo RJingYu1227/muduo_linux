@@ -23,11 +23,11 @@ class tcpserver {
 public:
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;//客户端事件回调
 
-	tcpserver(elthreadpool* loop, const char* ip, int port);
+	tcpserver(eventloop* serverloop, const char* ip, int port, int loopnum = 2);
 	~tcpserver();
 
 	eventloop* getLoop() { return serverloop_; }
-	bool listening() { return listening_; }
+	bool isListening()const { return listening_; }
 	void start();
 
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
@@ -49,12 +49,12 @@ private:
 	const int port_;
 	const int listenfd_;
 
-	elthreadpool* loops_;
 	eventloop* serverloop_;
+	elthreadpool* lpool_;
 	memorypool<tcpconnection>* mpool1_;
 	memorypool<channel>* mpool2_;
 	channel* channel_;
-	conn_map conns_;
+	conn_map connections_;
 
 	event_callback connectedCallback;
 	event_callback closedCallback;

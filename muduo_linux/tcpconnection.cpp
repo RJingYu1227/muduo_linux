@@ -137,6 +137,15 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 		channel_->enableWriting();
 }
 
+void tcpconnection::froceDestory() {
+	if (state_ == 3)
+		return;
+
+	state_ = 3;
+	channel_->remove();
+	LOG << "关闭一个连接，ip = " << ip_;
+}
+
 void tcpconnection::handleRead() {
 	ssize_t n = buffer1_.readFd(fd_);
 	if (n > 0) {
@@ -156,6 +165,7 @@ void tcpconnection::handleClose() {
 	state_ = 3;
 	channel_->remove();//注意
 	closedCallback(shared_from_this());
+	LOG << "关闭一个连接，ip = " << ip_;
 }
 
 void tcpconnection::handleWrite() {

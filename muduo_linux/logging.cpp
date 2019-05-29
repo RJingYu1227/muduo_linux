@@ -39,6 +39,16 @@ bool logger::createAsyncLogging() {
 	return 1;
 }
 
+bool logger::deleteAsyncLogging() {
+	if (output == defaultOutput)
+		return 0;
+
+	output = defaultOutput;
+	delete async_;
+	async_ = nullptr;
+	return 1;
+}
+
 logger::impl::impl(const char* basename, int line)
 	:stream_(),
 	basename_(basename),

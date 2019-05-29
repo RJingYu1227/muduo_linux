@@ -8,14 +8,14 @@
 #include<arpa/inet.h>
 #include<errno.h>
 
-tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
+tcpserver::tcpserver(eventloop* serverloop, const char* ip, int port, int loopnum)
 	:ip_(ip),
 	port_(port),
 	listenfd_(socket(AF_INET, SOCK_STREAM, 0)),
-	loops_(pool) {
+	serverloop_(serverloop),
+	lpool_(new elthreadpool(serverloop, loopnum)) {
 
 	bindFd();
-	serverloop_ = pool->getServerLoop();
 	mpool1_ = new memorypool<tcpconnection>(1024);
 	mpool2_ = new memorypool<channel>(1024);
 	channel_ = new channel(serverloop_, listenfd_);
@@ -28,9 +28,18 @@ tcpserver::tcpserver(elthreadpool* pool, const char* ip, int port)
 tcpserver::~tcpserver() {
 	channel_->remove();
 	delete channel_;
+	close(listenfd_);
+
+	for (auto& temp : connections_) {
+		tcpconn_ptr conn = temp.second;
+		conn->loop_->runInLoop(std::bind(&tcpconnection::froceDestory, conn.get()));
+	}
+	delete lpool_;
+
+	connections_.clear();
 	delete mpool1_;
 	delete mpool2_;
-	close(listenfd_);
+
 	LOG << "关闭TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
@@ -42,6 +51,7 @@ void tcpserver::start() {
 		exit(1);
 	}
 	channel_->enableReading();
+	lpool_->start();
 	listening_ = 1;
 
 	LOG << "TcpServer开始监听";
@@ -75,7 +85,7 @@ void tcpserver::acceptConn() {
 		return;
 	}
 
-	eventloop* ioloop_ = loops_->getIoLoop();
+	eventloop* ioloop_ = lpool_->getLoop();
 	tcpconnection* conn_;
 	channel* ch_;
 	mpool1_->setPtr(conn_);
@@ -90,7 +100,7 @@ void tcpserver::acceptConn() {
 	new_->setSendDoneCallback(sendDoneCallback);
 
 	ioloop_->queueInLoop(std::bind(&tcpconnection::start, new_));
-	conns_.emplace(clifd_, new_);
+	connections_.emplace(clifd_, new_);
 }
 
 void tcpserver::deleter(tcpconnection* conn) {
@@ -102,6 +112,7 @@ void tcpserver::deleter(tcpconnection* conn) {
 }
 
 void tcpserver::deleterInLoop(tcpconnection* conn) {
+	close(conn->getFd());
 	mpool2_->destroyPtr(conn->channel_);
 	mpool1_->destroyPtr(conn);
 }
@@ -113,7 +124,5 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	closedCallback(conn);
 
-	conns_.erase(conn->getFd());
-	close(conn->getFd());
-	LOG << "关闭一个连接，ip = " << conn->getIp();
+	connections_.erase(conn->getFd());
 }
