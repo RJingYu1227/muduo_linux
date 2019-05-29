@@ -27,8 +27,8 @@ bool logger::createAsyncLogging() {
 	if (output == asyncOutput)
 		return 0;
 
-	pthread_t temp;
-	int ret = pthread_create(&temp, NULL, asyncFunc, NULL);
+	pthread_t tid;
+	int ret = pthread_create(&tid, NULL, asyncFunc, NULL);
 	if (ret) {
 		LOG << "日志线程创建失败";
 		return 0;
@@ -36,6 +36,7 @@ bool logger::createAsyncLogging() {
 	while (async_ == nullptr);
 
 	output = asyncOutput;
+	LOG << "创建日志线程成功，线程为" << tid;
 	return 1;
 }
 
