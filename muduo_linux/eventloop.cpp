@@ -13,7 +13,7 @@ eventloop* eventloop::getEventLoop() {
 void eventloop::updateThread() {
 	thread_id_ = pthread_self();
 	loop_inthisthread_ = this;
-	LOG << "事件循环" << loop_inthisthread_ << "的新线程" << thread_id_;
+	LOG << "事件循环：" << loop_inthisthread_ << " 的新线程：" << thread_id_;
 }
 
 eventloop::eventloop() :
@@ -26,7 +26,7 @@ eventloop::eventloop() :
 	timerque_(new timerqueue(this)) {
 
 	loop_inthisthread_ = this;
-	LOG << "在主线程" << thread_id_ << "创建事件循环" << this;
+	LOG << "在线程：" << thread_id_ << " 创建事件循环：" << this;
 }
 
 eventloop::~eventloop() {
@@ -35,11 +35,13 @@ eventloop::~eventloop() {
 	delete eventque_;
 	delete epoller_;
 	loop_inthisthread_ = nullptr;
+
+	LOG << "在线程：" << pthread_self() << " 关闭事件循环：" << this;
 }
 
 void eventloop::assertInLoopThread() {
 	if (thread_id_ != pthread_self())
-		LOG << "事件循环" << this << "属于线程" << thread_id_ << "目前线程为" << pthread_self();
+		LOG << "事件循环：" << this << " 属于线程：" << thread_id_ << " 目前线程为：" << pthread_self();
 }
 
 bool eventloop::isInLoopThread()const {
@@ -63,6 +65,7 @@ void eventloop::loop() {
 	assertInLoopThread();
 	looping_ = 1;
 	quit_ = 0;
+	LOG << "事件循环：" << this << " 开始";
 
 	while (!quit_) {
 		active_channels_.clear();
@@ -71,9 +74,9 @@ void eventloop::loop() {
 			ch->handleEvent();
 		doFunctors();//注意这里的执行顺序
 	}
-
 	doFunctors();//注意这里
-	LOG << "事件循环" << this << "停止";
+
+	LOG << "事件循环：" << this << " 停止";
 	looping_ = 0;
 }
 

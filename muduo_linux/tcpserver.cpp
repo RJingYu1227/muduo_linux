@@ -46,6 +46,9 @@ tcpserver::~tcpserver() {
 }
 
 void tcpserver::start() {
+	if (isListening())
+		return;
+
 	serverloop_->assertInLoopThread();
 
 	if (listen(listenfd_, SOMAXCONN) == -1) {
