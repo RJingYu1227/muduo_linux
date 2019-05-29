@@ -8,12 +8,12 @@
 #include<arpa/inet.h>
 #include<errno.h>
 
-tcpserver::tcpserver(eventloop* serverloop, const char* ip, int port, int loopnum)
+tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	:ip_(ip),
 	port_(port),
 	listenfd_(socket(AF_INET, SOCK_STREAM, 0)),
-	serverloop_(serverloop),
-	lpool_(new elthreadpool(serverloop, loopnum)) {
+	serverloop_(new eventloop()),
+	looppool_(new elthreadpool(serverloop_, loopnum)) {
 
 	bindFd();
 	mpool1_ = new memorypool<tcpconnection>(1024);
@@ -32,11 +32,13 @@ tcpserver::~tcpserver() {
 
 	for (auto& temp : connections_) {
 		tcpconn_ptr conn = temp.second;
-		conn->loop_->runInLoop(std::bind(&tcpconnection::froceDestory, conn.get()));
+		conn->loop_->runInLoop(std::bind(&tcpconnection::froceDestory, conn));
 	}
-	delete lpool_;
 
+	delete looppool_;
 	connections_.clear();
+	delete serverloop_;
+
 	delete mpool1_;
 	delete mpool2_;
 
@@ -51,10 +53,11 @@ void tcpserver::start() {
 		exit(1);
 	}
 	channel_->enableReading();
-	lpool_->start();
 	listening_ = 1;
-
 	LOG << "TcpServer开始监听";
+	looppool_->start();
+
+	serverloop_->loop();
 }
 
 void tcpserver::bindFd() {
@@ -85,7 +88,7 @@ void tcpserver::acceptConn() {
 		return;
 	}
 
-	eventloop* ioloop_ = lpool_->getLoop();
+	eventloop* ioloop_ = looppool_->getLoop();
 	tcpconnection* conn_;
 	channel* ch_;
 	mpool1_->setPtr(conn_);
@@ -99,15 +102,12 @@ void tcpserver::acceptConn() {
 	new_->setRecvDoneCallback(recvDoneCallback);
 	new_->setSendDoneCallback(sendDoneCallback);
 
-	ioloop_->queueInLoop(std::bind(&tcpconnection::start, new_));
+	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
 	connections_.emplace(clifd_, new_);
 }
 
 void tcpserver::deleter(tcpconnection* conn) {
-	if (serverloop_->isInLoopThread())
-		deleterInLoop(conn);
-	else
-		serverloop_->queueInLoop(std::bind(&tcpserver::deleterInLoop, this, conn));
+	serverloop_->runInLoop(std::bind(&tcpserver::deleterInLoop, this, conn));
 	conn = nullptr;
 }
 

@@ -9,7 +9,7 @@ class tcpserver;
 
 class elthreadpool {
 public:
-	elthreadpool(eventloop* baseloop, int num = 0);
+	elthreadpool(eventloop* baseloop, int num);
 	~elthreadpool();
 
 	eventloop* getBaseLoop() { return baseloop_; }

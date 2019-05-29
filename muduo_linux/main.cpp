@@ -24,8 +24,7 @@ void onSendDone(const tcpconn_ptr& conn) {
 int main() {
 	logger::createAsyncLogging();
 	tcpconnection::ignoreSigPipe();
-	eventloop* loop = new eventloop();
-	tcpserver* server = new tcpserver(loop, "127.0.0.1", 6666, 2);
+	tcpserver* server = new tcpserver("127.0.0.1", 6666, 2);
 
 	server->setConnectedCallback(onConnected);
 	server->setClosedCallback(onClosed);
@@ -33,10 +32,8 @@ int main() {
 	server->setSendDoneCallback(onSendDone);
 
 	server->start();	
-	loop->loop();
 
 	delete server;
-	delete loop;
 	logger::deleteAsyncLogging();
 
 	return 0;
