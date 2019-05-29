@@ -36,7 +36,7 @@ bool logger::createAsyncLogging() {
 	while (async_ == nullptr);
 
 	output = asyncOutput;
-	LOG << "创建日志线程成功，线程为" << tid;
+	LOG << "创建日志线程成功，线程为：" << tid;
 	return 1;
 }
 
@@ -69,7 +69,7 @@ logger::logger(const char* filename, int line)
 }
 
 logger::~logger() {
-	impl_.stream_ << " -- " << impl_.basename_ << ':' << impl_.line_ << '\n';
+	impl_.stream_ << " -- " << impl_.basename_ << ' ' << impl_.line_ << '\n';
 	const logbuffer<logstream::kSmallBuffer>& temp = impl_.stream_.getBuffer();
 	output(temp.getData(), temp.length());
 }
