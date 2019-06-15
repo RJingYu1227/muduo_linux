@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<functional>
 
@@ -13,7 +13,7 @@ public:
 	int64_t getTime() { return time_; }
 	void run() { Callback(); }
 	static std::string timeToString(int64_t time);
-	static int64_t getMicroUnixTime();//΢��Ϊ��λ
+	static int64_t getMicroUnixTime();//微秒为单位
 
 private:
 	void restart(int64_t now) { time_ = now + useconds_; }
