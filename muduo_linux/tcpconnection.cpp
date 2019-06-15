@@ -1,6 +1,7 @@
 ﻿#include"tcpconnection.h"
 #include"logging.h"
 #include<sys/socket.h>
+#include<netinet/tcp.h>
 #include<unistd.h>
 #include<assert.h>
 #include<arpa/inet.h>
@@ -191,7 +192,7 @@ void tcpconnection::handleError() {
 
 void tcpconnection::setTcpNoDelay(bool on) {
 	int optval = on ? 1 : 0;
-	setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR,
+	setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY,
 		&optval, static_cast<socklen_t>(sizeof optval));
 }
 
