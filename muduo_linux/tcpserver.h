@@ -34,6 +34,10 @@ public:
 	void setRecvDoneCallback(const event_callback& cb) { recvDoneCallback = cb; }
 	void setSendDoneCallback(const event_callback& cb) { sendDoneCallback = cb; }
 
+	int getListenFd()const { return listenfd_; }
+	const char* getIp()const { return ip_; }
+	int getPort()const { return port_; }
+
 private:
 	typedef std::unordered_map<int, tcpconn_ptr> conn_map;
 

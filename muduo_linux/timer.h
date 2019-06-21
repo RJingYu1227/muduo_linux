@@ -12,6 +12,7 @@ public:
 
 	int64_t getTime() { return time_; }
 	void run() { Callback(); }
+
 	static std::string timeToString(int64_t time);
 	static int64_t getMicroUnixTime();//微秒为单位
 

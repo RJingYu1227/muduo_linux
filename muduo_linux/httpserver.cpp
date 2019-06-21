@@ -16,8 +16,8 @@ eventloop* httpserver::getLoop() {
 }
 
 void httpserver::start() {
+	LOG << "Http服务器模式";
 	server_.start();
-
 }
 
 void httpserver::defaultCallback(const httprequest& request, httpresponse& response) {
