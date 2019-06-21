@@ -13,3 +13,5 @@
 tcpserver占用一个线程处理连接；
 多个线程处理tcpconnection的epoll事件；
 asynclogging占用一个线程处理日志写入磁盘。
+
+2019/6/21 更新了一个http测试用例
