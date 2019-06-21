@@ -21,6 +21,8 @@ public:
 
 	void swap(buffer& rhs);
 	void append(const char* data, size_t len);
+	void append(const std::string& data) 
+	{ append(&data[0], data.size()); }
 	void prepend(const void* data, size_t len);//用于封包
 
 	size_t usedBytes()const { return end_index_ - begin_index_; }
@@ -28,8 +30,11 @@ public:
 	size_t prependableBytes()const { return begin_index_; }
 	size_t capacity()const { return buffer_.capacity(); }
 
+	char* beginPtr() { return headPtr() + begin_index_; }
+	const char* beginPtr()const { return headPtr() + begin_index_; }
 	char* endPtr() { return headPtr() + end_index_; }
 	const char* endPtr() const { return headPtr() + end_index_; }
+
 	void hasUsed(size_t len);
 	void unUsed(size_t len);
 	void ensureLeftBytes(size_t len);
@@ -37,7 +42,6 @@ public:
 	void retrieveAll();
 
 	ssize_t readFd(int fd);
-	const char* beginPtr()const { return headPtr() + begin_index_; }
 	std::string toString();
 
 	const char* findCRLF()const;

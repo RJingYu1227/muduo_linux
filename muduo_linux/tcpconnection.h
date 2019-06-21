@@ -7,6 +7,8 @@
 #include<netinet/in.h>
 #include<functional>
 
+using std::string;
+
 class eventloop;
 class channel;
 
@@ -39,6 +41,7 @@ public:
 	void startRead();
 	void stopRead();
 	void send(buffer* data);
+	void send(const string& data);
 
 	buffer* getRecvBuffer() { return &buffer1_; }
 	buffer* getSendBuffer() { return &buffer2_; }
@@ -48,10 +51,14 @@ public:
 	void forceCloseWithDelay(double seconds);//秒为单位
 	void shutDown();//优雅关闭
 
-	int getFd() { return fd_; }
-	bool connected() { return state_ == 1; }
-	const char* getIp() { return ip_; }
-	int getPort() { return port_; }
+	//任意指针
+	void setPtr(unsigned long ptr) { ptr_ = ptr; }
+	unsigned long getPtr() { return ptr_; }
+
+	int getFd()const { return fd_; }
+	bool connected()const { return state_ == 1; }
+	const char* getIp()const { return ip_; }
+	int getPort()const { return port_; }
 
 private:
 
@@ -60,7 +67,7 @@ private:
 	//建议使用shared_from_this()，不然不是线程安全的
 	void startReadInLoop();
 	void stopReadInLoop();
-	void sendInLoop1(const std::string &data);
+	void sendInLoop1(const string &data);
 	void sendInLoop2(const char* data, size_t len);
 	void shutDownInLoop();
 
@@ -71,6 +78,7 @@ private:
 
 	eventloop* loop_;
 	channel* channel_;
+	unsigned long ptr_;
 
 	const char* ip_;
 	const int port_;

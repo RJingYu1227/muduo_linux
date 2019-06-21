@@ -5,7 +5,6 @@
 #include"channel.h"
 #include"memorypool.h"
 #include"tcpconnection.h"
-
 #include<netinet/in.h>
 #include<functional>
 #include<unordered_map>
@@ -62,5 +61,6 @@ private:
 	event_callback sendDoneCallback;
 
 	bool listening_;
+
 };
 

@@ -1,6 +1,5 @@
 ﻿#include"tcpserver.h"
 #include"logging.h"
-
 #include<strings.h>
 #include<unistd.h>
 #include<sys/socket.h>

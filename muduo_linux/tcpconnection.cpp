@@ -17,6 +17,7 @@ void tcpconnection::ignoreSigPipe() {
 tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
 	:loop_(loop),
 	channel_(ch),
+	ptr_(0),
 	ip_(inet_ntoa(cliaddr->sin_addr)),
 	port_(cliaddr->sin_port),
 	fd_(fd),
@@ -80,6 +81,17 @@ void tcpconnection::send(buffer* data) {
 			data->toString()));
 }
 
+void tcpconnection::send(const string& data) {
+	if (state_ != 1)
+		return;
+
+	if (loop_->isInLoopThread())
+		sendInLoop2(&data[0], data.size());
+	else
+		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1,
+			shared_from_this(), data));
+}
+
 void tcpconnection::startReadInLoop() {
 	if (state_ == 1)
 		channel_->enableReading();
@@ -101,7 +113,7 @@ void tcpconnection::shutDownInLoop() {
 		LOG << "TcpShutDown出错，ip = " << ip_ << " errno = " << errno;
 }
 
-void tcpconnection::sendInLoop1(const std::string &data) {
+void tcpconnection::sendInLoop1(const string &data) {
 	sendInLoop2(&data[0], data.size());
 }
 
