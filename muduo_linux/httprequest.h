@@ -30,43 +30,41 @@ public:
 	httprequest() 
 		:state_(kExpectRequestLine), 
 		method_(kINVALID), 
-		version_(kUNKNOWN)
+		version_(kUNKNOWN),
+		length_(0)
 	{}
 	
 	bool praseRequest(buffer* buffer1);
 	bool praseDone()const 
 	{ return state_ == kPraseDone; }
 
-	void setVersion(version v) 
-	{ version_ = v; }
 	version getVersion()const 
 	{ return version_; }
 
-	bool setMethod(const char* start, const char* end);
 	method getMethod()const 
 	{ return method_; }
 
-	void setPath(const char* start, const char* end) 
-	{ path_.assign(start, end); }
 	const string& getPath()const 
 	{ return path_; }
 
-	void setQuery(const char* start, const char* end) 
-	{ query_.assign(start, end); }
 	const string& getQuery()const 
 	{ return query_; }
 
-	void addHeader(const char* start, const char* colon, const char* end);
 	string getHeader(const string& key)const;
 	const std::map<string, string>& getHeaders()const 
 	{ return headers_; }
 
+	int getLength()const 
+	{ return length_; }
+
 	void reset();
-	void swap(httprequest& that);
+	//void swap(httprequest& that);
 	
 private:
 
 	bool processRequestLine(const char* start, const char* end);
+	bool setMethod(const char* start, const char* end);
+	void addHeader(const char* start, const char* colon, const char* end);
 
 	prasestate state_;
 	method method_;
@@ -74,5 +72,6 @@ private:
 	string path_;
 	string query_;
 	std::map<string, string> headers_;
+	int length_;
 
 };

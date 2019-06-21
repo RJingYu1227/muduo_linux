@@ -42,9 +42,11 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 		bool alive = request->getHeader("Connection") == "Keep-Alive";
 		httpresponse response(alive);
 		httpCallback(*request, response);
+
 		buffer buffer2;
 		response.appendToBuffer(&buffer2);
 		conn->send(&buffer2);
+
 		if (response.keepAlive())
 			request->reset();
 		else

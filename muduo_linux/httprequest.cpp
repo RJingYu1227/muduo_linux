@@ -36,7 +36,7 @@ string httprequest::getHeader(const string& key)const {
 	if (iter != headers_.end())
 		return iter->second;
 	else
-		return '\0';
+		return "\0";
 }
 
 void httprequest::reset() {
@@ -46,8 +46,10 @@ void httprequest::reset() {
 	path_.clear();
 	query_.clear();
 	headers_.clear();
+	length_ = 0;
 }
 
+/*
 void httprequest::swap(httprequest& that) {
 	std::swap(state_, that.state_);
 	std::swap(method_, that.method_);
@@ -56,6 +58,7 @@ void httprequest::swap(httprequest& that) {
 	query_.swap(that.query_);
 	headers_.swap(that.headers_);
 }
+*/
 
 bool httprequest::processRequestLine(const char* start, const char* end) {
 	const char* space = std::find(start, end, ' ');
@@ -66,18 +69,18 @@ bool httprequest::processRequestLine(const char* start, const char* end) {
 		if (space == end)
 			return 0;
 
-		const char* quemk = std::find(start, end, '?');
-		setPath(start, quemk);
-		setQuery(quemk, end);
+		const char* quemk = std::find(start, space, '?');
+		path_.assign(start, quemk);
+		query_.assign(quemk, space);
 
 		start = space + 1;
 		if (!(end - start == 8 && std::equal(start, end - 1, "HTTP/1.")))
 			return 0;
 
 		if (*(end - 1) == '0')
-			setVersion(version::kHTTP10);
+			version_ = kHTTP10;
 		else if (*(end - 1) == '1')
-			setVersion(version::kHTTP11);
+			version_ = kHTTP11;
 		else
 			return 0;
 	}
@@ -87,6 +90,12 @@ bool httprequest::processRequestLine(const char* start, const char* end) {
 
 bool httprequest::praseRequest(buffer* buffer1) {
 	while (1) {
+		if (state_ == kExpectBody) {
+			if (buffer1->usedBytes() >= static_cast<size_t>(length_))
+				state_ = kPraseDone;
+			break;
+		}
+
 		const char* crlf = buffer1->findCRLF();
 		if (crlf == NULL)
 			break;
@@ -103,13 +112,18 @@ bool httprequest::praseRequest(buffer* buffer1) {
 			const char* colon = std::find(start, crlf, ':');
 			if (colon != crlf)
 				addHeader(start, colon, crlf);
-			else {
+			else if (headers_.find("Content-Length") == headers_.end()) {
 				state_ = kPraseDone;
 				break;
 			}
-		}
-		else if (state_ == kExpectBody) {
-
+			else {
+				length_ = atoi(headers_["Content-Length"].c_str());
+				if (length_ <= 0) {
+					state_ = kPraseDone;
+					break;
+				}
+				state_ = kExpectBody;
+			}
 		}
 	}
 
