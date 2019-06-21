@@ -38,7 +38,7 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 		conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
 		conn->shutDown();
 	}
-	else {
+	else if (request->praseDone()) {
 		bool alive = request->getHeader("Connection") == "Keep-Alive";
 		httpresponse response(alive);
 		httpCallback(*request, response);

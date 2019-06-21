@@ -36,7 +36,7 @@ string httprequest::getHeader(const string& key)const {
 	if (iter != headers_.end())
 		return iter->second;
 	else
-		return "\0";
+		return '\0';
 }
 
 void httprequest::reset() {
@@ -49,6 +49,7 @@ void httprequest::reset() {
 }
 
 void httprequest::swap(httprequest& that) {
+	std::swap(state_, that.state_);
 	std::swap(method_, that.method_);
 	std::swap(version_, that.version_);
 	path_.swap(that.path_);
@@ -96,7 +97,7 @@ bool httprequest::praseRequest(buffer* buffer1) {
 			if (processRequestLine(start, crlf))
 				state_ = kExpectHeaders;
 			else
-				break;
+				return 0;
 		}
 		else if (state_ == kExpectHeaders) {
 			const char* colon = std::find(start, crlf, ':');
@@ -112,5 +113,5 @@ bool httprequest::praseRequest(buffer* buffer1) {
 		}
 	}
 
-	return state_ != kExpectRequestLine;
+	return 1;
 }
