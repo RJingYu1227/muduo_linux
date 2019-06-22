@@ -39,7 +39,7 @@ int main() {
 	server.start();	*/
 	httpserver server("127.0.0.1", 7777, 2);
 
-	//server.setHttpCallback(httpCallback);
+	server.setHttpCallback(httpCallback);
 
 	server.start();
 	logger::deleteAsyncLogging();

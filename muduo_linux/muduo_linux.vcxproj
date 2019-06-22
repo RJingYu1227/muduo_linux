@@ -113,6 +113,7 @@
     <ClInclude Include="logging.h" />
     <ClInclude Include="logstream.h" />
     <ClInclude Include="memorypool.h" />
+    <ClInclude Include="uncopyable.h" />
     <ClInclude Include="tcpconnection.h" />
     <ClInclude Include="tcpserver.h" />
     <ClInclude Include="timer.h" />
