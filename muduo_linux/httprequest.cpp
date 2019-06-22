@@ -21,12 +21,14 @@ bool httprequest::setMethod(const char* start, const char* end) {
 
 void httprequest::addHeader(const char* start, const char* colon, const char* end) {
 	string key(start, colon);
+	++colon;
 	while (colon < end && *colon == ' ')
 		++colon;
 
 	while (end > colon && *(end-1) == ' ')
 		--end;
 	string value(colon, end);
+	//value大小写转换
 
 	headers_[key] = value;
 }

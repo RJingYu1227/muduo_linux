@@ -9,7 +9,7 @@ void httpresponse::appendToBuffer(buffer* buffer2) {
 	buffer2->append(statu2_);
 
 	if (alive_)
-		buffer2->append("Connection: Keep-Alive\r\n");
+		buffer2->append("Connection: keep-alive\r\n");
 	else
 		buffer2->append("Connection: close\r\n");
 

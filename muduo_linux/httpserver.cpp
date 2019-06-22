@@ -1,5 +1,6 @@
 ﻿#include"httpserver.h"
 #include"logging.h"
+#include<string>
 
 httpserver::httpserver(const char* ip, int port, int loopnum)
 	: server_(ip, port, loopnum),
@@ -33,22 +34,32 @@ void httpserver::onConnected(const tcpconn_ptr& conn) {
 
 void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 	httprequest* request = reinterpret_cast<httprequest*>(conn->getPtr());
+	buffer* buffer1 = conn->getRecvBuffer();
+	LOG << buffer1->toString();
 
-	if (!request->praseRequest(conn->getRecvBuffer())) {
+	if (!request->praseRequest(buffer1)) {
 		conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
 		conn->shutDown();
 	}
 	else if (request->praseDone()) {
-		bool alive = request->getHeader("Connection") == "Keep-Alive";
+		string temp = request->getHeader("Connection");
+		bool alive = (temp == "keep-alive") ||
+			(request->getVersion() == httprequest::kHTTP11 && temp != "close");
+		//1.0协议中默认close，keep-alive要指明
+		//1.1协议中默认keep-alive，close要指明
+
 		httpresponse response(alive);
 		httpCallback(*request, response);
 
 		buffer buffer2;
 		response.appendToBuffer(&buffer2);
 		conn->send(&buffer2);
+		LOG << buffer2.toString();
 
-		if (response.keepAlive())
+		if (response.keepAlive()) {
+			buffer1->retrieve(request->getLength());
 			request->reset();
+		}
 		else
 			conn->shutDown();
 	}
