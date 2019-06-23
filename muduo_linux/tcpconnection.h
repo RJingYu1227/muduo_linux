@@ -52,8 +52,8 @@ public:
 	void shutDown();//优雅关闭
 
 	//任意指针
-	void setPtr(unsigned long ptr) { ptr_ = ptr; }
-	unsigned long getPtr() { return ptr_; }
+	void setPtr(void* ptr) { ptr_ = ptr; }
+	void* getPtr() { return ptr_; }
 
 	int getFd()const { return fd_; }
 	bool connected()const { return state_ == 1; }
@@ -78,7 +78,7 @@ private:
 
 	eventloop* loop_;
 	channel* channel_;
-	unsigned long ptr_;
+	void* ptr_;
 
 	const char* ip_;
 	const int port_;

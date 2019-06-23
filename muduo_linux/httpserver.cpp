@@ -28,12 +28,12 @@ void httpserver::defaultCallback(const httprequest& request, httpresponse& respo
 }
 
 void httpserver::onConnected(const tcpconn_ptr& conn) {
-	conn->setPtr(reinterpret_cast<unsigned long>(new httprequest()));
+	conn->setPtr(new httprequest());
 
 }
 
 void httpserver::onRecvDone(const tcpconn_ptr& conn) {
-	httprequest* request = reinterpret_cast<httprequest*>(conn->getPtr());
+	httprequest* request = (httprequest*)conn->getPtr();
 	buffer* buffer1 = conn->getRecvBuffer();
 	LOG << buffer1->toString();
 
@@ -66,7 +66,7 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 }
 
 void httpserver::onClosed(const tcpconn_ptr& conn) {
-	delete reinterpret_cast<httprequest*>(conn->getPtr());
+	delete (httprequest*)conn->getPtr();
 
 }
 
