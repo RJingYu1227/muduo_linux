@@ -10,7 +10,7 @@
 tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	:ip_(ip),
 	port_(port),
-	listenfd_(socket(AF_INET, SOCK_STREAM, 0)),
+	listenfd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
 	serverloop_(new eventloop()),
 	looppool_(new elthreadpool(serverloop_, loopnum)) {
 
@@ -84,28 +84,33 @@ void tcpserver::bindFd() {
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;
 	socklen_t cliaddrlen_ = sizeof cliaddr_;
-	int clifd_ = accept(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_);
-	if (clifd_ == -1) {
-		LOG << "建立连接失败，errno = " << errno;
-		return;
+	while (1) {
+		int clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_,
+			SOCK_NONBLOCK | SOCK_CLOEXEC);
+
+		if (clifd_ == -1) {
+			if (errno != EAGAIN)
+				LOG << "建立连接失败，errno = " << errno;
+			return;
+		}
+
+		eventloop* ioloop_ = looppool_->getLoop();
+		tcpconnection* conn_;
+		channel* ch_;
+		mpool1_->setPtr(conn_);
+		mpool2_->setPtr(ch_);
+		new(ch_)channel(ioloop_, clifd_);
+		new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
+
+		tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
+		new_->setConnectedCallback(connectedCallback);
+		new_->setClosedCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+		new_->setRecvDoneCallback(recvDoneCallback);
+		new_->setSendDoneCallback(sendDoneCallback);
+
+		ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
+		connections_.emplace(clifd_, new_);
 	}
-
-	eventloop* ioloop_ = looppool_->getLoop();
-	tcpconnection* conn_;
-	channel* ch_;
-	mpool1_->setPtr(conn_);
-	mpool2_->setPtr(ch_);
-	new(ch_)channel(ioloop_, clifd_);
-	new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
-
-	tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
-	new_->setConnectedCallback(connectedCallback);
-	new_->setClosedCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
-	new_->setRecvDoneCallback(recvDoneCallback);
-	new_->setSendDoneCallback(sendDoneCallback);
-
-	ioloop_->runInLoop(std::bind(&tcpconnection::start, new_));
-	connections_.emplace(clifd_, new_);
 }
 
 void tcpserver::deleter(tcpconnection* conn) {
