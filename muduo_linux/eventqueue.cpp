@@ -3,7 +3,7 @@
 #include<assert.h>
 
 eventqueue::eventqueue(eventloop* loop)
-	:fd_(eventfd(0, 0)),
+	:fd_(eventfd(0, EFD_CLOEXEC)),
 	count_(0),
 	lock_(PTHREAD_MUTEX_INITIALIZER),
 	loop_(loop),
