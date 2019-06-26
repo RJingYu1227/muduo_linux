@@ -2,11 +2,10 @@
 
 #include<vector>
 #include<string>
-#include<algorithm>
 
-class buffer
-{
+class buffer {
 public:
+
 	static const size_t kCheapPrepend = 8;
 	static const size_t kInitialSize = 1024;
 	static const char kCRLF[3];
@@ -21,8 +20,10 @@ public:
 
 	void swap(buffer& rhs);
 	void append(const char* data, size_t len);
-	void append(const std::string& data) 
-	{ append(&data[0], data.size()); }
+	void append(const std::string& data)
+	{
+		append(&data[0], data.size());
+	}
 	void prepend(const void* data, size_t len);//用于封包
 
 	size_t usedBytes()const { return end_index_ - begin_index_; }
@@ -48,6 +49,7 @@ public:
 	const char* findCRLF(const char* start)const;
 
 private:
+
 	char* headPtr() { return &*buffer_.begin(); }
 	const char* headPtr() const { return &*buffer_.begin(); }
 
@@ -56,5 +58,6 @@ private:
 	std::vector<char> buffer_;
 	size_t begin_index_;
 	size_t end_index_;
+
 };
 

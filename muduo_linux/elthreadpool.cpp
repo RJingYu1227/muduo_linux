@@ -9,13 +9,39 @@ elthreadpool::elthreadpool(eventloop* baseloop, int num)
 	num_(num),
 	index_(0),
 	baseloop_(baseloop) {
-	for (int i = 1; i <= num; ++i) {
-		eventloop* loop_ = new eventloop();
-		loops_.push_back(loop_);
-	}
+
 }
 
 elthreadpool::~elthreadpool() {
+	if (start_)
+		stop();
+	assert(!start_);
+}
+
+void elthreadpool::start() {
+	assert(!start_);
+
+	for (int i = 1; i <= num_; ++i) {
+		eventloop* loop_ = new eventloop();
+		loops_.push_back(loop_);
+	}
+	int ret;
+	pthread_t temp;
+
+	for (eventloop* ioloop : loops_) {
+		ret = pthread_create(&temp, NULL, threadFunc, ioloop);
+		if (ret) {
+			LOG << "eventloop线程创建失败";
+			exit(1);
+		}
+		//tids_.push_back(temp);
+		pthread_detach(temp);
+	}
+	
+	start_ = 1;
+}
+
+void elthreadpool::stop() {
 	start_ = 0;
 
 	for (eventloop* loop_ : loops_)
@@ -29,23 +55,6 @@ elthreadpool::~elthreadpool() {
 	}
 }
 
-void elthreadpool::start() {
-	assert(!start_);
-	int ret;
-	pthread_t temp;
-	for (eventloop* ioloop : loops_) {
-		ret = pthread_create(&temp, NULL, loopThreadFunc, ioloop);
-		if (ret) {
-			LOG << "eventloop线程创建失败";
-			exit(1);
-		}
-		//tids_.push_back(temp);
-		pthread_detach(temp);
-	}
-	
-	start_ = 1;
-}
-
 eventloop* elthreadpool::getLoop() {
 	if (num_ == 0)
 		return baseloop_;
@@ -54,7 +63,7 @@ eventloop* elthreadpool::getLoop() {
 	return loops_[index_];
 }
 
-void* elthreadpool::loopThreadFunc(void* a) {
+void* elthreadpool::threadFunc(void* a) {
 	eventloop* b = (eventloop*)a;
 	b->updateThread();
 	b->loop();

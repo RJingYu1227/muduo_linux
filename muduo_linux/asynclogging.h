@@ -1,15 +1,16 @@
 ﻿#pragma once
 
 #include"logstream.h"
+#include"uncopyable.h"
+
 #include<pthread.h>
 #include<vector>
 #include<string>
-#include<atomic>
 #include<time.h>
 
 template class logbuffer<logstream::kLargeBuffer>;
 
-class asynclogging {
+class asynclogging :uncopyable {
 public:
 
 	asynclogging(const char* basename, off_t rollsize, int flush_interval = 3);
@@ -51,5 +52,6 @@ private:
 
 	timespec time_;
 
-	std::atomic<bool> running_;
+	bool running_;
+
 };

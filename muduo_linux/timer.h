@@ -17,11 +17,12 @@ public:
 	static int64_t getMicroUnixTime();//微秒为单位
 
 private:
+
 	void restart(int64_t now) { time_ = now + useconds_; }
 
 	event_callback Callback;
 	int64_t time_;
 	int64_t useconds_;
 	bool repeat_;
-	//bool handling_;
+
 };

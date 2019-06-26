@@ -3,12 +3,14 @@
 #include"tcpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
+#include"uncopyable.h"
+
 #include<functional>
 
 class httprequest;
 class httpresponse;
 
-class httpserver {
+class httpserver :uncopyable {
 public:
 	typedef std::function<void(const httprequest&, httpresponse&)> callback;
 

@@ -1,10 +1,12 @@
 ﻿#pragma once
 
+#include"uncopyable.h"
+
 #include<unistd.h>
 #include<stdio.h>
 #include<fcntl.h>
 
-class appendfile {
+class appendfile :uncopyable {
 public:
 	explicit appendfile(const char* filename);
 	~appendfile();

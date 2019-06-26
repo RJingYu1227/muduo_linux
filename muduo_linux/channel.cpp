@@ -12,6 +12,7 @@ channel::channel(eventloop* loop, int fd)
 	event_(0),
 	revent_(0),
 	mark_(-1) {
+
 }
 
 channel::~channel() {

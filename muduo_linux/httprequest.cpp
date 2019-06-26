@@ -1,5 +1,6 @@
 ﻿#include"httprequest.h"
 #include<assert.h>
+#include<algorithm>
 
 bool httprequest::setMethod(const char* start, const char* end) {
 	assert(method_ == kINVALID);

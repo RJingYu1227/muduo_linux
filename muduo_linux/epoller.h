@@ -2,6 +2,8 @@
 
 #include"channel.h"
 #include"eventloop.h"
+#include"uncopyable.h"
+
 #include<vector>
 #include<sys/epoll.h>
 #include<unordered_map>
@@ -9,7 +11,7 @@
 class channel;
 class eventloop;
 
-class epoller {
+class epoller :uncopyable {
 public:
 	typedef std::vector<channel*> channellist;
 
@@ -28,9 +30,10 @@ private:
 	static const int kInitEventListSize = 1024;
 
 	void fillActiveChannels(int numevents, channellist* active_channels_)const;
-	
+
 	eventloop* loop_;
 	int epollfd_;
 	event_list events_;
 	channel_map channels_;
+
 };

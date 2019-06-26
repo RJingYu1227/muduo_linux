@@ -3,6 +3,8 @@
 #include"channel.h"
 #include"eventloop.h"
 #include"timer.h"
+#include"uncopyable.h"
+
 #include<memory>
 #include<functional>
 #include<set>
@@ -12,8 +14,7 @@ class eventloop;
 class channel;
 class timer;
 
-class timerqueue
-{
+class timerqueue :uncopyable {
 public:
 	typedef std::function<void()> event_callback;
 
@@ -32,7 +33,6 @@ private:
 	void cancelTimerInLoop(timer* timer1);
 
 	void handleRead();
-	//void readTimerfd(int64_t now);
 	bool insert(const entry& temp);
 	void getTimers(int64_t now);
 

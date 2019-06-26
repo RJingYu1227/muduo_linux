@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<assert.h>
 #include<sys/uio.h>
+#include<algorithm>
 
 const char buffer::kCRLF[3] = "\r\n";
 
@@ -9,6 +10,13 @@ void buffer::swap(buffer& rhs) {
 	buffer_.swap(rhs.buffer_);
 	std::swap(begin_index_, rhs.begin_index_);
 	std::swap(end_index_, rhs.end_index_);
+}
+
+namespace std {
+	template<>
+	void swap<buffer>(buffer& lhs, buffer& rhs) {
+		lhs.swap(rhs);
+	}
 }
 
 void buffer::append(const char* data, size_t len) {

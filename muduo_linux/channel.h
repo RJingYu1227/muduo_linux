@@ -1,11 +1,13 @@
 ﻿#pragma once
 
 #include"eventloop.h"
+#include"uncopyable.h"
+
 #include<functional>
 
 class eventloop;
 
-class channel {
+class channel :uncopyable {
 public:
 	typedef std::function<void()> event_callback;
 
@@ -21,7 +23,6 @@ public:
 
 	int getFd()const { return fd_; }
 	int getEvent()const { return event_; }
-	void setRevent(int revt) { revent_ = revt; }
 	bool isNoneEvent()const { return event_ == kNoneEvent; }
 	bool isWriting() const { return event_ & kWriteEvent; }
 	bool isReading() const { return event_ & kReadEvent; }
@@ -36,15 +37,18 @@ public:
 
 	//epoller
 	int mark() { return mark_; }
-	void setMark(int mark_) { this->mark_ = mark_; }
+	void setMark(int mark) { mark_ = mark; }
+	void setRevent(int revt) { revent_ = revt; }
+
 	void remove();
 
 private:
-	void update();
 
 	static const int kNoneEvent;
 	static const int kReadEvent;
 	static const int kWriteEvent;
+
+	void update();
 
 	eventloop* loop_;
 	int fd_;
@@ -56,5 +60,6 @@ private:
 	event_callback writeCallback;
 	event_callback errorCallback;
 	event_callback closeCallback;
+
 };
 

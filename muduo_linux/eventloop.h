@@ -5,6 +5,8 @@
 #include"timer.h"
 #include"timerqueue.h"
 #include"eventqueue.h"
+#include"uncopyable.h"
+
 #include<pthread.h>
 #include<vector>
 #include<functional>
@@ -16,9 +18,11 @@ class timer;
 class timerqueue;
 class eventqueue;
 
-class eventloop {
+class eventloop :uncopyable {
 public:
 	typedef std::function<void()> functor;
+
+	static eventloop* getEventLoop();
 
 	eventloop();
 	~eventloop();
@@ -39,8 +43,6 @@ public:
 	void runAfter(const functor& cb, double seconds);
 	timer* runEvery(const functor& cb, double seconds);
 	void cancelTimer(timer* timer1);//一个timer只能调用一次
-
-	static eventloop* getEventLoop();
 
 private:
 	typedef std::vector<channel*> channel_list;

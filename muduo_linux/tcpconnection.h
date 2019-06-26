@@ -3,6 +3,8 @@
 #include"eventloop.h"
 #include"channel.h"
 #include"buffer.h"
+#include"uncopyable.h"
+
 #include<memory>
 #include<netinet/in.h>
 #include<functional>
@@ -12,7 +14,7 @@ using std::string;
 class eventloop;
 class channel;
 
-class tcpconnection :public std::enable_shared_from_this<tcpconnection> {
+class tcpconnection :uncopyable, public std::enable_shared_from_this<tcpconnection> {
 	friend class tcpserver;
 public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;

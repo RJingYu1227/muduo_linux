@@ -15,10 +15,9 @@ struct head {
 	int size_ = 0;
 };
 
-
+//这是在堆上申请空间，地址从低到高
 template<typename T>
-class memorypool//这是在堆上申请空间，地址从低到高
-{
+class memorypool {
 public:
 	memorypool(int init = 1024);
 	~memorypool();

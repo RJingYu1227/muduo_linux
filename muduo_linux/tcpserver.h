@@ -5,6 +5,8 @@
 #include"channel.h"
 #include"memorypool.h"
 #include"tcpconnection.h"
+#include"uncopyable.h"
+
 #include<netinet/in.h>
 #include<functional>
 #include<unordered_map>
@@ -18,7 +20,7 @@ template class memorypool<channel>;
 
 typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
-class tcpserver {
+class tcpserver :uncopyable {
 public:
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;//客户端事件回调
 

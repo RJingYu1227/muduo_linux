@@ -2,6 +2,8 @@
 
 #include"eventloop.h"
 #include"channel.h"
+#include"uncopyable.h"
+
 #include<functional>
 #include<vector>
 #include<sys/eventfd.h>
@@ -10,8 +12,7 @@
 class eventloop;
 class channel;
 
-class eventqueue
-{
+class eventqueue :uncopyable {
 public:
 	typedef std::function<void()> functor;
 
