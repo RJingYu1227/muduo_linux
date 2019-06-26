@@ -1,5 +1,6 @@
-﻿#include "asynclogging.h"
+﻿#include"asynclogging.h"
 #include"logfile.h"
+
 #include<assert.h>
 
 asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_interval)

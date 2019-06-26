@@ -1,4 +1,7 @@
 #include"eventqueue.h"
+#include"eventloop.h"
+#include"channel.h"
+
 #include<unistd.h>
 #include<assert.h>
 
@@ -7,16 +10,15 @@ eventqueue::eventqueue(eventloop* loop)
 	count_(0),
 	lock_(PTHREAD_MUTEX_INITIALIZER),
 	loop_(loop),
-	channel_(new channel(loop_, fd_)) {
+	channel_(loop_, fd_) {
 
 	assert(fd_ > 0);
-	channel_->setReadCallback(std::bind(&eventqueue::handleRead, this));
-	channel_->enableReading();
+	channel_.setReadCallback(std::bind(&eventqueue::handleRead, this));
+	channel_.enableReading();
 }
 
 eventqueue::~eventqueue(){
-	channel_->remove();
-	delete channel_;
+	channel_.remove();
 	close(fd_);
 }
 

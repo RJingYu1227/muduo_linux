@@ -1,14 +1,14 @@
 ﻿#pragma once
 
 #include"tcpserver.h"
-#include"httprequest.h"
-#include"httpresponse.h"
+#include"tcpconnection.h"
 #include"uncopyable.h"
 
 #include<functional>
 
 class httprequest;
 class httpresponse;
+class eventloop;
 
 class httpserver :uncopyable {
 public:

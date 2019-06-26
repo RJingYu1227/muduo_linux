@@ -1,10 +1,7 @@
 ﻿#pragma once
 
-#include"elthreadpool.h"
-#include"eventloop.h"
-#include"channel.h"
 #include"memorypool.h"
-#include"tcpconnection.h"
+#include"channel.h"
 #include"uncopyable.h"
 
 #include<netinet/in.h>
@@ -13,10 +10,7 @@
 
 class elthreadpool;
 class eventloop;
-class channel;
 class tcpconnection;
-template class memorypool<tcpconnection>;
-template class memorypool<channel>;
 
 typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
@@ -56,9 +50,8 @@ private:
 
 	eventloop* serverloop_;
 	elthreadpool* looppool_;
-	memorypool<tcpconnection>* mpool1_;
-	memorypool<channel>* mpool2_;
-	channel* channel_;
+	memorypool<tcpconnection> mpool_;
+	channel channel_;
 	conn_map connections_;
 
 	event_callback connectedCallback;

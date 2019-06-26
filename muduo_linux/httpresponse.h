@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include"buffer.h"
-
 #include<stdio.h>
 #include<map>
 #include<string>

@@ -1,5 +1,8 @@
-﻿#include "timerqueue.h"
+﻿#include"timerqueue.h"
+#include"channel.h"
+#include"eventloop.h"
 #include"logging.h"
+
 #include<sys/timerfd.h>
 #include<unistd.h>
 #include<strings.h>
@@ -8,17 +11,16 @@
 timerqueue::timerqueue(eventloop* loop)
 	:loop_(loop),
 	fd_(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
-	channel_(new channel(loop_, fd_)) {
+	channel_(loop_, fd_) {
 
 	assert(fd_ > 0);
-	channel_->setReadCallback(std::bind(&timerqueue::handleRead, this));
-	channel_->enableReading();
+	channel_.setReadCallback(std::bind(&timerqueue::handleRead, this));
+	channel_.enableReading();
 }
 
 
 timerqueue::~timerqueue() {
-	channel_->remove();
-	delete channel_;
+	channel_.remove();
 	close(fd_);
 }
 

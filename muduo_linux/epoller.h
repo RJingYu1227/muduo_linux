@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include"channel.h"
-#include"eventloop.h"
 #include"uncopyable.h"
 
 #include<vector>

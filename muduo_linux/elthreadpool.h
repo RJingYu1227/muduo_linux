@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include"eventloop.h"
-#include"tcpserver.h"
 #include"uncopyable.h"
 
 #include<vector>

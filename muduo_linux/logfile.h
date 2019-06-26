@@ -1,10 +1,10 @@
 ﻿#pragma once
 
-#include"fileutil.h"
-
 #include<pthread.h>
 #include<string>
 #include<time.h>
+
+class appendfile;
 
 class logfile {
 public:

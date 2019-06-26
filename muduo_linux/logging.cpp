@@ -1,4 +1,6 @@
-﻿#include "logging.h"
+﻿#include"logging.h"
+#include"asynclogging.h"
+
 #include<time.h>
 #include<unistd.h>
 #include<pthread.h>

@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include"channel.h"
-#include"eventloop.h"
 #include"timer.h"
+#include"channel.h"
 #include"uncopyable.h"
 
 #include<memory>
@@ -11,8 +10,6 @@
 #include<vector>
 
 class eventloop;
-class channel;
-class timer;
 
 class timerqueue :uncopyable {
 public:
@@ -41,7 +38,7 @@ private:
 
 	eventloop* loop_;
 	int fd_;
-	channel* channel_;
+	channel channel_;
 	
 	timer_set timers_;
 	std::vector<entry> expire_timers_;

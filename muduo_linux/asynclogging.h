@@ -8,8 +8,6 @@
 #include<string>
 #include<time.h>
 
-template class logbuffer<logstream::kLargeBuffer>;
-
 class asynclogging :uncopyable {
 public:
 

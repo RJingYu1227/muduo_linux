@@ -1,4 +1,6 @@
-﻿#include "logfile.h"
+﻿#include"logfile.h"
+#include"fileutil.h"
+
 #include<assert.h>
 
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)

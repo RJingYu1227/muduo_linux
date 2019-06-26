@@ -2,6 +2,7 @@
 #include"tcpserver.h"
 #include"httpserver.h"
 #include"logging.h"
+#include"tcpconnection.h"
 
 #include<stdlib.h>
 
@@ -34,19 +35,22 @@ int main(int argc, char* argv[]) {
 
 	logger::createAsyncLogging();
 	tcpconnection::ignoreSigPipe();
-	/*tcpserver server("127.0.0.1", 6666, 2);
+	/*
+	tcpserver server(argv[1], atoi(argv[2]), 2);
 
 	server.setConnectedCallback(onConnected);
 	server.setClosedCallback(onClosed);
 	server.setRecvDoneCallback(onRecvDone);
 	server.setSendDoneCallback(onSendDone);
 
-	server.start();	*/
+	server.start();
+	*/
 	httpserver server(argv[1], atoi(argv[2]), 2);
 
 	server.setHttpCallback(httpCallback);
 
 	server.start();
+	
 	logger::deleteAsyncLogging();
 
 	return 0;

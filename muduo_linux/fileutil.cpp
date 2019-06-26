@@ -1,4 +1,5 @@
 ﻿#include "fileutil.h"
+
 #include<assert.h>
 
 appendfile::appendfile(const char* filename)
@@ -19,6 +20,7 @@ void appendfile::append(const char* data, size_t len) {
 		size_t n = fwrite_unlocked(data, 1, len, fp_);
 		if (n == 0) {
 			int err = ferror(fp_);
+			//对同一个文件,每一次调用输入输出函数，均产生一个新的ferror函数值
 			if (err)
 				fprintf(stderr, "appendfile::append() failed !\n");
 			break;

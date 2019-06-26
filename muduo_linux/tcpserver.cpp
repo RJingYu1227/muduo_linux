@@ -1,5 +1,9 @@
 ﻿#include"tcpserver.h"
 #include"logging.h"
+#include"elthreadpool.h"
+#include"eventloop.h"
+#include"tcpconnection.h"
+
 #include<strings.h>
 #include<unistd.h>
 #include<sys/socket.h>
@@ -13,19 +17,17 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	listenfd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
 	serverloop_(new eventloop()),
 	looppool_(new elthreadpool(serverloop_, loopnum)),
-	mpool1_(new memorypool<tcpconnection>(1024)),
-	mpool2_(new memorypool<channel>(1024)),
-	channel_(new channel(serverloop_, listenfd_)),
+	mpool_(1024),
+	channel_(serverloop_, listenfd_),
 	listening_(0) {
 
 	bindFd();
-	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
+	channel_.setReadCallback(std::bind(&tcpserver::acceptConn, this));
 	LOG << "创建TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
 tcpserver::~tcpserver() {
-	channel_->remove();
-	delete channel_;
+	channel_.remove();
 	close(listenfd_);
 
 	for (auto temp : connections_) {
@@ -36,9 +38,6 @@ tcpserver::~tcpserver() {
 	delete looppool_;
 	connections_.clear();
 	delete serverloop_;
-
-	delete mpool1_;
-	delete mpool2_;
 
 	LOG << "关闭TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
@@ -53,7 +52,7 @@ void tcpserver::start() {
 		LOG << "TcpServer监听失败，errno = " << errno;
 		exit(1);
 	}
-	channel_->enableReading();
+	channel_.enableReading();
 	listening_ = 1;
 	LOG << "TcpServer开始监听";
 
@@ -95,11 +94,8 @@ void tcpserver::acceptConn() {
 
 		eventloop* ioloop_ = looppool_->getLoop();
 		tcpconnection* conn_;
-		channel* ch_;
-		mpool1_->setPtr(conn_);
-		mpool2_->setPtr(ch_);
-		new(ch_)channel(ioloop_, clifd_);
-		new(conn_)tcpconnection(ioloop_, ch_, clifd_, &cliaddr_);
+		mpool_.setPtr(conn_);
+		new(conn_)tcpconnection(ioloop_, clifd_, &cliaddr_);
 
 		tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
 		new_->setConnectedCallback(connectedCallback);
@@ -119,8 +115,7 @@ void tcpserver::deleter(tcpconnection* conn) {
 
 void tcpserver::deleterInLoop(tcpconnection* conn) {
 	close(conn->getFd());
-	mpool2_->destroyPtr(conn->channel_);
-	mpool1_->destroyPtr(conn);
+	mpool_.destroyPtr(conn);
 }
 
 void tcpserver::removeConn(const tcpconn_ptr &conn) {

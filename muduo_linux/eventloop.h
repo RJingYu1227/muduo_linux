@@ -1,10 +1,5 @@
 ﻿#pragma once
 
-#include"channel.h"
-#include"epoller.h"
-#include"timer.h"
-#include"timerqueue.h"
-#include"eventqueue.h"
 #include"uncopyable.h"
 
 #include<pthread.h>

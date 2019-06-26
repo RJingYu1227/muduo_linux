@@ -1,5 +1,8 @@
 ﻿#include"tcpconnection.h"
+#include"eventloop.h"
+#include"channel.h"
 #include"logging.h"
+
 #include<sys/socket.h>
 #include<netinet/tcp.h>
 #include<unistd.h>
@@ -14,20 +17,20 @@ void tcpconnection::ignoreSigPipe() {
 	LOG << "忽略SIGPIPE";
 }
 
-tcpconnection::tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr)
+tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr)
 	:loop_(loop),
-	channel_(ch),
 	ptr_(0),
 	ip_(inet_ntoa(cliaddr->sin_addr)),
 	port_(cliaddr->sin_port),
 	fd_(fd),
 	state_(0),
-	watermark_(64 * 1024 * 1024) {
+	watermark_(64 * 1024 * 1024),
+	channel_(loop_, fd_) {
 
-	channel_->setReadCallback(std::bind(&tcpconnection::handleRead, this));
-	channel_->setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
-	channel_->setErrorCallback(std::bind(&tcpconnection::handleError, this));
-	channel_->setCloseCallback(std::bind(&tcpconnection::handleClose, this));
+	channel_.setReadCallback(std::bind(&tcpconnection::handleRead, this));
+	channel_.setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
+	channel_.setErrorCallback(std::bind(&tcpconnection::handleError, this));
+	channel_.setCloseCallback(std::bind(&tcpconnection::handleClose, this));
 	LOG << "建立一个新连接，ip = " << ip_;
 }
 
@@ -38,7 +41,7 @@ tcpconnection::~tcpconnection() {
 void tcpconnection::start() {
 	assert(state_ == 0);
 	state_ = 1;
-	channel_->enableReading();
+	channel_.enableReading();
 	connectedCallback(shared_from_this());
 }
 
@@ -94,16 +97,16 @@ void tcpconnection::send(const string& data) {
 
 void tcpconnection::startReadInLoop() {
 	if (state_ == 1)
-		channel_->enableReading();
+		channel_.enableReading();
 }
 
 void tcpconnection::stopReadInLoop() {
 	if (state_ == 1)
-		channel_->disableReading();
+		channel_.disableReading();
 }
 
 void tcpconnection::shutDownInLoop() {
-	if (state_ != 1 || channel_->isWriting())
+	if (state_ != 1 || channel_.isWriting())
 		return;
 
 	state_ = 2;
@@ -123,7 +126,7 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 
 	ssize_t nwrote = 0;
 	size_t remaing = len;
-	if (!channel_->isWriting() && buffer2_.usedBytes() == 0) {
+	if (!channel_.isWriting() && buffer2_.usedBytes() == 0) {
 		nwrote = write(fd_, data, len);
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
@@ -146,8 +149,8 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 		loop_->queueInLoop(std::bind(highWaterCallback, shared_from_this()));
 
 	buffer2_.append(data + nwrote, remaing);
-	if (!channel_->isWriting())
-		channel_->enableWriting();
+	if (!channel_.isWriting())
+		channel_.enableWriting();
 }
 
 void tcpconnection::froceDestory() {
@@ -155,7 +158,7 @@ void tcpconnection::froceDestory() {
 		return;
 
 	state_ = 3;
-	channel_->remove();
+	channel_.remove();
 	LOG << "关闭一个连接，ip = " << ip_;
 }
 
@@ -176,7 +179,7 @@ void tcpconnection::handleClose() {
 		return;
 
 	state_ = 3;
-	channel_->remove();//注意
+	channel_.remove();//注意
 	closedCallback(shared_from_this());
 	LOG << "关闭一个连接，ip = " << ip_;
 }
@@ -187,7 +190,7 @@ void tcpconnection::handleWrite() {
 		if (nwrote >= 0) {
 			buffer2_.retrieve(nwrote);
 			if (buffer2_.usedBytes() == 0) {
-				channel_->disableWrting();
+				channel_.disableWrting();
 				if (sendDoneCallback)
 					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
 				LOG << "完整发送一次信息";

@@ -1,4 +1,6 @@
 ﻿#include"httpresponse.h"
+#include"buffer.h"
+
 #include<string.h>
 
 void httpresponse::appendToBuffer(buffer* buffer2) {

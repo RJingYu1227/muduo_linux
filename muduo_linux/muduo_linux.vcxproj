@@ -92,6 +92,7 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="logstream.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="poller.cpp" />
     <ClCompile Include="tcpconnection.cpp" />
     <ClCompile Include="tcpserver.cpp" />
     <ClCompile Include="timer.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="logging.h" />
     <ClInclude Include="logstream.h" />
     <ClInclude Include="memorypool.h" />
+    <ClInclude Include="poller.h" />
     <ClInclude Include="uncopyable.h" />
     <ClInclude Include="tcpconnection.h" />
     <ClInclude Include="tcpserver.h" />

@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include"eventloop.h"
-#include"channel.h"
 #include"buffer.h"
+#include"channel.h"
 #include"uncopyable.h"
 
 #include<memory>
@@ -12,7 +11,6 @@
 using std::string;
 
 class eventloop;
-class channel;
 
 class tcpconnection :uncopyable, public std::enable_shared_from_this<tcpconnection> {
 	friend class tcpserver;
@@ -22,7 +20,7 @@ public:
 
 	static void ignoreSigPipe();
 
-	tcpconnection(eventloop* loop, channel* ch, int fd, sockaddr_in* cliaddr);
+	tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr);
 	~tcpconnection();
 
 	eventloop* getLoop() { return loop_; }
@@ -79,7 +77,6 @@ private:
 	void handleError();
 
 	eventloop* loop_;
-	channel* channel_;
 	void* ptr_;
 
 	const char* ip_;
@@ -90,6 +87,7 @@ private:
 
 	buffer buffer1_;
 	buffer buffer2_;//这里的buffer不是指针
+	channel channel_;
 
 	event_callback connectedCallback;
 	event_callback closedCallback;

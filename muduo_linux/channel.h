@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include"eventloop.h"
 #include"uncopyable.h"
 
 #include<functional>

@@ -1,4 +1,6 @@
 ﻿#include"httprequest.h"
+#include"buffer.h"
+
 #include<assert.h>
 #include<algorithm>
 

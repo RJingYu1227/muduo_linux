@@ -1,6 +1,5 @@
 #pragma once
 
-#include"eventloop.h"
 #include"channel.h"
 #include"uncopyable.h"
 
@@ -10,7 +9,6 @@
 #include<pthread.h>
 
 class eventloop;
-class channel;
 
 class eventqueue :uncopyable {
 public:
@@ -30,7 +28,7 @@ private:
 	eventfd_t count_;
 	pthread_mutex_t lock_;
 	eventloop* loop_;
-	channel* channel_;
+	channel channel_;
 	std::vector<functor> functors_;
 
 };

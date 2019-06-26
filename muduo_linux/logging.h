@@ -1,11 +1,9 @@
 ﻿#pragma once
 
 #include"logstream.h"
-#include"asynclogging.h"
 
 #include<string>
 
-class logstream;
 class asynclogging;
 
 class logger {

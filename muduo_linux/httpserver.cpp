@@ -1,5 +1,8 @@
 ﻿#include"httpserver.h"
+#include"httprequest.h"
+#include"httpresponse.h"
 #include"logging.h"
+
 #include<string>
 
 httpserver::httpserver(const char* ip, int port, int loopnum)

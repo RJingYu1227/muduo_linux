@@ -1,4 +1,5 @@
-﻿#include "logstream.h"
+﻿#include"logstream.h"
+
 #include<algorithm>
 #include<stdio.h>
 
