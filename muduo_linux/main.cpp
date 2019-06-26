@@ -3,6 +3,8 @@
 #include"httpserver.h"
 #include"logging.h"
 
+#include<stdlib.h>
+
 void onConnected(const tcpconn_ptr& conn){
 
 }
@@ -26,7 +28,10 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 	
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+	if (argc != 3)
+		return 0;
+
 	logger::createAsyncLogging();
 	tcpconnection::ignoreSigPipe();
 	/*tcpserver server("127.0.0.1", 6666, 2);
@@ -37,7 +42,7 @@ int main() {
 	server.setSendDoneCallback(onSendDone);
 
 	server.start();	*/
-	httpserver server("127.0.0.1", 7777, 2);
+	httpserver server(argv[1], atoi(argv[2]), 2);
 
 	server.setHttpCallback(httpCallback);
 
