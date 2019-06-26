@@ -20,10 +20,7 @@ public:
 
 	void swap(buffer& rhs);
 	void append(const char* data, size_t len);
-	void append(const std::string& data)
-	{
-		append(&data[0], data.size());
-	}
+	void append(const std::string& data) { append(&data[0], data.size()); }
 	void prepend(const void* data, size_t len);//用于封包
 
 	size_t usedBytes()const { return end_index_ - begin_index_; }

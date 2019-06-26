@@ -22,6 +22,7 @@ namespace std {
 void buffer::append(const char* data, size_t len) {
 	ensureLeftBytes(len);
 	std::copy(data, data + len, endPtr());
+	//将一个序列拷贝到一个容器中去
 	hasUsed(len);
 }
 

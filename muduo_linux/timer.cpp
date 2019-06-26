@@ -2,9 +2,10 @@
 #include<string>
 #include<sys/time.h>
 
-timer::timer(const event_callback &cb, int64_t time, double seconds) {
-	Callback = cb;
-	time_ = time;
+timer::timer(const event_callback &cb, int64_t time, double seconds)
+	:Callback(cb),
+	time_(time) {
+
 	useconds_ = static_cast<int64_t>(seconds * 1000000);
 	repeat_ = (useconds_ > 0);
 }

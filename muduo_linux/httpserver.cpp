@@ -29,7 +29,6 @@ void httpserver::defaultCallback(const httprequest& request, httpresponse& respo
 
 void httpserver::onConnected(const tcpconn_ptr& conn) {
 	conn->setPtr(new httprequest());
-
 }
 
 void httpserver::onRecvDone(const tcpconn_ptr& conn) {
@@ -67,6 +66,5 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 
 void httpserver::onClosed(const tcpconn_ptr& conn) {
 	delete (httprequest*)conn->getPtr();
-
 }
 

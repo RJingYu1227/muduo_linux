@@ -5,11 +5,12 @@
 #include<strings.h>
 #include<assert.h>
 
-timerqueue::timerqueue(eventloop* loop) {
-	loop_ = loop;
-	fd_ = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+timerqueue::timerqueue(eventloop* loop)
+	:loop_(loop),
+	fd_(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
+	channel_(new channel(loop_, fd_)) {
+
 	assert(fd_ > 0);
-	channel_ = new channel(loop_, fd_);
 	channel_->setReadCallback(std::bind(&timerqueue::handleRead, this));
 	channel_->enableReading();
 }

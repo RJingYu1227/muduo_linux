@@ -8,6 +8,7 @@ epoller::epoller(eventloop* loop)
 	:loop_(loop),
 	epollfd_(epoll_create1(EPOLL_CLOEXEC)),
 	events_(kInitEventListSize) {
+
 	assert(epollfd_ > 0);
 }
 

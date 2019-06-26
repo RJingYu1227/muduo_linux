@@ -12,15 +12,14 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	port_(port),
 	listenfd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
 	serverloop_(new eventloop()),
-	looppool_(new elthreadpool(serverloop_, loopnum)) {
+	looppool_(new elthreadpool(serverloop_, loopnum)),
+	mpool1_(new memorypool<tcpconnection>(1024)),
+	mpool2_(new memorypool<channel>(1024)),
+	channel_(new channel(serverloop_, listenfd_)),
+	listening_(0) {
 
 	bindFd();
-	mpool1_ = new memorypool<tcpconnection>(1024);
-	mpool2_ = new memorypool<channel>(1024);
-	channel_ = new channel(serverloop_, listenfd_);
 	channel_->setReadCallback(std::bind(&tcpserver::acceptConn, this));
-	listening_ = 0;
-
 	LOG << "创建TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
@@ -29,7 +28,7 @@ tcpserver::~tcpserver() {
 	delete channel_;
 	close(listenfd_);
 
-	for (auto& temp : connections_) {
+	for (auto temp : connections_) {
 		tcpconn_ptr conn = temp.second;
 		conn->loop_->runInLoop(std::bind(&tcpconnection::froceDestory, conn));
 	}
@@ -57,8 +56,8 @@ void tcpserver::start() {
 	channel_->enableReading();
 	listening_ = 1;
 	LOG << "TcpServer开始监听";
-	looppool_->start();
 
+	looppool_->start();
 	serverloop_->loop();
 }
 
@@ -71,7 +70,6 @@ void tcpserver::bindFd() {
 	sockaddr_in serveraddr_;
 	bzero(&serveraddr_, sizeof serveraddr_);
 	serveraddr_.sin_family = AF_INET;
-	//serveraddr_.sin_addr.s_addr = INADDR_ANY;
 	inet_pton(AF_INET, ip_, &serveraddr_.sin_addr);
 	serveraddr_.sin_port = htons(static_cast<uint16_t>(port_));
 
@@ -83,15 +81,16 @@ void tcpserver::bindFd() {
 
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;
-	socklen_t cliaddrlen_ = sizeof cliaddr_;
+	socklen_t len_ = sizeof cliaddr_;
 	while (1) {
-		int clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &cliaddrlen_,
+		bzero(&cliaddr_, len_);
+		int clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &len_,
 			SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 		if (clifd_ == -1) {
 			if (errno != EAGAIN)
 				LOG << "建立连接失败，errno = " << errno;
-			return;
+			break;
 		}
 
 		eventloop* ioloop_ = looppool_->getLoop();
