@@ -36,7 +36,6 @@ private:
 	typedef std::vector<buffer*> buffer_vec;
 
 	void threadFunc();
-	void wait();
 
 	std::string basename_;
 	off_t rollsize_;

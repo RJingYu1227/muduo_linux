@@ -45,7 +45,7 @@ tcpserver::~tcpserver() {
 }
 
 void tcpserver::start() {
-	if (isListening())
+	if (listening_)
 		return;
 
 	serverloop_->assertInLoopThread();

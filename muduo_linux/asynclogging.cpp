@@ -57,8 +57,11 @@ void asynclogging::threadFunc() {
 		
 		pthread_mutex_lock(&lock_);
 
-		if (buffers_.empty())
-			wait();
+		if (buffers_.empty()) {
+			clock_gettime(CLOCK_REALTIME, &time_);
+			time_.tv_sec += static_cast<time_t>(flush_interval_);
+			pthread_cond_timedwait(&cond_, &lock_, &time_);
+		}
 
 		buffers_.push_back(buffer1_);
 		buffersw_.swap(buffers_);
@@ -93,10 +96,4 @@ void asynclogging::threadFunc() {
 	output_.flush();
 	delete buffer3_;
 	delete buffer4_;
-}
-
-void asynclogging::wait() {
-	clock_gettime(CLOCK_REALTIME, &time_);
-	time_.tv_sec += static_cast<time_t>(flush_interval_);
-	pthread_cond_timedwait(&cond_, &lock_, &time_);
 }
