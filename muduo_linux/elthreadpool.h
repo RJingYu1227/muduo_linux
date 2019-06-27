@@ -10,17 +10,16 @@ class tcpserver;
 class elthreadpool :uncopyable {
 public:
 
-	elthreadpool(eventloop* baseloop, int num);
-	~elthreadpool();
+	elthreadpool(int num);
+	~elthreadpool() { stop(); }
 
-	eventloop* getBaseLoop() { return baseloop_; }
 	eventloop* getLoop();
 
 	void start();
 	void stop();
 
 	void setLoopNum(int num) { num_ = num; }
-	int loopNum() { return num_; }
+	int getLoopNum() { return num_; }
 
 private:
 
@@ -30,7 +29,6 @@ private:
 	bool start_;
 	int num_;
 	int index_;
-	eventloop* baseloop_;
 	std::vector<eventloop*> loops_;
 	//std::vector<pthread_t> tids_;
 };

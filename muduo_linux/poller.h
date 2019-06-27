@@ -1,7 +1,6 @@
-#pragma once
+﻿#pragma once
 
 #include"uncopyable.h"
-#include"eventloop.h"
 
 #include<unordered_map>
 #include<vector>
@@ -13,9 +12,15 @@ class poller :uncopyable {
 public:
 	typedef std::vector<channel*> channellist;
 
-	poller(eventloop* loop)
-		:loop_(loop) {};
-	virtual ~poller() = default;
+	enum POLLER {
+		kPOLL,
+		kEPOLL
+	};
+
+	static poller* newPoller(eventloop* loop, POLLER p = kEPOLL);
+
+	poller(eventloop* loop);
+	virtual ~poller();
 
 	virtual void doPoll(int, channellist&) = 0;
 	virtual void updateChannel(channel* ch) = 0;

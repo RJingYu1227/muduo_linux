@@ -36,6 +36,7 @@ tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr)
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);
+	close(fd_);
 }
 
 void tcpconnection::start() {
@@ -108,8 +109,8 @@ void tcpconnection::stopReadInLoop() {
 void tcpconnection::shutDownInLoop() {
 	if (state_ != 1 || channel_.isWriting())
 		return;
-
 	state_ = 2;
+
 	if (shutdown(fd_, SHUT_WR) == 0)
 		return;
 	else
@@ -153,15 +154,6 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 		channel_.enableWriting();
 }
 
-void tcpconnection::froceDestory() {
-	if (state_ == 3)
-		return;
-
-	state_ = 3;
-	channel_.remove();
-	LOG << "关闭一个连接，ip = " << ip_;
-}
-
 void tcpconnection::handleRead() {
 	ssize_t n = buffer1_.readFd(fd_);
 	if (n > 0) {
@@ -177,8 +169,8 @@ void tcpconnection::handleRead() {
 void tcpconnection::handleClose() {
 	if (state_ == 3)
 		return;
-
 	state_ = 3;
+
 	channel_.remove();//注意
 	closedCallback(shared_from_this());
 	LOG << "关闭一个连接，ip = " << ip_;

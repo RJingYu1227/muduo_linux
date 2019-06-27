@@ -16,7 +16,7 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	port_(port),
 	listenfd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
 	serverloop_(new eventloop()),
-	looppool_(new elthreadpool(serverloop_, loopnum)),
+	looppool_(new elthreadpool(loopnum)),
 	mpool_(1024),
 	channel_(serverloop_, listenfd_),
 	listening_(0) {
@@ -27,18 +27,17 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 }
 
 tcpserver::~tcpserver() {
-	channel_.remove();
+	stop();
 	close(listenfd_);
 
-	for (auto temp : connections_) {
-		tcpconn_ptr conn = temp.second;
-		conn->loop_->runInLoop(std::bind(&tcpconnection::froceDestory, conn));
+	for (auto& temp : connections_) {
+		temp.second->setClosedCallback(closedCallback);
+		temp.second->forceClose();
 	}
-
 	delete looppool_;
+
 	connections_.clear();
 	delete serverloop_;
-
 	LOG << "关闭TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
 }
 
@@ -53,11 +52,22 @@ void tcpserver::start() {
 		exit(1);
 	}
 	channel_.enableReading();
-	listening_ = 1;
-	LOG << "TcpServer开始监听";
 
 	looppool_->start();
+	listening_ = 1;
+	LOG << "TcpServer开始监听";
 	serverloop_->loop();
+}
+
+void tcpserver::stop() {
+	if (!listening_)
+		return;
+
+	serverloop_->quit();
+	while (serverloop_->isLooping());
+
+	channel_.remove();
+	listening_ = 0;
 }
 
 void tcpserver::bindFd() {
@@ -93,6 +103,9 @@ void tcpserver::acceptConn() {
 		}
 
 		eventloop* ioloop_ = looppool_->getLoop();
+		if (ioloop_ == nullptr)
+			ioloop_ = serverloop_;
+
 		tcpconnection* conn_;
 		mpool_.setPtr(conn_);
 		new(conn_)tcpconnection(ioloop_, clifd_, &cliaddr_);
@@ -110,11 +123,9 @@ void tcpserver::acceptConn() {
 
 void tcpserver::deleter(tcpconnection* conn) {
 	serverloop_->runInLoop(std::bind(&tcpserver::deleterInLoop, this, conn));
-	conn = nullptr;
 }
 
 void tcpserver::deleterInLoop(tcpconnection* conn) {
-	close(conn->getFd());
 	mpool_.destroyPtr(conn);
 }
 
@@ -124,6 +135,5 @@ void tcpserver::removeConn(const tcpconn_ptr &conn) {
 
 void tcpserver::removeConnInLoop(const tcpconn_ptr &conn) {
 	closedCallback(conn);
-
 	connections_.erase(conn->getFd());
 }

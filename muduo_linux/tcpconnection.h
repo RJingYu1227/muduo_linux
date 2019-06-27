@@ -13,7 +13,6 @@ using std::string;
 class eventloop;
 
 class tcpconnection :uncopyable, public std::enable_shared_from_this<tcpconnection> {
-	friend class tcpserver;
 public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;
@@ -62,8 +61,6 @@ public:
 
 private:
 
-	void froceDestory();
-
 	//建议使用shared_from_this()，不然不是线程安全的
 	void startReadInLoop();
 	void stopReadInLoop();
@@ -95,5 +92,6 @@ private:
 	event_callback sendDoneCallback;
 	event_callback highWaterCallback;
 	//成员变量声明顺序因为字节对齐原因会影响类的大小
+
 };
 

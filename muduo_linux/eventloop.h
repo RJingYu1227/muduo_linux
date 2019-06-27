@@ -8,7 +8,7 @@
 #include<sys/eventfd.h>
 
 class channel;
-class epoller;
+class poller;
 class timer;
 class timerqueue;
 class eventqueue;
@@ -36,22 +36,22 @@ public:
 
 	void runAt(const functor& cb, int64_t time);
 	void runAfter(const functor& cb, double seconds);
-	timer* runEvery(const functor& cb, double seconds);
+	const timer* runEvery(const functor& cb, double seconds);
 	void cancelTimer(timer* timer1);//一个timer只能调用一次
 
 private:
-	typedef std::vector<channel*> channel_list;
 
 	void doFunctors();
 
-	pthread_t thread_id_;//第一个初始化
+	pthread_t tid_;//第一个初始化
 	bool quit_;
 	bool looping_;
-	int epoll_timeout_;
-	epoller* epoller_;
+	int timeout_;
+	poller* poller_;
 	eventqueue* eventque_;//最后执行
 	timerqueue* timerque_;//尽快执行
-	channel_list active_channels_;
+	std::vector<channel*> active_channels_;
+	std::vector<functor> functors_;
 
 };
 

@@ -8,7 +8,7 @@
 #include<strings.h>
 
 epoller::epoller(eventloop* loop)
-	:loop_(loop),
+	:poller(loop),
 	epollfd_(epoll_create1(EPOLL_CLOEXEC)),
 	events_(kInitEventListSize) {
 
@@ -19,7 +19,7 @@ epoller::~epoller() {
 	close(epollfd_);
 }
 
-void epoller::doEpoll(int timeoutms, channellist* active_channels_) {
+void epoller::doPoll(int timeoutms, channellist& active_channels_) {
 	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
@@ -82,11 +82,11 @@ void epoller::removeChannel(channel* ch) {
 
 }
 
-void epoller::fillActiveChannels(int numevents_, channellist* active_channels_)const {
+void epoller::fillActiveChannels(int numevents_, channellist& active_channels_)const {
 	assert(static_cast<size_t>(numevents_) <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = static_cast<channel*>(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);
-		active_channels_->push_back(ch);
+		active_channels_.push_back(ch);
 	}
 }

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"poller.h"
 
 #include<vector>
 #include<sys/epoll.h>
@@ -9,14 +9,14 @@
 class channel;
 class eventloop;
 
-class epoller :uncopyable {
+class epoller :public poller {
 public:
 	typedef std::vector<channel*> channellist;
 
 	epoller(eventloop* loop);
 	~epoller();
 
-	void doEpoll(int timeoutms, channellist* active_channels_);
+	void doPoll(int timeoutms, channellist& active_channels_);
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
 	void assertInLoopThread();
@@ -27,11 +27,9 @@ private:
 
 	static const int kInitEventListSize = 1024;
 
-	void fillActiveChannels(int numevents, channellist* active_channels_)const;
+	void fillActiveChannels(int numevents, channellist& active_channels_)const;
 
-	eventloop* loop_;
 	int epollfd_;
 	event_list events_;
-	channel_map channels_;
 
 };

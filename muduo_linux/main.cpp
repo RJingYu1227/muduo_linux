@@ -35,17 +35,17 @@ int main(int argc, char* argv[]) {
 
 	logger::createAsyncLogging();
 	tcpconnection::ignoreSigPipe();
-	/*
-	tcpserver server(argv[1], atoi(argv[2]), 2);
+
+	/*tcpserver server(argv[1], atoi(argv[2]));
 
 	server.setConnectedCallback(onConnected);
 	server.setClosedCallback(onClosed);
 	server.setRecvDoneCallback(onRecvDone);
 	server.setSendDoneCallback(onSendDone);
 
-	server.start();
-	*/
-	httpserver server(argv[1], atoi(argv[2]), 2);
+	server.start();*/
+
+	httpserver server(argv[1], atoi(argv[2]));
 
 	server.setHttpCallback(httpCallback);
 

@@ -10,7 +10,7 @@ public:
 	timer(const event_callback &cb, int64_t time, double seconds);
 	~timer() {}
 
-	int64_t getTime() { return time_; }
+	int64_t getTime()const { return time_; }
 	void run() { Callback(); }
 
 	static std::string timeToString(int64_t time);

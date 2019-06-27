@@ -16,14 +16,15 @@ typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 
 class tcpserver :uncopyable {
 public:
-	typedef std::function<void(const tcpconn_ptr&)> event_callback;//客户端事件回调
+	typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
-	tcpserver(const char* ip, int port, int loopnum = 0);
+	tcpserver(const char* ip, int port, int loopnum = 2);
 	~tcpserver();
 
 	eventloop* getLoop() { return serverloop_; }
 	bool isListening()const { return listening_; }
 	void start();
+	void stop();
 
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }

@@ -3,34 +3,28 @@
 #include"tcpserver.h"
 #include"logging.h"
 
-#include<assert.h>
 #include<pthread.h>
 
 
-elthreadpool::elthreadpool(eventloop* baseloop, int num)
+elthreadpool::elthreadpool(int num)
 	:start_(0),
 	num_(num),
-	index_(0),
-	baseloop_(baseloop) {
+	index_(0) {
 
-}
-
-elthreadpool::~elthreadpool() {
-	if (start_)
-		stop();
-	assert(!start_);
 }
 
 void elthreadpool::start() {
-	assert(!start_);
+	if (start_)
+		return;
 
+	loops_.clear();
 	for (int i = 1; i <= num_; ++i) {
 		eventloop* loop_ = new eventloop();
 		loops_.push_back(loop_);
 	}
+
 	int ret;
 	pthread_t temp;
-
 	for (eventloop* ioloop : loops_) {
 		ret = pthread_create(&temp, NULL, threadFunc, ioloop);
 		if (ret) {
@@ -45,7 +39,8 @@ void elthreadpool::start() {
 }
 
 void elthreadpool::stop() {
-	start_ = 0;
+	if (!start_)
+		return;
 
 	for (eventloop* loop_ : loops_)
 		loop_->quit();
@@ -56,11 +51,13 @@ void elthreadpool::stop() {
 		loop_->updateThread();
 		delete loop_;
 	}
+
+	start_ = 0;
 }
 
 eventloop* elthreadpool::getLoop() {
 	if (num_ == 0)
-		return baseloop_;
+		return nullptr;
 	++index_;
 	index_ %= num_;
 	return loops_[index_];
