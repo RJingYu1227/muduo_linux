@@ -57,7 +57,7 @@ logger::impl::impl(const char* basename, int line)
 	basename_(basename),
 	line_(line) {
 	
-	stream_ << timer::timeToString(timer::getUnixTime());
+	stream_ << timer::timeToString(timer::getUnixTime()) << '\n';
 }
 
 logger::logger(const char* filename, int line)

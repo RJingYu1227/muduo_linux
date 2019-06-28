@@ -37,7 +37,6 @@ void httpserver::onConnected(const tcpconn_ptr& conn) {
 void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 	httprequest* request = (httprequest*)conn->getPtr();
 	buffer* buffer1 = conn->getRecvBuffer();
-	LOG << buffer1->toString();
 
 	if (!request->praseRequest(buffer1)) {
 		conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
@@ -56,7 +55,6 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 		buffer buffer2;
 		response.appendToBuffer(&buffer2);
 		conn->send(&buffer2);
-		LOG << buffer2.toString();
 
 		if (response.keepAlive()) {
 			buffer1->retrieve(request->getLength());
