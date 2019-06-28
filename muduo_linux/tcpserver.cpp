@@ -9,7 +9,6 @@
 #include<sys/socket.h>
 #include<sys/types.h>
 #include<arpa/inet.h>
-#include<errno.h>
 
 tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	:ip_(ip),

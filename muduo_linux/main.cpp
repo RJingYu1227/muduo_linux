@@ -14,7 +14,6 @@ void onRecvDone(const tcpconn_ptr& conn) {
 	buffer* buff = conn->getRecvBuffer();
 	conn->send(buff);
 	buff->retrieveAll();
-	conn->shutDown();
 }
 
 void onClosed(const tcpconn_ptr& conn) {
@@ -46,11 +45,8 @@ int main(int argc, char* argv[]) {
 	server.start();*/
 
 	httpserver server(argv[1], atoi(argv[2]));
-
-	server.setHttpCallback(httpCallback);
-
 	server.start();
-	
+
 	logger::deleteAsyncLogging();
 
 	return 0;

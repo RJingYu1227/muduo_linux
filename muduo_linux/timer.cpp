@@ -1,23 +1,22 @@
 #include"timer.h"
 
 #include<string>
-#include<sys/time.h>
 
-timer::timer(const event_callback &cb, int64_t time, double seconds)
-	:Callback(cb),
+timer::timer(const functor &cb, int64_t time, double seconds)
+	:Functor(cb),
 	time_(time) {
 
 	useconds_ = static_cast<int64_t>(seconds * 1000000);
 	repeat_ = (useconds_ > 0);
 }
 
-std::string timer::timeToString(int64_t time) {
-	time_t seconds = static_cast<time_t>(time / 1000000);
-	return ctime(&seconds);
-	//gmtime
-	//localtime
-	//ctime
-	//asctime
+/* (s) %Y%m%d-%H%M%S */
+std::string timer::timeToString(time_t time) {
+	char timebuf[32];
+	tm tm_;
+	localtime_r(&time, &tm_);//该函数是可重入的
+	strftime(timebuf, sizeof timebuf, "%Y%m%d-%H%M%S", &tm_);
+	return timebuf;
 }
 
 int64_t timer::getMicroUnixTime() {

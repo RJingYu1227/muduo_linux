@@ -2,6 +2,7 @@
 #include"fileutil.h"
 
 #include<assert.h>
+#include<time.h>
 
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)
 	:basename_(basename),
@@ -60,7 +61,8 @@ void logfile::setLogFileName(std::string& str) {
 	str = basename_;
 
 	char timebuf[32];
-	time_ = time(NULL);
+	time_t time_ = time(NULL);
+	tm tm_;
 	localtime_r(&time_, &tm_);
 	strftime(timebuf, sizeof timebuf, "%Y%m%d-%H%M%S", &tm_);
 

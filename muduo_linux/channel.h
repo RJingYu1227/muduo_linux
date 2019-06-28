@@ -22,22 +22,33 @@ public:
 
 	int getFd()const { return fd_; }
 	int getEvent()const { return event_; }
-	bool isNoneEvent()const { return event_ == kNoneEvent; }
-	bool isWriting() const { return event_ & kWriteEvent; }
-	bool isReading() const { return event_ & kReadEvent; }
-	eventloop* ownerLoop() { return loop_; }
+	eventloop* getLoop() { return loop_; }
 
-	//修改event_
-	void enableReading() { event_ |= kReadEvent; update(); }
-	void enableWriting() { event_ |= kWriteEvent; update(); }
-	void disableWrting() { event_ &= ~kWriteEvent; update(); }
-	void disableReading() { event_ &= kReadEvent; update(); }
-	void disableALL() { event_ = kNoneEvent; update(); }
+	//event
+	void enableReading() 
+	{ event_ |= kReadEvent; update(); }
+	void disableReading() 
+	{ event_ &= ~kReadEvent; update(); }
+	bool isReading() const 
+	{ return event_ & kReadEvent; }
 
-	//epoller
-	int mark() { return mark_; }
+	void enableWriting() 
+	{ event_ |= kWriteEvent; update(); }
+	void disableWrting() 
+	{ event_ &= ~kWriteEvent; update(); }
+	bool isWriting() const 
+	{ return event_ & kWriteEvent; }
+
+	void disableALL() 
+	{ event_ = kNoneEvent; update(); }
+	bool isNoneEvent()const 
+	{ return event_ == kNoneEvent; }
+
+	//poller
 	void setMark(int mark) { mark_ = mark; }
+	int getMark()const { return mark_; }
 	void setRevent(int revt) { revent_ = revt; }
+	int getRevent()const { return revent_; }
 
 	void remove();
 

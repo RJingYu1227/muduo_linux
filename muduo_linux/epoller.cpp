@@ -1,7 +1,6 @@
 ﻿#include"epoller.h"
 #include"logging.h"
 #include"channel.h"
-#include"eventloop.h"
 
 #include<assert.h>
 #include<unistd.h>
@@ -28,17 +27,11 @@ void epoller::doPoll(int timeoutms, channellist& active_channels_) {
 			events_.resize(events_.size() * 2);
 	}
 	else
-		LOG << "epoll调用出错";
+		LOG << "epoll调用出错，errno = " << errno;
 
-}
-
-void epoller::assertInLoopThread() {
-	loop_->assertInLoopThread();
 }
 
 void epoller::updateChannel(channel* ch) {
-	assertInLoopThread();
-
 	int fd_ = ch->getFd();
 	epoll_event ev;
 	bzero(&ev, sizeof ev);
@@ -46,7 +39,7 @@ void epoller::updateChannel(channel* ch) {
 	ev.data.fd = fd_;
 	ev.data.ptr = ch;
 
-	if (ch->mark() == -1) {
+	if (ch->getMark() == -1) {
 		assert(channels_.find(fd_) == channels_.end());
 		epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd_, &ev);
 		channels_.emplace(fd_, ch);
@@ -60,10 +53,9 @@ void epoller::updateChannel(channel* ch) {
 }
 
 void epoller::removeChannel(channel* ch) {
-	assertInLoopThread();
 	int fd_ = ch->getFd();
 
-	if (ch->mark() == -1) {
+	if (ch->getMark() == -1) {
 		assert(channels_.find(fd_) == channels_.end());
 		return;
 	}

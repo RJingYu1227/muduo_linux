@@ -3,6 +3,7 @@
 #include"logstream.h"
 
 #include<string>
+#include<errno.h>
 
 class asynclogging;
 
@@ -33,7 +34,6 @@ private:
 	struct impl {
 
 		impl(const char* basename, int line);
-		void formatTime();
 
 		logstream stream_;
 		std::string basename_;

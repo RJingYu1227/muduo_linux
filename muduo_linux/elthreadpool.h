@@ -14,12 +14,16 @@ public:
 	~elthreadpool() { stop(); }
 
 	eventloop* getLoop();
+	std::vector<eventloop*> getLoops() 
+	{ return loops_; }
 
 	void start();
 	void stop();
 
-	void setLoopNum(int num) { num_ = num; }
-	int getLoopNum() { return num_; }
+	void setLoopNum(int num) 
+	{ num_ = num; }
+	int getLoopNum() 
+	{ return num_; }
 
 private:
 

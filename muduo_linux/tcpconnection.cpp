@@ -10,7 +10,6 @@
 #include<arpa/inet.h>
 #include<signal.h>
 #include<string>
-#include<errno.h>
 
 void tcpconnection::ignoreSigPipe() {
 	signal(SIGPIPE, SIG_IGN);
@@ -131,9 +130,11 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 		nwrote = write(fd_, data, len);
 		if (nwrote >= 0) {
 			remaing = len - nwrote;
-			if (remaing == 0 && sendDoneCallback) {
+			if (remaing == 0){
 				LOG << "完整发送一次信息";
-				loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
+				if (sendDoneCallback)
+					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
+				return;
 			}
 		}
 		else {
@@ -141,9 +142,6 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 			return;
 		}
 	}
-
-	if (remaing == 0)
-		return;
 
 	if (buffer2_.usedBytes() + remaing >= watermark_ 
 		&& highWaterCallback)

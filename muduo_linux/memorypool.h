@@ -15,7 +15,6 @@ struct head {
 	int size_ = 0;
 };
 
-//这是在堆上申请空间，地址从低到高
 template<typename T>
 class memorypool {
 public:
@@ -63,7 +62,6 @@ void memorypool<T>::setPtr(T* &ptr) {
 template<typename T>
 void memorypool<T>::destroyPtr(T* ptr) {
 	manager_.destroy(ptr);
-	//析构之后再收回地址
 	ptr_queue_.push(ptr);
 }
 

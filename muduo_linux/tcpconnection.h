@@ -36,7 +36,6 @@ public:
 	void setTcpNoDelay(bool on);
 	void setTcpKeepAlive(bool on);
 
-	//如果在该tcpconn的回调函数中调用，那么xxxInLoop则是不必要的
 	void startRead();
 	void stopRead();
 	void send(buffer* data);
@@ -52,7 +51,7 @@ public:
 
 	//任意指针
 	void setPtr(void* ptr) { ptr_ = ptr; }
-	void* getPtr() { return ptr_; }
+	void* getPtr()const { return ptr_; }
 
 	int getFd()const { return fd_; }
 	bool connected()const { return state_ == 1; }

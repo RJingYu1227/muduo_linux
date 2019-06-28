@@ -1,7 +1,7 @@
 ﻿#include"logging.h"
 #include"asynclogging.h"
+#include"timer.h"
 
-#include<time.h>
 #include<unistd.h>
 #include<pthread.h>
 
@@ -56,13 +56,8 @@ logger::impl::impl(const char* basename, int line)
 	:stream_(),
 	basename_(basename),
 	line_(line) {
-
-	formatTime();
-}
-
-void logger::impl::formatTime() {
-	time_t time_ = time(NULL);
-	stream_ << ctime(&time_);
+	
+	stream_ << timer::timeToString(timer::getUnixTime());
 }
 
 logger::logger(const char* filename, int line)

@@ -54,13 +54,13 @@ bool eventloop::isInLoopThread()const {
 }
 
 void eventloop::updateChannel(channel* ch) {
-	assert(ch->ownerLoop() == this);
+	assert(ch->getLoop() == this);
 	assertInLoopThread();
 	poller_->updateChannel(ch);
 }
 
 void eventloop::removeChannel(channel* ch) {
-	assert(ch->ownerLoop() == this);
+	assert(ch->getLoop() == this);
 	assertInLoopThread();
 	poller_->removeChannel(ch);
 }

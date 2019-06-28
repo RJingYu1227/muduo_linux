@@ -109,6 +109,7 @@ logstream& logstream::operator<<(unsigned long long v) {
 logstream& logstream::operator<<(double v) {
 	if (buffer_.leftBytes() >= kMaxNumericSize) {
 		int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v);
+		//%g是根据结果自动选择科学记数法还是一般的小数记数法
 		buffer_.add(len);
 	}
 	return *this;

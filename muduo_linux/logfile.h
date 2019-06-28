@@ -1,8 +1,6 @@
 ﻿#pragma once
 
-#include<pthread.h>
 #include<string>
-#include<time.h>
 
 class appendfile;
 
@@ -14,23 +12,17 @@ public:
 
 	void append(const char* data, size_t len);
 	void flush();
-	bool rollfile();//error
+	bool rollfile();
 
 private:
 	
-	//static const int kRollPerSeconds = 60 * 60 * 24;
 	void setLogFileName(std::string& str);
-
 	void append_unlock(const char* data, size_t len);
 
 	std::string basename_;
 	off_t rollsize_;
-	time_t time_;
-	tm tm_;
 	int count_limit_;
 	int count_;
-
-	//pthread_mutex_t lock_;
 	appendfile* file_;
 
 };

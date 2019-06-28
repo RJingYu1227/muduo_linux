@@ -19,13 +19,15 @@ public:
 
 	static poller* newPoller(eventloop* loop, POLLER p = kEPOLL);
 
-	poller(eventloop* loop);
-	virtual ~poller();
+	poller(eventloop* loop) 
+		:loop_(loop) {
+
+	}
+	virtual ~poller() = default;
 
 	virtual void doPoll(int, channellist&) = 0;
 	virtual void updateChannel(channel* ch) = 0;
 	virtual void removeChannel(channel* ch) = 0;
-	void assertInLoopThread();
 
 protected:
 	typedef std::unordered_map<int, channel*> channel_map;
@@ -34,4 +36,3 @@ protected:
 	channel_map channels_;
 
 };
-

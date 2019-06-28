@@ -1,5 +1,4 @@
 ﻿#include"timerqueue.h"
-#include"channel.h"
 #include"eventloop.h"
 #include"logging.h"
 
@@ -22,6 +21,11 @@ timerqueue::timerqueue(eventloop* loop)
 timerqueue::~timerqueue() {
 	channel_.remove();
 	close(fd_);
+}
+
+void timerqueue::addTimer(const event_callback& cb, int64_t time) {
+	timer* temp_ = new timer(cb, time, 0);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 }
 
 timer* timerqueue::addTimer(const event_callback &cb, int64_t time, double seconds) {
@@ -79,7 +83,7 @@ void timerqueue::handleRead() {
 
 bool timerqueue::insert(const timerqueue::entry &temp) {
 	bool changed = 0;
-	timer_set::iterator iter = timers_.begin();
+	auto iter = timers_.begin();
 	if (iter == timers_.end() || temp.first < iter->first)
 		changed = 1;
 	timers_.insert(temp);
@@ -88,7 +92,7 @@ bool timerqueue::insert(const timerqueue::entry &temp) {
 
 void timerqueue::getTimers(int64_t now) {
 	entry ey(now, reinterpret_cast<timer*>(UINTPTR_MAX));
-	timer_set::iterator end = timers_.lower_bound(ey);
+	auto end = timers_.lower_bound(ey);
 	std::copy(timers_.begin(), end, std::back_inserter(expire_timers_));
 	timers_.erase(timers_.begin(),end);
 }
@@ -108,6 +112,6 @@ void timerqueue::resetTimerfd(int64_t time) {
 	setTimespec(time, new_value_.it_value);
 	int ret = timerfd_settime(fd_, 0, &new_value_, &old_value_);
 	if (ret)
-		LOG << "定时器设置出错";
+		LOG << "定时器设置出错，errno = " << errno;
 }
 

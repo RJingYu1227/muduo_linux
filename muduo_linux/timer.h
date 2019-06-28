@@ -1,26 +1,28 @@
 ﻿#pragma once
 
 #include<functional>
+#include<sys/time.h>
 
 class timer {
 	friend class timerqueue;
 public:
-	typedef std::function<void()> event_callback;
+	typedef std::function<void()> functor;
 
-	timer(const event_callback &cb, int64_t time, double seconds);
+	timer(const functor &cb, int64_t time, double seconds);
 	~timer() {}
 
 	int64_t getTime()const { return time_; }
-	void run() { Callback(); }
+	void run() { Functor(); }
 
-	static std::string timeToString(int64_t time);
-	static int64_t getMicroUnixTime();//微秒为单位
+	static std::string timeToString(time_t time);
+	static int64_t getMicroUnixTime();
+	static time_t getUnixTime() { return time(NULL); }
 
 private:
 
 	void restart(int64_t now) { time_ = now + useconds_; }
 
-	event_callback Callback;
+	functor Functor;
 	int64_t time_;
 	int64_t useconds_;
 	bool repeat_;

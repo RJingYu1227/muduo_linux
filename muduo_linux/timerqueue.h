@@ -4,7 +4,6 @@
 #include"channel.h"
 #include"uncopyable.h"
 
-#include<memory>
 #include<functional>
 #include<set>
 #include<vector>
@@ -18,7 +17,8 @@ public:
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
-	timer* addTimer(const event_callback& cb, int64_t time, double seconds = 0.0);
+	void addTimer(const event_callback& cb, int64_t time);
+	timer* addTimer(const event_callback& cb, int64_t time, double seconds);
 	void cancelTimer(timer* timer1);//只限于取消重复事件
 
 private:
