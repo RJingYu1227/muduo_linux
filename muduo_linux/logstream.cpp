@@ -3,12 +3,12 @@
 #include<algorithm>
 #include<stdio.h>
 
-const char logDigits[] = "9876543210123456789";
-const char* logZero = logDigits + 9;
-const char logDigitsHex[] = "0123456789ABCDEF";
+static const char logDigits[] = "9876543210123456789";
+static const char* logZero = logDigits + 9;
+static const char logDigitsHex[] = "0123456789ABCDEF";
 
 template<typename T>
-size_t logConvert(char buf[], T value){
+static size_t logConvert(char buf[], T value){
 	T i = value;
 	char* p = buf;
 
@@ -26,7 +26,7 @@ size_t logConvert(char buf[], T value){
 	return p - buf;
 }
 
-size_t logConvertHex(char buf[], uintptr_t value) {
+static size_t logConvertHex(char buf[], uintptr_t value) {
 	uintptr_t i = value;
 	char* p = buf;
 

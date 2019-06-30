@@ -7,9 +7,10 @@
 template<typename T>
 struct head {
 	head() {}
-	head(T* ptr_, int size_) {
-		this->ptr_ = ptr_;
-		this->size_ = size_;
+	head(T* ptr, int size)
+		:ptr_(ptr),
+		size_(size) {
+
 	}
 	T* ptr_ = nullptr;
 	int size_ = 0;

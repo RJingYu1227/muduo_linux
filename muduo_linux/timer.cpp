@@ -1,4 +1,4 @@
-#include"timer.h"
+ï»¿#include"timer.h"
 
 #include<string>
 
@@ -14,7 +14,7 @@ timer::timer(const functor &cb, int64_t time, double seconds)
 std::string timer::timeToString(time_t time) {
 	char timebuf[32];
 	tm tm_;
-	localtime_r(&time, &tm_);//¸Ãº¯ÊıÊÇ¿ÉÖØÈëµÄ
+	localtime_r(&time, &tm_);//è¯¥å‡½æ•°æ˜¯å¯é‡å…¥çš„
 	strftime(timebuf, sizeof timebuf, "%Y%m%d-%H%M%S", &tm_);
 	return timebuf;
 }
