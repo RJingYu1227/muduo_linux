@@ -18,7 +18,7 @@ void httpresponse::appendToBuffer(buffer* buffer2) {
 	snprintf(buf, sizeof buf, "Content-Length: %zd\r\n", body_.size());
 	buffer2->append(buf, strlen(buf));
 
-	for (auto iter : headers_)
+	for (auto& iter : headers_)
 		buffer2->append(iter.first + iter.second);
 
 	buffer2->append("\r\n", 2);
