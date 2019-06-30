@@ -27,8 +27,7 @@ public:
 
 	void addHeader(const string& key, const string& value) 
 	{ headers_[key + ": "] = (value + "\r\n"); }
-	void setContentType(const string& value) 
-	{ headers_["Content-Type: "] = (value + "\r\n"); }
+	void eraseHeader(const string& key);
 
 	string& getBody() { return body_; }
 	void setStatu1(status value) { statu1_ = value; }

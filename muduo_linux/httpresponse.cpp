@@ -3,6 +3,12 @@
 
 #include<string.h>
 
+void httpresponse::eraseHeader(const string& key) {
+	auto iter = headers_.find(key + ": ");
+	if (iter != headers_.end())
+		headers_.erase(iter);
+}
+
 void httpresponse::appendToBuffer(buffer* buffer2) {
 	char buf[32];
 

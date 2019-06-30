@@ -46,9 +46,10 @@ void timerqueue::cancelTimer(timer* timer1){
 }
 
 void timerqueue::cancelTimerInLoop(timer* timer1) {
-	entry temp_(timer1->time_, timer1);
-	if (timers_.find(temp_) != timers_.end()) {
-		timers_.erase(temp_);
+	entry temp(timer1->time_, timer1);
+	auto iter = timers_.find(temp);
+	if (iter != timers_.end()) {
+		timers_.erase(iter);
 		delete timer1;
 	}
 	else

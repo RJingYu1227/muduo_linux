@@ -46,8 +46,9 @@ void epoller::updateChannel(channel* ch) {
 		ch->setMark(1);
 	}
 	else {
-		assert(channels_.find(fd_) != channels_.end());
-		assert(channels_[fd_] = ch);
+		auto iter = channels_.find(fd_);
+		assert(iter != channels_.end());
+		assert(iter->second = ch);
 		epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd_, &ev);
 	}
 }
@@ -66,8 +67,9 @@ void epoller::removeChannel(channel* ch) {
 	ev.data.fd = fd_;
 	ev.data.ptr = ch;
 
-	assert(channels_.find(fd_) != channels_.end());
-	assert(channels_[fd_] = ch);
+	auto iter = channels_.find(fd_);
+	assert(iter != channels_.end());
+	assert(iter->second = ch);
 	channels_.erase(fd_);
 	epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd_, &ev);
 	ch->setMark(-1);
