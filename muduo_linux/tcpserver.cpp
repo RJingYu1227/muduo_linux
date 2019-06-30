@@ -10,6 +10,8 @@
 #include<sys/types.h>
 #include<arpa/inet.h>
 
+using std::placeholders::_1;
+
 tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	:ip_(ip),
 	port_(port),
@@ -18,6 +20,8 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	looppool_(new elthreadpool(loopnum)),
 	mpool_(1024),
 	channel_(serverloop_, listenfd_),
+	removeFunc(std::bind(&tcpserver::removeConn, this, _1)),
+	deleterFunc(std::bind(&tcpserver::deleter, this, _1)),
 	listening_(0) {
 
 	bindFd();
@@ -90,9 +94,13 @@ void tcpserver::bindFd() {
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;
 	socklen_t len_ = sizeof cliaddr_;
+	int clifd_;
+	eventloop* ioloop_;
+	tcpconnection* conn_;
+
 	while (1) {
 		bzero(&cliaddr_, len_);
-		int clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &len_,
+		clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &len_,
 			SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 		if (clifd_ == -1) {
@@ -101,17 +109,16 @@ void tcpserver::acceptConn() {
 			break;
 		}
 
-		eventloop* ioloop_ = looppool_->getLoop();
+		ioloop_ = looppool_->getLoop();
 		if (ioloop_ == nullptr)
 			ioloop_ = serverloop_;
 
-		tcpconnection* conn_;
 		mpool_.setPtr(conn_);
 		new(conn_)tcpconnection(ioloop_, clifd_, &cliaddr_);
 
-		tcpconn_ptr new_(conn_, std::bind(&tcpserver::deleter, this, std::placeholders::_1));
+		tcpconn_ptr new_(conn_, deleterFunc);
 		new_->setConnectedCallback(connectedCallback);
-		new_->setClosedCallback(std::bind(&tcpserver::removeConn, this, std::placeholders::_1));
+		new_->setClosedCallback(removeFunc);
 		new_->setRecvDoneCallback(recvDoneCallback);
 		new_->setSendDoneCallback(sendDoneCallback);
 

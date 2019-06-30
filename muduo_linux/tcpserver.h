@@ -60,6 +60,9 @@ private:
 	event_callback recvDoneCallback;
 	event_callback sendDoneCallback;
 
+	event_callback removeFunc;
+	std::function<void(tcpconnection*)> deleterFunc;
+
 	bool listening_;
 
 };
