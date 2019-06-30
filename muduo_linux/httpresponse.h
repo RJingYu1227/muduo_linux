@@ -27,7 +27,8 @@ public:
 
 	void addHeader(const string& key, const string& value) 
 	{ headers_[key + ": "] = (value + "\r\n"); }
-	void eraseHeader(const string& key);
+	void eraseHeader(const string& key) 
+	{ headers_.erase(key + ": "); }
 
 	string& getBody() { return body_; }
 	void setStatu1(status value) { statu1_ = value; }

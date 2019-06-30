@@ -47,11 +47,8 @@ void timerqueue::cancelTimer(timer* timer1){
 
 void timerqueue::cancelTimerInLoop(timer* timer1) {
 	entry temp(timer1->time_, timer1);
-	auto iter = timers_.find(temp);
-	if (iter != timers_.end()) {
-		timers_.erase(iter);
+	if (timers_.erase(temp))
 		delete timer1;
-	}
 	else
 		timer1->repeat_ = 0;
 	//只有取消重复事件才是指针安全的，建议修改handleRead
