@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include"uncopyable.h"
+
 #include<queue>
 #include<memory>
 #include<assert.h>
@@ -17,7 +19,7 @@ struct head {
 };
 
 template<typename T>
-class memorypool {
+class memorypool :uncopyable {
 public:
 	memorypool(int init = 1024);
 	~memorypool();
