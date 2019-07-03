@@ -17,6 +17,13 @@ public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
+	enum state {
+		kConnecting,
+		kConnected,
+		kDisConnecting,
+		kDisConnected
+	};
+
 	static void ignoreSigPipe();
 
 	tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr);

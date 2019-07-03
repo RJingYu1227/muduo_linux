@@ -81,7 +81,7 @@
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="channel.cpp" />
     <ClCompile Include="elthreadpool.cpp" />
-    <ClCompile Include="epoller.cpp" />
+    <ClCompile Include="kepoll.cpp" />
     <ClCompile Include="eventloop.cpp" />
     <ClCompile Include="eventqueue.cpp" />
     <ClCompile Include="fileutil.cpp" />
@@ -103,7 +103,7 @@
     <ClInclude Include="buffer.h" />
     <ClInclude Include="channel.h" />
     <ClInclude Include="elthreadpool.h" />
-    <ClInclude Include="epoller.h" />
+    <ClInclude Include="kepoll.h" />
     <ClInclude Include="eventloop.h" />
     <ClInclude Include="eventqueue.h" />
     <ClInclude Include="fileutil.h" />

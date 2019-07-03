@@ -6,11 +6,11 @@
 #include<sys/epoll.h>
 #include<unordered_map>
 
-class epoller :public poller {
+class kepoll :public poller {
 public:
 
-	epoller(eventloop* loop);
-	~epoller();
+	kepoll(eventloop* loop);
+	~kepoll();
 
 	void doPoll(int timeoutms, channellist& active_channels_);
 	void updateChannel(channel* ch);

@@ -1,4 +1,4 @@
-﻿#include"epoller.h"
+﻿#include"kepoll.h"
 #include"logging.h"
 #include"channel.h"
 
@@ -6,7 +6,7 @@
 #include<unistd.h>
 #include<strings.h>
 
-epoller::epoller(eventloop* loop)
+kepoll::kepoll(eventloop* loop)
 	:poller(loop),
 	epollfd_(epoll_create1(EPOLL_CLOEXEC)),
 	events_(kInitEventListSize) {
@@ -14,11 +14,11 @@ epoller::epoller(eventloop* loop)
 	assert(epollfd_ > 0);
 }
 
-epoller::~epoller() {
+kepoll::~kepoll() {
 	close(epollfd_);
 }
 
-void epoller::doPoll(int timeoutms, channellist& active_channels_) {
+void kepoll::doPoll(int timeoutms, channellist& active_channels_) {
 	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
@@ -31,7 +31,7 @@ void epoller::doPoll(int timeoutms, channellist& active_channels_) {
 
 }
 
-void epoller::updateChannel(channel* ch) {
+void kepoll::updateChannel(channel* ch) {
 	int fd_ = ch->getFd();
 	epoll_event ev;
 	bzero(&ev, sizeof ev);
@@ -53,7 +53,7 @@ void epoller::updateChannel(channel* ch) {
 	}
 }
 
-void epoller::removeChannel(channel* ch) {
+void kepoll::removeChannel(channel* ch) {
 	int fd_ = ch->getFd();
 
 	if (ch->getMark() == -1) {
@@ -76,10 +76,10 @@ void epoller::removeChannel(channel* ch) {
 
 }
 
-void epoller::fillActiveChannels(int numevents_, channellist& active_channels_)const {
+void kepoll::fillActiveChannels(int numevents_, channellist& active_channels_)const {
 	assert(static_cast<size_t>(numevents_) <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
-		channel* ch = static_cast<channel*>(events_[i].data.ptr);
+		channel* ch = (channel*)(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);
 		active_channels_.push_back(ch);
 	}

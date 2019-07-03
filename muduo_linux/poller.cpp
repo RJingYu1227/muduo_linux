@@ -1,9 +1,9 @@
 ﻿#include"poller.h"
-#include"epoller.h"
+#include"kepoll.h"
 
 poller* poller::newPoller(eventloop* loop, poller::POLLER p) {
 	if (p == kEPOLL)
-		return new epoller(loop);
+		return new kepoll(loop);
 	else
 		return nullptr;
 }

@@ -28,6 +28,7 @@ public:
 	virtual void doPoll(int, channellist&) = 0;
 	virtual void updateChannel(channel* ch) = 0;
 	virtual void removeChannel(channel* ch) = 0;
+	size_t size() { return channels_.size(); }
 
 protected:
 	typedef std::unordered_map<int, channel*> channel_map;
