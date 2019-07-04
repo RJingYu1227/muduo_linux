@@ -186,10 +186,10 @@ void tcpconnection::handleError() {
 	LOG << "Tcp连接出错，errno = " << errno;
 }
 
-void tcpconnection::setTcpNoDelay(bool on) {
-	socket_.setNodelay(on);
+void tcpconnection::setTcpNodelay(bool on) {
+	socket_.setTcpNodelay(on);
 }
 
-void tcpconnection::setTcpKeepAlive(bool on) {
+void tcpconnection::setKeepalive(bool on) {
 	socket_.setKeepalive(on);
 }

@@ -32,7 +32,8 @@ public:
 	void setSendDoneCallback(const event_callback& cb) { sendDoneCallback = cb; }
 
 	int getFd()const { return socket_.getFd(); }
-	int getPort()const { return socket_.getPort(); }
+	uint16_t getPort()const { return socket_.getPort(); }
+	uint32_t getAddr()const { return socket_.getAddr(); }
 
 private:
 

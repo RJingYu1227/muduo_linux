@@ -40,8 +40,8 @@ public:
 	}
 
 	//tcp选项，注意线程安全
-	void setTcpNoDelay(bool on);
-	void setTcpKeepAlive(bool on);
+	void setTcpNodelay(bool on);
+	void setKeepalive(bool on);
 
 	void startRead();
 	void stopRead();
@@ -61,8 +61,9 @@ public:
 	void* getPtr()const { return ptr_; }
 
 	int getFd()const { return fd_; }
+	uint16_t getPort()const { return socket_.getPort(); }
+	uint32_t getAddr()const { return socket_.getAddr(); }
 	bool connected()const { return state_ == 1; }
-	int getPort()const { return socket_.getPort(); }
 
 private:
 

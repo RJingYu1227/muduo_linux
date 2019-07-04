@@ -2,7 +2,6 @@
 
 #include"logstream.h"
 
-#include<string>
 #include<errno.h>
 
 class asynclogging;

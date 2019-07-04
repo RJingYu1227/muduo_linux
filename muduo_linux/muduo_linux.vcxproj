@@ -76,6 +76,9 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\httpserver;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
     <ClCompile Include="net\buffer.cpp" />
