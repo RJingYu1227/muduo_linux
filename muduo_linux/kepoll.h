@@ -21,7 +21,7 @@ private:
 
 	static const int kInitEventListSize = 128;
 
-	void fillActiveChannels(int numevents, channellist& active_channels_)const;
+	void fillActiveChannels(int numevents, channellist& active_channels_);
 
 	int epollfd_;
 	event_list events_;

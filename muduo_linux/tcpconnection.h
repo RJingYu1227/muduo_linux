@@ -2,10 +2,10 @@
 
 #include"buffer.h"
 #include"channel.h"
+#include"ksocket.h"
 #include"uncopyable.h"
 
 #include<memory>
-#include<netinet/in.h>
 #include<functional>
 
 using std::string;
@@ -26,7 +26,7 @@ public:
 
 	static void ignoreSigPipe();
 
-	tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr);
+	tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr);
 	~tcpconnection();
 
 	eventloop* getLoop() { return loop_; }
@@ -62,8 +62,7 @@ public:
 
 	int getFd()const { return fd_; }
 	bool connected()const { return state_ == 1; }
-	const char* getIp()const { return ip_; }
-	int getPort()const { return port_; }
+	int getPort()const { return socket_.getPort(); }
 
 private:
 
@@ -82,14 +81,13 @@ private:
 	eventloop* loop_;
 	void* ptr_;
 
-	const char* ip_;
-	const int port_;
-	const int fd_;
+	int fd_;
 	int state_;
 	size_t watermark_;
 
+	ksocket socket_;
 	buffer buffer1_;
-	buffer buffer2_;//这里的buffer不是指针
+	buffer buffer2_;
 	channel channel_;
 
 	event_callback connectedCallback;
@@ -97,7 +95,6 @@ private:
 	event_callback recvDoneCallback;
 	event_callback sendDoneCallback;
 	event_callback highWaterCallback;
-	//成员变量声明顺序因为字节对齐原因会影响类的大小
 
 };
 

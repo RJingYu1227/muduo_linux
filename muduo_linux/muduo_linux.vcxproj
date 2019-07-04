@@ -88,6 +88,7 @@
     <ClCompile Include="httprequest.cpp" />
     <ClCompile Include="httpresponse.cpp" />
     <ClCompile Include="httpserver.cpp" />
+    <ClCompile Include="ksocket.cpp" />
     <ClCompile Include="logfile.cpp" />
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="logstream.cpp" />
@@ -110,6 +111,7 @@
     <ClInclude Include="httprequest.h" />
     <ClInclude Include="httpresponse.h" />
     <ClInclude Include="httpserver.h" />
+    <ClInclude Include="ksocket.h" />
     <ClInclude Include="logfile.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="logstream.h" />

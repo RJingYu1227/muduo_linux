@@ -3,39 +3,33 @@
 #include"channel.h"
 #include"logging.h"
 
-#include<sys/socket.h>
-#include<netinet/tcp.h>
 #include<unistd.h>
 #include<assert.h>
-#include<arpa/inet.h>
 #include<signal.h>
-#include<string>
 
 void tcpconnection::ignoreSigPipe() {
 	signal(SIGPIPE, SIG_IGN);
 	LOG << "忽略SIGPIPE";
 }
 
-tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in* cliaddr)
+tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 	:loop_(loop),
 	ptr_(0),
-	ip_(inet_ntoa(cliaddr->sin_addr)),
-	port_(cliaddr->sin_port),
 	fd_(fd),
 	state_(0),
 	watermark_(64 * 1024 * 1024),
+	socket_(fd, cliaddr),
 	channel_(loop_, fd_) {
 
 	channel_.setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_.setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
 	channel_.setErrorCallback(std::bind(&tcpconnection::handleError, this));
 	channel_.setCloseCallback(std::bind(&tcpconnection::handleClose, this));
-	LOG << "建立一个新连接，ip = " << ip_;
+	LOG << "建立一个新连接";
 }
 
 tcpconnection::~tcpconnection() {
 	assert(state_ == 3);
-	close(fd_);
 }
 
 void tcpconnection::start() {
@@ -110,10 +104,7 @@ void tcpconnection::shutDownInLoop() {
 		return;
 	state_ = 2;
 
-	if (shutdown(fd_, SHUT_WR) == 0)
-		return;
-	else
-		LOG << "TcpShutDown出错，ip = " << ip_ << " errno = " << errno;
+	socket_.shutdownWrite();
 }
 
 void tcpconnection::sendInLoop1(const string &data) {
@@ -171,7 +162,7 @@ void tcpconnection::handleClose() {
 
 	channel_.remove();//注意
 	closedCallback(shared_from_this());
-	LOG << "关闭一个连接，ip = " << ip_;
+	LOG << "关闭一个连接";
 }
 
 void tcpconnection::handleWrite() {
@@ -192,17 +183,13 @@ void tcpconnection::handleWrite() {
 }
 
 void tcpconnection::handleError() {
-	LOG << "Tcp连接出错，ip = " << ip_ << " errno = " << errno;
+	LOG << "Tcp连接出错，errno = " << errno;
 }
 
 void tcpconnection::setTcpNoDelay(bool on) {
-	int optval = on ? 1 : 0;
-	setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY,
-		&optval, static_cast<socklen_t>(sizeof optval));
+	socket_.setNodelay(on);
 }
 
 void tcpconnection::setTcpKeepAlive(bool on) {
-	int optval = on ? 1 : 0;
-	setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE,
-		&optval, static_cast<socklen_t>(sizeof optval));
+	socket_.setKeepalive(on);
 }

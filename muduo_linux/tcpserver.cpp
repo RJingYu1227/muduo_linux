@@ -4,34 +4,25 @@
 #include"eventloop.h"
 #include"tcpconnection.h"
 
-#include<strings.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<sys/types.h>
-#include<arpa/inet.h>
-
 using std::placeholders::_1;
 
 tcpserver::tcpserver(const char* ip, int port, int loopnum)
-	:ip_(ip),
-	port_(port),
-	listenfd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
-	serverloop_(new eventloop()),
+	:serverloop_(new eventloop()),
 	looppool_(new elthreadpool(loopnum)),
+	socket_(ip, port),
 	mpool_(1024),
-	channel_(serverloop_, listenfd_),
+	channel_(serverloop_, socket_.getFd()),
 	removeFunc(std::bind(&tcpserver::removeConn, this, _1)),
 	deleterFunc(std::bind(&tcpserver::deleter, this, _1)),
 	listening_(0) {
 
-	bindFd();
+	socket_.bind();
 	channel_.setReadCallback(std::bind(&tcpserver::acceptConn, this));
-	LOG << "创建TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
+	LOG << "创建TcpServer：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 tcpserver::~tcpserver() {
 	stop();
-	close(listenfd_);
 
 	for (auto& temp : connections_) {
 		temp.second->setClosedCallback(closedCallback);
@@ -41,7 +32,7 @@ tcpserver::~tcpserver() {
 
 	connections_.clear();
 	delete serverloop_;
-	LOG << "关闭TcpServer：" << ip_ << ' ' << port_ << ' ' << listenfd_;
+	LOG << "关闭TcpServer：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 void tcpserver::start() {
@@ -50,10 +41,7 @@ void tcpserver::start() {
 
 	serverloop_->assertInLoopThread();
 
-	if (listen(listenfd_, SOMAXCONN) == -1) {
-		LOG << "TcpServer监听失败，errno = " << errno;
-		exit(1);
-	}
+	socket_.listen();
 	channel_.enableReading();
 
 	looppool_->start();
@@ -71,50 +59,27 @@ void tcpserver::stop() {
 
 	channel_.remove();
 	listening_ = 0;
+	LOG << "TcpServer停止监听";
 }
 
-void tcpserver::bindFd() {
-	if (listenfd_ == -1) {
-		LOG << "创建listenfd失败，errno = " << errno;
-		exit(1);
-	}
-
-	sockaddr_in serveraddr_;
-	bzero(&serveraddr_, sizeof serveraddr_);
-	serveraddr_.sin_family = AF_INET;
-	inet_pton(AF_INET, ip_, &serveraddr_.sin_addr);
-	serveraddr_.sin_port = htons(static_cast<uint16_t>(port_));
-
-	if (bind(listenfd_, (sockaddr*)&serveraddr_, sizeof serveraddr_) == -1) {
-		LOG << "绑定监听端口失败，errno = " << errno;
-		exit(1);
-	}
-}
 
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;
-	socklen_t len_ = sizeof cliaddr_;
 	int clifd_;
 	eventloop* ioloop_;
 	tcpconnection* conn_;
 
 	while (1) {
-		bzero(&cliaddr_, len_);
-		clifd_ = accept4(listenfd_, (sockaddr*)&cliaddr_, &len_,
-			SOCK_NONBLOCK | SOCK_CLOEXEC);
-
-		if (clifd_ == -1) {
-			if (errno != EAGAIN)
-				LOG << "建立连接失败，errno = " << errno;
+		clifd_ = socket_.accept(&cliaddr_);
+		if (clifd_ == -1)
 			break;
-		}
 
 		ioloop_ = looppool_->getLoop();
 		if (ioloop_ == nullptr)
 			ioloop_ = serverloop_;
 
 		mpool_.setPtr(conn_);
-		new(conn_)tcpconnection(ioloop_, clifd_, &cliaddr_);
+		new(conn_)tcpconnection(ioloop_, clifd_, cliaddr_);
 
 		tcpconn_ptr new_(conn_, deleterFunc);
 		new_->setConnectedCallback(connectedCallback);

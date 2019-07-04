@@ -76,7 +76,7 @@ void kepoll::removeChannel(channel* ch) {
 
 }
 
-void kepoll::fillActiveChannels(int numevents_, channellist& active_channels_)const {
+void kepoll::fillActiveChannels(int numevents_, channellist& active_channels_) {
 	assert(static_cast<size_t>(numevents_) <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = (channel*)(events_[i].data.ptr);
