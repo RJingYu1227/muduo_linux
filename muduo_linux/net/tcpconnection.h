@@ -58,12 +58,12 @@ public:
 
 	//任意指针
 	void setPtr(void* ptr) { ptr_ = ptr; }
-	void* getPtr()const { return ptr_; }
+	void* getPtr() { return ptr_; }
 
 	int getFd()const { return fd_; }
 	uint16_t getPort()const { return socket_.getPort(); }
 	uint32_t getAddr()const { return socket_.getAddr(); }
-	bool connected()const { return state_ == 1; }
+	bool isConnected()const { return state_ == 1; }
 
 private:
 
