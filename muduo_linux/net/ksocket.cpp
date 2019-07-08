@@ -6,7 +6,7 @@
 #include<assert.h>
 
 ksocket::ksocket(const char* ip, int port)
-	:fd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP)),
+	:fd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP)),
 	len_(sizeof(sockaddr_in)) {
 
 	assert(fd_ > 0);
