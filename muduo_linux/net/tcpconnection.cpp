@@ -86,7 +86,7 @@ void tcpconnection::send(const string& data) {
 		sendInLoop2(&data[0], data.size());
 	else
 		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1,
-			shared_from_this(), string(data)));
+			shared_from_this(), data));
 }
 
 void tcpconnection::startReadInLoop() {
