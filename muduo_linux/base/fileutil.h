@@ -4,7 +4,7 @@
 
 #include<unistd.h>
 #include<stdio.h>
-#include<fcntl.h>
+
 
 class appendfile :uncopyable {
 public:

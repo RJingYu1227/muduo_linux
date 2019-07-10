@@ -77,10 +77,12 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\httpserver;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
+    <IncludePath>D:\编程练习\muduo_linux\muduo_linux\httpserver;D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
+    <ClCompile Include="base\kthread.cpp" />
+    <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\buffer.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
@@ -104,6 +106,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
+    <ClInclude Include="base\kthread.h" />
+    <ClInclude Include="net\kmysql.h" />
     <ClInclude Include="net\buffer.h" />
     <ClInclude Include="net\channel.h" />
     <ClInclude Include="net\elthreadpool.h" />
@@ -130,6 +134,9 @@
     <Link>
       <LibraryDependencies>pthread;protobuf</LibraryDependencies>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(ClCompile.AdditionalIncludeDirectories);/usr/include/mysql</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

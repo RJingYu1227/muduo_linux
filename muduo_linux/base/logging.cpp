@@ -33,7 +33,7 @@ bool logger::createAsyncLogging() {
 	int ret = pthread_create(&tid, NULL, asyncFunc, NULL);
 	if (ret) {
 		LOG << "日志线程创建失败";
-		return 0;
+		exit(1);
 	}
 	while (async_ == nullptr);
 

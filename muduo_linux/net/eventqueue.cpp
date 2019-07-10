@@ -8,7 +8,6 @@
 eventqueue::eventqueue(eventloop* loop)
 	:fd_(eventfd(0, EFD_CLOEXEC)),
 	count_(0),
-	lock_(PTHREAD_MUTEX_INITIALIZER),
 	loop_(loop),
 	channel_(loop_, fd_) {
 
@@ -27,20 +26,16 @@ void eventqueue::wakeup() {
 }
 
 void eventqueue::addFunctor(const functor& func) {
-	pthread_mutex_lock(&lock_);
-
-	functors_.push_back(func);
-
-	pthread_mutex_unlock(&lock_);
+	{
+		klock<kmutex> x(&lock_);
+		functors_.push_back(func);
+	}
 	eventfd_write(fd_, 1);
 }
 
 void eventqueue::getFunctors(std::vector<functor>& vec) {
-	pthread_mutex_lock(&lock_);
-
+	klock<kmutex> x(&lock_);
 	vec.swap(functors_);
-
-	pthread_mutex_unlock(&lock_);
 }
 
 void eventqueue::handleRead() {

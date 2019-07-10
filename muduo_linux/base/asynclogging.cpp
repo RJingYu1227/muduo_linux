@@ -8,8 +8,6 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 	rollsize_(rollsize),
 	flush_interval_(flush_interval),
 	tid_(pthread_self()),
-	lock_(PTHREAD_MUTEX_INITIALIZER),
-	cond_(PTHREAD_COND_INITIALIZER),
 	buffer1_(new buffer),
 	buffer2_(new buffer),
 	buffers_(),
@@ -21,7 +19,7 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 }
 
 void asynclogging::append(const char* data, size_t len) {
-	pthread_mutex_lock(&lock_);
+	klock<kmutex> x(&lock_);
 
 	if (buffer1_->leftBytes() > len)
 		buffer1_->append(data, len);
@@ -34,10 +32,9 @@ void asynclogging::append(const char* data, size_t len) {
 		else
 			buffer1_ = new buffer;
 		buffer1_->append(data, len);
-		pthread_cond_signal(&cond_);
+		cond_.notify();
 	}
 
-	pthread_mutex_unlock(&lock_);
 }
 
 void asynclogging::threadFunc() {
@@ -56,25 +53,22 @@ void asynclogging::threadFunc() {
 		assert(buffer4_ && buffer4_->length() == 0);
 		assert(buffersw_.empty());
 		
-		pthread_mutex_lock(&lock_);
+		{
+			klock<kmutex> x(&lock_);
 
-		if (buffers_.empty()) {
-			clock_gettime(CLOCK_REALTIME, &time_);
-			time_.tv_sec += static_cast<time_t>(flush_interval_);
-			pthread_cond_timedwait(&cond_, &lock_, &time_);
+			if (buffers_.empty())
+				cond_.timedwait(&lock_, flush_interval_);
+
+			buffers_.push_back(buffer1_);
+			buffersw_.swap(buffers_);
+
+			buffer1_ = buffer3_;
+			buffer3_ = nullptr;
+			if (!buffer2_) {
+				buffer2_ = buffer4_;
+				buffer4_ = nullptr;
+			}
 		}
-
-		buffers_.push_back(buffer1_);
-		buffersw_.swap(buffers_);
-
-		buffer1_ = buffer3_;
-		buffer3_ = nullptr;
-		if (!buffer2_) {
-			buffer2_ = buffer4_;
-			buffer4_ = nullptr;
-		}
-			
-		pthread_mutex_unlock(&lock_);
 
 		assert(!buffersw_.empty());
 

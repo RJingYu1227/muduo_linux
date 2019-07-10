@@ -5,7 +5,6 @@
 #include<pthread.h>
 #include<vector>
 #include<functional>
-#include<sys/eventfd.h>
 
 class channel;
 class poller;

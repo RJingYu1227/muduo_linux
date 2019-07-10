@@ -1,12 +1,11 @@
 ﻿#pragma once
 
 #include"logstream.h"
+#include"kthread.h"
 #include"uncopyable.h"
 
-#include<pthread.h>
 #include<vector>
 #include<string>
-#include<time.h>
 
 class asynclogging :uncopyable {
 public:
@@ -26,7 +25,7 @@ public:
 	void append(const char* data, size_t len);
 	void stop() {
 		running_ = 0;
-		pthread_cond_signal(&cond_);
+		cond_.notify();
 		pthread_join(tid_, NULL);
 	}
 
@@ -41,14 +40,12 @@ private:
 	int flush_interval_;
 
 	pthread_t tid_;
-	pthread_mutex_t lock_;
-	pthread_cond_t cond_;
+	kmutex lock_;
+	kcond cond_;
 
 	buffer* buffer1_;
 	buffer* buffer2_;
 	buffer_vec buffers_;
-
-	timespec time_;
 
 	bool running_;
 

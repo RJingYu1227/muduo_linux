@@ -1,12 +1,12 @@
 #pragma once
 
 #include"channel.h"
+#include"kthread.h"
 #include"uncopyable.h"
 
 #include<functional>
 #include<vector>
 #include<sys/eventfd.h>
-#include<pthread.h>
 
 class eventloop;
 
@@ -26,7 +26,7 @@ private:
 
 	int fd_;
 	eventfd_t count_;
-	pthread_mutex_t lock_;
+	kmutex lock_;
 	eventloop* loop_;
 	channel channel_;
 	std::vector<functor> functors_;
