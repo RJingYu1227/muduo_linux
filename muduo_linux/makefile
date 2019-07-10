@@ -28,4 +28,3 @@ ${OBJ} :
 clean:
 	rm ${OBJ}
 	rm ${TARGET}
-
