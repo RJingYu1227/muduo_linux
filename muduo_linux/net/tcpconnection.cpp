@@ -21,6 +21,7 @@ tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 	socket_(fd, cliaddr),
 	channel_(loop_, fd_) {
 
+	socket_.setTcpNodelay(1);
 	channel_.setReadCallback(std::bind(&tcpconnection::handleRead, this));
 	channel_.setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
 	channel_.setErrorCallback(std::bind(&tcpconnection::handleError, this));

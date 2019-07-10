@@ -29,7 +29,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 }
 
 int main(int argc, char* argv[]) {
-	if (argc != 3)
+	if (argc != 4)
 		return 0;
 
 	logger::createAsyncLogging();
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
 	server.start();*/
 
-	httpserver server(argv[1], atoi(argv[2]));
+	httpserver server(argv[1], atoi(argv[2]), atoi(argv[3]));
 	server.start();
 
 	logger::deleteAsyncLogging();
