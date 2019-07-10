@@ -1,10 +1,14 @@
-﻿#include"eventloop.h"
-#include"tcpserver.h"
+﻿#include"logging.h"
+
 #include"httpserver.h"
-#include"logging.h"
+#include"httprequest.h"
+#include"httpresponse.h"
+
+#include"tcpserver.h"
 #include"tcpconnection.h"
 
-#include<stdlib.h>
+
+#include<iostream>
 
 void onConnected(const tcpconn_ptr& conn){
 
@@ -25,7 +29,18 @@ void onSendDone(const tcpconn_ptr& conn) {
 }
 
 void httpCallback(const httprequest& request, httpresponse& response) {
-	
+	if (request.getPath() == "/hello") {
+		response.setStatu1(httpresponse::k200OK);
+		response.setStatu2("OK");
+		response.addHeader("Content-Type", "text/plain");
+		response.addHeader("Server", "Muduo");
+		response.getBody() = "hello, world!\n";
+	}
+	else {
+		response.setStatu1(httpresponse::k404NotFound);
+		response.setStatu2("Not Found");
+		response.setKeepAlive(0);
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -45,6 +60,7 @@ int main(int argc, char* argv[]) {
 	server.start();*/
 
 	httpserver server(argv[1], atoi(argv[2]), atoi(argv[3]));
+	server.setHttpCallback(httpCallback);
 	server.start();
 
 	logger::deleteAsyncLogging();
