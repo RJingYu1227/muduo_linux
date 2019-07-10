@@ -1,7 +1,6 @@
 ﻿#include"logfile.h"
 #include"fileutil.h"
 
-#include<assert.h>
 #include<time.h>
 
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)
@@ -9,10 +8,8 @@ logfile::logfile(const char* basename, off_t rollsize, int count_limit)
 	rollsize_(rollsize),
 	count_limit_(count_limit),
 	count_(0),
-	//lock_(PTHREAD_MUTEX_INITIALIZER),
 	file_(nullptr) {
 
-	//assert(basename_.find('/') == std::string::npos);
 	rollfile();
 }
 
@@ -42,19 +39,16 @@ void logfile::append_unlock(const char* data, size_t len) {
 	}
 }
 
-bool logfile::rollfile() {
+void logfile::rollfile() {
 	std::string filename; 
 	setLogFileName(filename);
-	if (file_ == nullptr) {
+
+	if (file_ == nullptr)
 		file_ = new appendfile(filename.c_str());
-		return 1;
-	}
-	if (file_) {
+	else {
 		file_->~appendfile();
 		new(file_)appendfile(filename.c_str());
-		return 1;
 	}
-	return 0;
 }
 
 void logfile::setLogFileName(std::string& str) {

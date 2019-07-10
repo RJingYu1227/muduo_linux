@@ -7,7 +7,7 @@ appendfile::appendfile(const char* filename)
 	written_bytes_(0) {
 
 	assert(fp_);
-	setbuffer(fp_, buffer_, sizeof(buffer_));
+	setbuffer(fp_, buffer_, sizeof buffer_);
 }
 
 appendfile::~appendfile() {

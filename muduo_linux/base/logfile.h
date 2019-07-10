@@ -12,10 +12,10 @@ public:
 
 	void append(const char* data, size_t len);
 	void flush();
-	bool rollfile();
 
 private:
 	
+	void rollfile();
 	void setLogFileName(std::string& str);
 	void append_unlock(const char* data, size_t len);
 
