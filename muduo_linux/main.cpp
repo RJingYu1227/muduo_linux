@@ -7,7 +7,6 @@
 #include"tcpserver.h"
 #include"tcpconnection.h"
 
-
 #include<iostream>
 
 void onConnected(const tcpconn_ptr& conn){
@@ -67,4 +66,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-

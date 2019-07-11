@@ -44,9 +44,8 @@ private:
 class kspin {
 public:
 
-	kspin()
-		:lock_(0) {
-
+	kspin() {
+		pthread_spin_init(&lock_, 0);
 	}
 	~kspin() {}
 
