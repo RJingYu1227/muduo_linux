@@ -4,42 +4,42 @@
 
 #include<queue>
 #include<memory>
-#include<assert.h>
 
 template<typename T>
 struct head {
 	head() {}
-	head(T* ptr, int size)
+	head(T* ptr, size_t size)
 		:ptr_(ptr),
 		size_(size) {
 
 	}
 	T* ptr_ = nullptr;
-	int size_ = 0;
+	size_t size_ = 0;
 };
 
 template<typename T>
 class memorypool :uncopyable {
 public:
-	memorypool(int init = 1024);
+	memorypool(size_t init = 128);
 	~memorypool();
 
 	void setPtr(T* &ptr);
 	void destroyPtr(T* ptr);
-	int size() { return size_; }
+	size_t size() { return size_; }
 
 private:
 	void makeSpace();
 
-	int size_;
+	size_t size_;
 	std::allocator<T> manager_;
 	std::queue<head<T>> head_queue_;
 	std::queue<T*> ptr_queue_;
 };
 
 template<typename T>
-memorypool<T>::memorypool(int init) {
-	size_ = init;
+memorypool<T>::memorypool(size_t init)
+	:size_(init) {
+
 	makeSpace();
 	size_ /= 2;
 }
@@ -74,7 +74,7 @@ void memorypool<T>::makeSpace() {
 	head<T> head_(ptr_, size_);
 	head_queue_.push(head_);
 
-	for (int i = 0; i < size_; ++i) {
+	for (size_t i = 0; i < size_; ++i) {
 		ptr_queue_.push(ptr_);
 		ptr_ += 1;
 	}
