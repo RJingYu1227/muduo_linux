@@ -98,12 +98,22 @@ void eventloop::runInLoop(const functor& func) {
 	if (isInLoopThread())
 		func();
 	else
-		queueInLoop(func);
+		eventque_->addFunctor(func);
 }
 
-//std::move没必要
+void eventloop::runInLoop(functor&& func) {
+	if (isInLoopThread())
+		func();
+	else
+		eventque_->addFunctor(std::move(func));
+}
+
 void eventloop::queueInLoop(const functor& func) {
 	eventque_->addFunctor(func);
+}
+
+void eventloop::queueInLoop(functor&& func) {
+	eventque_->addFunctor(std::move(func));
 }
 
 void eventloop::runAt(const functor& cb, int64_t time) {

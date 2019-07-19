@@ -19,6 +19,7 @@ public:
 
 	void wakeup();
 	void addFunctor(const functor& func);
+	void addFunctor(functor&& func);
 	void getFunctors(std::vector<functor>& vec);
 
 private:

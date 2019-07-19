@@ -28,6 +28,14 @@ void eventqueue::wakeup() {
 void eventqueue::addFunctor(const functor& func) {
 	{
 		klock<kmutex> x(&lock_);
+		functors_.push_back(func);
+	}
+	eventfd_write(fd_, 1);
+}
+
+void eventqueue::addFunctor(functor&& func) {
+	{
+		klock<kmutex> x(&lock_);
 		functors_.push_back(std::move(func));
 	}
 	eventfd_write(fd_, 1);

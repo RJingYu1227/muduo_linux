@@ -1,6 +1,9 @@
 ﻿#pragma once
 
+#include"uncopyable.h"
+
 #include<pthread.h>
+#include<functional>
 
 template<typename T>
 class klock {
@@ -79,3 +82,43 @@ private:
 
 };
 
+class kthread :uncopyable {
+public:
+	typedef std::function<void()> functor;
+
+	explicit kthread(const functor& func)
+		:threadFunc(func),
+		tid_(0),
+		started_(0),
+		joined_(0) {
+
+	}
+	explicit kthread(functor&& func)
+		:threadFunc(std::move(func)),
+		tid_(0),
+		started_(0),
+		joined_(0) {
+
+	}
+	~kthread() {
+		if (started_ && !joined_)
+			pthread_detach(tid_);
+	}
+
+	void start();
+	void start(const pthread_attr_t* attr);
+	int join();
+
+	bool started()const { return started_; }
+	pthread_t getTid()const { return tid_; }
+
+private:
+
+	static void* pthreadFunc(void* arg);
+
+	functor threadFunc;
+	pthread_t tid_;
+	bool started_;
+	bool joined_;
+
+};

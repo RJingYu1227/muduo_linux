@@ -3,7 +3,6 @@
 #include"timer.h"
 
 #include<unistd.h>
-#include<pthread.h>
 
 logger::outputFunc logger::output = logger::defaultOutput;
 asynclogging* logger::async_ = nullptr;

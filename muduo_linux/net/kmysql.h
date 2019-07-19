@@ -9,8 +9,6 @@
 class kmysql :uncopyable {
 public:
 	
-	kmysql();
-
 	~kmysql() {
 		mysql_free_result(res_);
 		mysql_close(&sql_);
@@ -36,3 +34,4 @@ private:
 
 };
 
+//未完待续

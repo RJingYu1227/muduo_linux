@@ -31,18 +31,20 @@ public:
 	bool isInLoopThread()const; 
 
 	void runInLoop(const functor& func);
-	void queueInLoop(const functor& func);//const左值引用
+	void runInLoop(functor&& func);
+	void queueInLoop(const functor& func);
+	void queueInLoop(functor&& func);
 
 	void runAt(const functor& cb, int64_t time);
 	void runAfter(const functor& cb, double seconds);
 	const timer* runEvery(const functor& cb, double seconds);
-	void cancelTimer(timer* timer1);//一个timer只能调用一次
+	void cancelTimer(timer* timer1);
 
 private:
 
 	void doFunctors();
 
-	pthread_t tid_;//第一个初始化
+	pthread_t tid_;
 	bool quit_;
 	bool looping_;
 	int timeout_;

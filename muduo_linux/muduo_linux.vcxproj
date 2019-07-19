@@ -82,8 +82,7 @@
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
     <ClCompile Include="base\kthread.cpp" />
-    <ClCompile Include="net\kmysql.cpp" />
-    <ClCompile Include="net\buffer.cpp" />
+    <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
     <ClCompile Include="net\kepoll.cpp" />
@@ -107,8 +106,9 @@
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
     <ClInclude Include="base\kthread.h" />
+    <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />
-    <ClInclude Include="net\buffer.h" />
+    <ClInclude Include="base\buffer.h" />
     <ClInclude Include="net\channel.h" />
     <ClInclude Include="net\elthreadpool.h" />
     <ClInclude Include="net\kepoll.h" />
