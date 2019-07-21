@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 	if (argc != 4)
 		return 0;
 
-	logger::createAsyncLogging();
+	logger::createAsyncLogger();
 	tcpconnection::ignoreSigPipe();
 
 	/*tcpserver server(argv[1], atoi(argv[2]));
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 	server.setHttpCallback(httpCallback);
 	server.start();
 
-	logger::deleteAsyncLogging();
+	logger::deleteAsyncLogger();
 
 	return 0;
 }

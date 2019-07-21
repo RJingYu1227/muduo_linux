@@ -17,37 +17,25 @@ void logger::asyncOutput(const char* data, size_t len) {
 	async_->append(data, len);
 }
 
-void* logger::asyncFunc(void* a) {
-	async_ = new asynclogging(log_filename_.c_str(), logstream::kLargeBuffer * 2);
-	async_->start();
-
-	return (void*)0;
-}
-
-bool logger::createAsyncLogging() {
+bool logger::createAsyncLogger() {
 	if (output == asyncOutput)
 		return 0;
 
-	pthread_t tid;
-	int ret = pthread_create(&tid, NULL, asyncFunc, NULL);
-	if (ret) {
-		LOG << "日志线程创建失败";
-		exit(1);
-	}
-	while (async_ == nullptr);
-
+	async_ = new asynclogging(log_filename_.c_str(), logstream::kLargeBuffer * 2);
+	async_->start();
 	output = asyncOutput;
-	LOG << "创建日志线程成功，线程为：" << tid;
+
 	return 1;
 }
 
-bool logger::deleteAsyncLogging() {
+bool logger::deleteAsyncLogger() {
 	if (output == defaultOutput)
 		return 0;
 
 	output = defaultOutput;
 	delete async_;
 	async_ = nullptr;
+
 	return 1;
 }
 

@@ -116,7 +116,7 @@ logstream& logstream::operator<<(double v) {
 }
 
 logstream& logstream::operator<<(const void* p) {
-	uintptr_t v = reinterpret_cast<uintptr_t>(p);
+	uintptr_t v = (uintptr_t)p;
 
 	if (buffer_.leftBytes() >= kMaxNumericSize) {
 		char* buf = buffer_.current();

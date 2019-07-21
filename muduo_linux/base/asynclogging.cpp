@@ -7,7 +7,7 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 	:basename_(basename),
 	rollsize_(rollsize),
 	flush_interval_(flush_interval),
-	tid_(pthread_self()),
+	thread_(std::bind(&asynclogging::threadFunc,this)),
 	buffer1_(new buffer),
 	buffer2_(new buffer),
 	buffers_(),

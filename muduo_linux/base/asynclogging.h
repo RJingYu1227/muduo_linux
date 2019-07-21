@@ -20,13 +20,13 @@ public:
 
 	void start() {
 		running_ = 1;
-		threadFunc();
+		thread_.start();
 	}
 	void append(const char* data, size_t len);
 	void stop() {
 		running_ = 0;
 		cond_.notify();
-		pthread_join(tid_, NULL);
+		thread_.join();
 	}
 
 private:
@@ -39,9 +39,9 @@ private:
 	off_t rollsize_;
 	int flush_interval_;
 
-	pthread_t tid_;
 	kmutex lock_;
 	kcond cond_;
+	kthread thread_;
 
 	buffer* buffer1_;
 	buffer* buffer2_;

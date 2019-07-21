@@ -1,5 +1,7 @@
 ﻿#include"kthread.h"
 
+#include<assert.h>
+
 bool kmutex::timedlock(int seconds) {
 	timespec tsc;
 	clock_gettime(CLOCK_REALTIME, &tsc);
@@ -28,8 +30,8 @@ void kthread::start() {
 		return;
 
 	int ret = pthread_create(&tid_, NULL, pthreadFunc, this);
-	if (ret == 0)
-		started_ = 1;
+	assert(ret == 0);
+	started_ = 1;
 }
 
 void kthread::start(const pthread_attr_t* attr) {
@@ -37,8 +39,8 @@ void kthread::start(const pthread_attr_t* attr) {
 		return;
 
 	int ret = pthread_create(&tid_, attr, pthreadFunc, this);
-	if (ret == 0)
-		started_ = 1;
+	assert(ret == 0);
+	started_ = 1;
 }
 
 int kthread::join() {
