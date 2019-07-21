@@ -8,17 +8,17 @@ class eventloop;
 
 class channel :uncopyable {
 public:
-	typedef std::function<void()> event_callback;
+	typedef std::function<void()> functor;
 
 	channel(eventloop* loop, int fd);
 	~channel();
 
 	void handleEvent();
 
-	void setReadCallback(const event_callback& cb) { readCallback = cb; }
-	void setWriteCallback(const event_callback& cb) { writeCallback = cb; }
-	void setErrorCallback(const event_callback& cb) { errorCallback = cb; }
-	void setCloseCallback(const event_callback& cb) { closeCallback = cb; }
+	void setReadCallback(const functor& func) { readCallback = func; }
+	void setWriteCallback(const functor& func) { writeCallback = func; }
+	void setErrorCallback(const functor& func) { errorCallback = func; }
+	void setCloseCallback(const functor& func) { closeCallback = func; }
 
 	int getFd()const { return fd_; }
 	int getEvent()const { return event_; }
@@ -66,10 +66,10 @@ private:
 	int revent_;
 	int mark_;
 
-	event_callback readCallback;
-	event_callback writeCallback;
-	event_callback errorCallback;
-	event_callback closeCallback;
+	functor readCallback;
+	functor writeCallback;
+	functor errorCallback;
+	functor closeCallback;
 
 };
 

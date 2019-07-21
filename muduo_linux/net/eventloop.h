@@ -35,9 +35,12 @@ public:
 	void queueInLoop(const functor& func);
 	void queueInLoop(functor&& func);
 
-	void runAt(const functor& cb, int64_t time);
-	void runAfter(const functor& cb, double seconds);
-	const timer* runEvery(const functor& cb, double seconds);
+	void runAt(const functor& func, int64_t time);
+	void runAt(functor&& func, int64_t time);
+	void runAfter(const functor& func, double seconds);
+	void runAfter(functor&& func, double seconds);
+	const timer* runEvery(const functor& func, double seconds);
+	const timer* runEvery(functor&& func, double seconds);
 	void cancelTimer(timer* timer1);
 
 private:

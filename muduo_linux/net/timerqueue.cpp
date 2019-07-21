@@ -23,13 +23,24 @@ timerqueue::~timerqueue() {
 	close(fd_);
 }
 
-void timerqueue::addTimer(const event_callback& cb, int64_t time) {
-	timer* temp_ = new timer(cb, time, 0);
+void timerqueue::addTimer(const functor& func, int64_t time) {
+	timer* temp_ = new timer(func, time, 0);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 }
 
-timer* timerqueue::addTimer(const event_callback &cb, int64_t time, double seconds) {
-	timer* temp_ = new timer(cb, time, seconds);
+void timerqueue::addTimer(functor&& func, int64_t time) {
+	timer* temp_ = new timer(std::move(func), time, 0);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
+}
+
+timer* timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
+	timer* temp_ = new timer(func, time, seconds);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
+	return temp_;
+}
+
+timer* timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
+	timer* temp_ = new timer(std::move(func), time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 	return temp_;
 }

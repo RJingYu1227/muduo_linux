@@ -25,6 +25,7 @@ bool logger::createAsyncLogger() {
 	async_->start();
 	output = asyncOutput;
 
+	LOG << "创建asyncLogger";
 	return 1;
 }
 
@@ -36,6 +37,7 @@ bool logger::deleteAsyncLogger() {
 	delete async_;
 	async_ = nullptr;
 
+	LOG << "关闭asyncLogger";
 	return 1;
 }
 

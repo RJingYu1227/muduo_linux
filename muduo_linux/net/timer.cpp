@@ -10,6 +10,14 @@ timer::timer(const functor &cb, int64_t time, double seconds)
 	repeat_ = (useconds_ > 0);
 }
 
+timer::timer(functor&& cb, int64_t time, double seconds)
+	:Functor(std::move(cb)),
+	time_(time) {
+
+	useconds_ = static_cast<int64_t>(seconds * 1000000);
+	repeat_ = (useconds_ > 0);
+}
+
 /* (s) %Y/%m/%d-%H:%M:%S */
 std::string timer::timeToString(time_t time) {
 	char timebuf[32];

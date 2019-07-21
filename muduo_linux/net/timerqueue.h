@@ -12,13 +12,16 @@ class eventloop;
 
 class timerqueue :uncopyable {
 public:
-	typedef std::function<void()> event_callback;
+	typedef std::function<void()> functor;
 
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
-	void addTimer(const event_callback& cb, int64_t time);
-	timer* addTimer(const event_callback& cb, int64_t time, double seconds);
+	void addTimer(const functor& func, int64_t time);
+	void addTimer(functor&& func, int64_t time);
+	timer* addTimer(const functor& func, int64_t time, double seconds);
+	timer* addTimer(functor&& func, int64_t time, double seconds);
+
 	void cancelTimer(timer* timer1);//只限于取消重复事件
 
 private:

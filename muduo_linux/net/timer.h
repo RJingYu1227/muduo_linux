@@ -9,6 +9,7 @@ public:
 	typedef std::function<void()> functor;
 
 	timer(const functor &cb, int64_t time, double seconds);
+	timer(functor&& cb, int64_t time, double seconds);
 	~timer() {}
 
 	int64_t getTime()const { return time_; }

@@ -5,7 +5,6 @@
 #include"timerqueue.h"
 #include"eventqueue.h"
 
-#include<iostream>
 #include<assert.h>
 #include<unistd.h>
 
@@ -116,18 +115,34 @@ void eventloop::queueInLoop(functor&& func) {
 	eventque_->addFunctor(std::move(func));
 }
 
-void eventloop::runAt(const functor& cb, int64_t time) {
-	timerque_->addTimer(cb, time);
+void eventloop::runAt(const functor& func, int64_t time) {
+	timerque_->addTimer(func, time);
 }
 
-void eventloop::runAfter(const functor &cb, double seconds) {
+void eventloop::runAt(functor&& func, int64_t time) {
+	timerque_->addTimer(std::move(func), time);
+}
+
+void eventloop::runAfter(const functor &func, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
 	time += timer::getMicroUnixTime();
-	timerque_->addTimer(cb, time);
+	timerque_->addTimer(func, time);
 }
 
-const timer* eventloop::runEvery(const functor &cb, double seconds) {
-	return timerque_->addTimer(cb, timer::getMicroUnixTime(), seconds);
+void eventloop::runAfter(functor&& func, double seconds) {
+	int64_t time = static_cast<int64_t>(seconds * 1000000);
+	time += timer::getMicroUnixTime();
+	timerque_->addTimer(std::move(func), time);
+}
+
+const timer* eventloop::runEvery(const functor &func, double seconds) {
+	return timerque_->addTimer(func,
+		timer::getMicroUnixTime(), seconds);
+}
+
+const timer* eventloop::runEvery(functor&& func, double seconds) {
+	return timerque_->addTimer(std::move(func),
+		timer::getMicroUnixTime(), seconds);
 }
 
 void eventloop::cancelTimer(timer* timer1) {
@@ -141,4 +156,3 @@ void eventloop::doFunctors() {
 	for (auto& func : functors_)
 		func();
 }
-
