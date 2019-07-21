@@ -1,6 +1,5 @@
 ﻿#include"eventloop.h"
 #include"logging.h"
-#include"channel.h"
 #include"poller.h"
 #include"timerqueue.h"
 #include"eventqueue.h"
@@ -12,12 +11,6 @@ __thread eventloop* loop_inthisthread_ = nullptr;
 
 eventloop* eventloop::getEventLoop() {
 	return loop_inthisthread_;
-}
-
-void eventloop::updateThread() {
-	tid_ = pthread_self();
-	loop_inthisthread_ = this;
-	LOG << "事件循环：" << loop_inthisthread_ << " 的新线程：" << tid_;
 }
 
 eventloop::eventloop() :

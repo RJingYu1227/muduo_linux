@@ -24,7 +24,7 @@ public:
 	eventloop* getLoop() { return serverloop_; }
 	bool isListening()const { return listening_; }
 	void start();
-	void stop();
+	void stop();//在server线程调用
 
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }

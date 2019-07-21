@@ -20,7 +20,9 @@ void kcond::timedwait(kmutex* lock, int seconds) {
 
 void* kthread::pthreadFunc(void* arg) {
 	kthread* temp = (kthread*)arg;
-	temp->threadFunc();
+	functor func = std::move(temp->threadFunc);
+	temp->started_ = 1;
+	func();
 
 	return (void*)0;
 }
@@ -31,7 +33,8 @@ void kthread::start() {
 
 	int ret = pthread_create(&tid_, NULL, pthreadFunc, this);
 	assert(ret == 0);
-	started_ = 1;
+	while (started_ != 1);
+
 }
 
 void kthread::start(const pthread_attr_t* attr) {
@@ -40,7 +43,8 @@ void kthread::start(const pthread_attr_t* attr) {
 
 	int ret = pthread_create(&tid_, attr, pthreadFunc, this);
 	assert(ret == 0);
-	started_ = 1;
+	while (started_ != 1);
+
 }
 
 int kthread::join() {

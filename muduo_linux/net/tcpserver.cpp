@@ -51,11 +51,10 @@ void tcpserver::start() {
 }
 
 void tcpserver::stop() {
-	if (!listening_)
+	if (!listening_ || !serverloop_->isInLoopThread())
 		return;
 
 	serverloop_->quit();
-	while (serverloop_->isLooping());
 
 	channel_.remove();
 	listening_ = 0;

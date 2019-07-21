@@ -2,7 +2,6 @@
 
 #include"uncopyable.h"
 
-#include<pthread.h>
 #include<vector>
 #include<functional>
 
@@ -21,7 +20,6 @@ public:
 	eventloop();
 	~eventloop();
 
-	void updateThread();
 	void loop();
 	void quit();
 	bool isLooping()const { return looping_; }
@@ -47,7 +45,7 @@ private:
 
 	void doFunctors();
 
-	pthread_t tid_;
+	unsigned long tid_;
 	bool quit_;
 	bool looping_;
 	int timeout_;

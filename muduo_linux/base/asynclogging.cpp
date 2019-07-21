@@ -10,7 +10,6 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 	thread_(std::bind(&asynclogging::threadFunc,this)),
 	buffer1_(new buffer),
 	buffer2_(new buffer),
-	buffers_(),
 	running_(0) {
 
 	buffer1_->bzero();

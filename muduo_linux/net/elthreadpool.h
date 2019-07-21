@@ -18,21 +18,20 @@ public:
 	{ return loops_; }
 
 	void start();
-	void stop();
+	void stop();//在非线程池内线程调用
 
 	void setLoopNum(int num) 
-	{ num_ = num; }
+	{ loop_num_ = num; }
 	int getLoopNum() 
-	{ return num_; }
+	{ return loop_num_; }
 
 private:
 
-	//为了线程调用，应该是静态成员函数
-	static void* threadFunc(void* loop);
+	void threadFunc();
 
-	bool start_;
-	int num_;
+	bool started_;
+	int loop_num_;
 	int index_;
 	std::vector<eventloop*> loops_;
-	//std::vector<pthread_t> tids_;
+
 };
