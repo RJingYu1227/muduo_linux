@@ -5,6 +5,7 @@
 elthreadpool::elthreadpool(int num)
 	:started_(0),
 	loop_num_(num),
+	current_num_(0),
 	index_(0) {
 
 }
@@ -18,7 +19,7 @@ void elthreadpool::start() {
 		thread_.start();
 	}
 	
-	while (static_cast<int>(loops_.size()) != loop_num_);
+	while (current_num_ != loop_num_);
 
 	started_ = 1;
 }
@@ -29,6 +30,8 @@ void elthreadpool::stop() {
 
 	for (eventloop* loop_ : loops_)
 		loop_->quit();
+
+	while (current_num_ != 0);
 
 	loops_.clear();
 	started_ = 0;
@@ -49,6 +52,10 @@ void elthreadpool::threadFunc() {
 	{
 		klock<kmutex> x(&mutex_);
 		loops_.push_back(&loop_);
+		++current_num_;
 	}
 	loop_.loop();
+
+	klock<kmutex> x(&mutex_);
+	--current_num_;
 }

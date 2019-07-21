@@ -18,7 +18,7 @@ public:
 	{ return loops_; }
 
 	void start();
-	void stop();//在非线程池内线程调用
+	void stop();//在非线程池内线程调用；会等待loop结束
 
 	void setLoopNum(int num) 
 	{ loop_num_ = num; }
@@ -31,6 +31,7 @@ private:
 
 	bool started_;
 	int loop_num_;
+	int current_num_;//atmoic
 	int index_;
 	std::vector<eventloop*> loops_;
 

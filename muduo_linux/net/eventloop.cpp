@@ -7,7 +7,7 @@
 #include<assert.h>
 #include<unistd.h>
 
-__thread eventloop* loop_inthisthread_ = nullptr;
+thread_local eventloop* loop_inthisthread_ = nullptr;//__thread
 
 eventloop* eventloop::getEventLoop() {
 	return loop_inthisthread_;

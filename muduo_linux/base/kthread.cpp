@@ -22,6 +22,7 @@ void* kthread::pthreadFunc(void* arg) {
 	kthread* temp = (kthread*)arg;
 	functor func = std::move(temp->threadFunc);
 	temp->started_ = 1;
+
 	func();
 
 	return (void*)0;
@@ -48,11 +49,19 @@ void kthread::start(const pthread_attr_t* attr) {
 }
 
 int kthread::join() {
-	if (!started_ || joined_)
+	if (!started_ || !joinable_)
 		return 0;
 
-	int ret = pthread_join(tid_, NULL);
-	joined_ = 1;
+	joinable_ = 0;
 
-	return ret;
+	return pthread_join(tid_, NULL);
+}
+
+int kthread::detach() {
+	if (!started_ || !joinable_)
+		return 0;
+
+	joinable_ = 0;
+
+	return pthread_detach(tid_);
 }

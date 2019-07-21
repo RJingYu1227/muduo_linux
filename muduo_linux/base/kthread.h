@@ -90,25 +90,26 @@ public:
 		:threadFunc(func),
 		tid_(0),
 		started_(0),
-		joined_(0) {
+		joinable_(1) {
 
 	}
 	explicit kthread(functor&& func)
 		:threadFunc(std::move(func)),
 		tid_(0),
 		started_(0),
-		joined_(0) {
+		joinable_(1) {
 
 	}
 	~kthread() {
-		if (started_ && !joined_)
-			pthread_detach(tid_);
+		detach();
 	}
 
 	void start();
 	void start(const pthread_attr_t* attr);
 	int join();
+	int detach();
 
+	bool joinable()const { return joinable_; }
 	bool started()const { return started_; }
 	pthread_t getTid()const { return tid_; }
 
@@ -119,6 +120,6 @@ private:
 	functor threadFunc;
 	pthread_t tid_;
 	bool started_;
-	bool joined_;
+	bool joinable_;
 
 };
