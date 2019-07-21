@@ -17,13 +17,6 @@ public:
 	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
 	typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
-	enum state {
-		kConnecting,
-		kConnected,
-		kDisConnecting,
-		kDisConnected
-	};
-
 	static void ignoreSigPipe();
 
 	tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr);
@@ -63,9 +56,16 @@ public:
 	int getFd()const { return fd_; }
 	uint16_t getPort()const { return socket_.getPort(); }
 	uint32_t getAddr()const { return socket_.getAddr(); }
-	bool isConnected()const { return state_ == 1; }
+	bool connected()const { return state_ == kConnected; }
+	bool disConnected()const { return state_ == kDisConnected; }
 
 private:
+	enum state {
+		kConnecting,
+		kConnected,
+		kDisConnecting,
+		kDisConnected
+	};
 
 	//建议使用shared_from_this()，不然不是线程安全的
 	void startReadInLoop();
@@ -83,7 +83,7 @@ private:
 	void* ptr_;
 
 	int fd_;
-	int state_;
+	state state_;
 	size_t watermark_;
 
 	ksocket socket_;

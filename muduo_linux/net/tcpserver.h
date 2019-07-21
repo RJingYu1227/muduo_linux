@@ -24,7 +24,7 @@ public:
 	eventloop* getLoop() { return serverloop_; }
 	bool isListening()const { return listening_; }
 	void start();
-	void stop();//在server线程调用
+	void stop();
 
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
@@ -37,6 +37,7 @@ public:
 
 private:
 
+	void stopInLoop();
 	void acceptConn();
 	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);

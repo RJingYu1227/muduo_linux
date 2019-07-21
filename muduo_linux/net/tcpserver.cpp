@@ -51,16 +51,21 @@ void tcpserver::start() {
 }
 
 void tcpserver::stop() {
-	if (!listening_ || !serverloop_->isInLoopThread())
+	if (!listening_)
+		return;
+
+	serverloop_->runInLoop(std::bind(&tcpserver::stopInLoop, this));
+}
+
+void tcpserver::stopInLoop() {
+	if (!listening_)
 		return;
 
 	serverloop_->quit();
-
 	channel_.remove();
 	listening_ = 0;
 	LOG << "TcpServer停止监听";
 }
-
 
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;

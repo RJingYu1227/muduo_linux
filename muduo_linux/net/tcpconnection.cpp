@@ -16,71 +16,78 @@ tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 	:loop_(loop),
 	ptr_(0),
 	fd_(fd),
-	state_(0),
+	state_(kConnecting),
 	watermark_(64 * 1024 * 1024),
 	socket_(fd, cliaddr),
 	channel_(loop_, fd_) {
 
 	socket_.setTcpNodelay(1);
-	channel_.setReadCallback(std::bind(&tcpconnection::handleRead, this));
-	channel_.setWriteCallback(std::bind(&tcpconnection::handleWrite, this));
-	channel_.setErrorCallback(std::bind(&tcpconnection::handleError, this));
-	channel_.setCloseCallback(std::bind(&tcpconnection::handleClose, this));
+	channel_.setReadCallback(
+		std::bind(&tcpconnection::handleRead, this));
+	channel_.setWriteCallback(
+		std::bind(&tcpconnection::handleWrite, this));
+	channel_.setErrorCallback(
+		std::bind(&tcpconnection::handleError, this));
+	channel_.setCloseCallback(
+		std::bind(&tcpconnection::handleClose, this));
 	LOG << "建立一个新连接";
 }
 
 tcpconnection::~tcpconnection() {
-	assert(state_ == 3);
+	assert(state_ == kDisConnected);
 }
 
 void tcpconnection::start() {
-	assert(state_ == 0);
-	state_ = 1;
+	assert(state_ == kConnecting);
+	state_ = kConnected;
 	channel_.enableReading();
 	connectedCallback(shared_from_this());
 }
 
 void tcpconnection::startRead() {
-	if (state_ == 1)
-		loop_->runInLoop(std::bind(&tcpconnection::startReadInLoop, shared_from_this()));
+	if (state_ == kConnected)
+		loop_->runInLoop(std::bind(&tcpconnection::startReadInLoop, 
+			shared_from_this()));
 }
 
 void tcpconnection::stopRead() {
-	if (state_ == 1)
-		loop_->runInLoop(std::bind(&tcpconnection::stopReadInLoop, shared_from_this()));
+	if (state_ == kConnected)
+		loop_->runInLoop(std::bind(&tcpconnection::stopReadInLoop, 
+			shared_from_this()));
 }
 
 void tcpconnection::forceClose() {
-	if (state_ == 1)
-		loop_->runInLoop(std::bind(&tcpconnection::handleClose, shared_from_this()));
+	if (state_ == kConnected)
+		loop_->runInLoop(std::bind(&tcpconnection::handleClose, 
+			shared_from_this()));
 }
 
 void tcpconnection::forceCloseWithDelay(double seconds) {
-	if (state_ == 1)
+	if (state_ == kConnected)
 		loop_->runAfter(std::bind(&tcpconnection::handleClose, 
 			shared_from_this()), 
 			seconds);
 }
 
 void tcpconnection::shutDown() {
-	if (state_ == 1)
-		loop_->runInLoop(std::bind(&tcpconnection::shutDownInLoop, shared_from_this()));
+	if (state_ == kConnected)
+		loop_->runInLoop(std::bind(&tcpconnection::shutDownInLoop, 
+			shared_from_this()));
 }
 
 void tcpconnection::send(buffer* data) {
-	if (state_ != 1)
+	if (state_ != kConnected)
 		return;
 
 	if (loop_->isInLoopThread())
 		sendInLoop2(data->beginPtr(), data->usedBytes());
 	else
 		loop_->queueInLoop(std::bind(&tcpconnection::sendInLoop1,
-			shared_from_this(),
-			data->toString()));
+			shared_from_this(), data->toString()));
 }
 
 void tcpconnection::send(const string& data) {
-	if (state_ != 1)
+	if (state_ != kConnected)
 		return;
 
 	if (loop_->isInLoopThread())
@@ -91,19 +98,19 @@ void tcpconnection::send(const string& data) {
 }
 
 void tcpconnection::startReadInLoop() {
-	if (state_ == 1)
+	if (state_ == kConnected)
 		channel_.enableReading();
 }
 
 void tcpconnection::stopReadInLoop() {
-	if (state_ == 1)
+	if (state_ == kConnected)
 		channel_.disableReading();
 }
 
 void tcpconnection::shutDownInLoop() {
-	if (state_ != 1 || channel_.isWriting())
+	if (state_ != kConnected || channel_.isWriting())
 		return;
-	state_ = 2;
+	state_ = kDisConnecting;
 
 	socket_.shutdownWrite();
 }
@@ -113,7 +120,7 @@ void tcpconnection::sendInLoop1(const string &data) {
 }
 
 void tcpconnection::sendInLoop2(const char* data, size_t len) {
-	if (state_ != 1)
+	if (state_ != kConnected)
 		return;
 
 	ssize_t nwrote = 0;
@@ -125,7 +132,8 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 			if (remaing == 0){
 				LOG << "完整发送一次信息";
 				if (sendDoneCallback)
-					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
+					loop_->queueInLoop(std::bind(sendDoneCallback, 
+						shared_from_this()));
 				return;
 			}
 		}
@@ -137,7 +145,8 @@ void tcpconnection::sendInLoop2(const char* data, size_t len) {
 
 	if (buffer2_.usedBytes() + remaing >= watermark_ 
 		&& highWaterCallback)
-		loop_->queueInLoop(std::bind(highWaterCallback, shared_from_this()));
+		loop_->queueInLoop(std::bind(highWaterCallback, 
+			shared_from_this()));
 
 	buffer2_.append(data + nwrote, remaing);
 	if (!channel_.isWriting())
@@ -157,9 +166,9 @@ void tcpconnection::handleRead() {
 }
 
 void tcpconnection::handleClose() {
-	if (state_ == 3)
+	if (state_ == kDisConnected)//这里要判断是因为配合forceClose
 		return;
-	state_ = 3;
+	state_ = kDisConnected;
 
 	channel_.remove();//注意
 	closedCallback(shared_from_this());
@@ -168,13 +177,15 @@ void tcpconnection::handleClose() {
 
 void tcpconnection::handleWrite() {
 	if (buffer2_.usedBytes() != 0) {
-		ssize_t nwrote = write(fd_, buffer2_.beginPtr(), buffer2_.usedBytes());
+		ssize_t nwrote = write(fd_, 
+			buffer2_.beginPtr(), buffer2_.usedBytes());
 		if (nwrote >= 0) {
 			buffer2_.retrieve(nwrote);
 			if (buffer2_.usedBytes() == 0) {
 				channel_.disableWrting();
 				if (sendDoneCallback)
-					loop_->queueInLoop(std::bind(sendDoneCallback, shared_from_this()));
+					loop_->queueInLoop(std::bind(sendDoneCallback, 
+						shared_from_this()));
 				LOG << "完整发送一次信息";
 			}
 		}
