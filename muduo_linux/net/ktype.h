@@ -13,4 +13,4 @@ class tcpconnection;
 
 typedef function<void()> functor;
 typedef shared_ptr<tcpconnection> tcpconn_ptr;
-typedef function<void(const tcpconn_ptr&)> event_callback;
+typedef function<void(const tcpconn_ptr&)> callback;
