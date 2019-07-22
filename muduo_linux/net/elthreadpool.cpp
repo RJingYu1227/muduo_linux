@@ -46,16 +46,16 @@ eventloop* elthreadpool::getLoop() {
 }
 
 void elthreadpool::threadFunc() {
-	static kmutex mutex_;
+	static kmutex lock;
 
 	eventloop loop_;
 	{
-		klock<kmutex> x(&mutex_);
+		klock<kmutex> x(&lock);
 		loops_.push_back(&loop_);
 		++current_num_;
 	}
 	loop_.loop();
 
-	klock<kmutex> x(&mutex_);
+	klock<kmutex> x(&lock);
 	--current_num_;
 }
