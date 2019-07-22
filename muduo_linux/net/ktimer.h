@@ -3,14 +3,14 @@
 #include<functional>
 #include<sys/time.h>
 
-class timer {
+class ktimer {
 	friend class timerqueue;
 public:
 	typedef std::function<void()> functor;
 
-	timer(const functor &cb, int64_t time, double seconds);
-	timer(functor&& cb, int64_t time, double seconds);
-	~timer() {}
+	ktimer(const functor &cb, int64_t time, double seconds);
+	ktimer(functor&& cb, int64_t time, double seconds);
+	~ktimer() {}
 
 	int64_t getTime()const { return time_; }
 	void run() { Functor(); }

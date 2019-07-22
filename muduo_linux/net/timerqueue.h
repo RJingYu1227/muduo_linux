@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include"timer.h"
+#include"ktimer.h"
 #include"channel.h"
 #include"uncopyable.h"
 
@@ -19,18 +19,18 @@ public:
 
 	void addTimer(const functor& func, int64_t time);
 	void addTimer(functor&& func, int64_t time);
-	timer* addTimer(const functor& func, int64_t time, double seconds);
-	timer* addTimer(functor&& func, int64_t time, double seconds);
+	ktimer* addTimer(const functor& func, int64_t time, double seconds);
+	ktimer* addTimer(functor&& func, int64_t time, double seconds);
 
-	void cancelTimer(timer* timer1);//只限于取消重复事件
+	void cancelTimer(ktimer* timer1);//只限于取消重复事件
 
 private:
-	typedef std::pair<int64_t, timer*> entry;
+	typedef std::pair<int64_t, ktimer*> entry;
 	typedef std::set<entry> timer_set;
 
 	//为了尽快处理handleRead
-	void addTimerInLoop(timer* timer1);
-	void cancelTimerInLoop(timer* timer1);
+	void addTimerInLoop(ktimer* timer1);
+	void cancelTimerInLoop(ktimer* timer1);
 
 	void handleRead();
 	bool insert(const entry& temp);

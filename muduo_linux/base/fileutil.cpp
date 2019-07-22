@@ -10,10 +10,6 @@ appendfile::appendfile(const char* filename)
 	setbuffer(fp_, buffer_, sizeof buffer_);
 }
 
-appendfile::~appendfile() {
-	fclose(fp_);
-}
-
 void appendfile::append(const char* data, size_t len) {
 	size_t remain = len;
 	while (remain > 0) {
@@ -28,8 +24,4 @@ void appendfile::append(const char* data, size_t len) {
 		remain -= n;
 	}
 	written_bytes_ += len;
-}
-
-void appendfile::flush() {
-	fflush(fp_);
 }

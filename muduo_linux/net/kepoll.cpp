@@ -4,7 +4,6 @@
 
 #include<assert.h>
 #include<unistd.h>
-#include<strings.h>
 
 kepoll::kepoll(eventloop* loop)
 	:poller(loop),
@@ -26,58 +25,53 @@ void kepoll::doPoll(int timeoutms, channellist& active_channels_) {
 		if (static_cast<size_t>(numevents) == events_.size())
 			events_.resize(events_.size() * 2);
 	}
-	else
+	else if (numevents == -1)
 		LOG << "epoll调用出错，errno = " << errno;
 
 }
 
 void kepoll::updateChannel(channel* ch) {
-	int fd_ = ch->getFd();
+	int fd = ch->getFd();
 	epoll_event ev;
-	bzero(&ev, sizeof ev);
 	ev.events = ch->getEvent();
-	ev.data.fd = fd_;
+	ev.events |= EPOLLET;
 	ev.data.ptr = ch;
 
 	if (ch->getMark() == -1) {
-		assert(channels_.find(fd_) == channels_.end());
-		epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd_, &ev);
-		channels_.emplace(fd_, ch);
+		assert(channels_.find(fd) == channels_.end());
+		epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &ev);
+		channels_.emplace(fd, ch);
 		ch->setMark(1);
 	}
 	else {
-		auto iter = channels_.find(fd_);
-		assert(iter != channels_.end());
-		assert(iter->second = ch);
-		epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd_, &ev);
+		auto iter = channels_.find(fd);
+		assert(iter != channels_.end() && iter->second == ch);
+		epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd, &ev);
 	}
 }
 
 void kepoll::removeChannel(channel* ch) {
-	int fd_ = ch->getFd();
+	int fd = ch->getFd();
 
 	if (ch->getMark() == -1) {
-		assert(channels_.find(fd_) == channels_.end());
+		assert(channels_.find(fd) == channels_.end());
 		return;
 	}
 
 	epoll_event ev;
-	bzero(&ev, sizeof ev);
 	ev.events = ch->getEvent();
-	ev.data.fd = fd_;
+	ev.events |= EPOLLET;
 	ev.data.ptr = ch;
 
-	auto iter = channels_.find(fd_);
-	assert(iter != channels_.end());
-	assert(iter->second = ch);
-	channels_.erase(fd_);
-	epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd_, &ev);
+	auto iter = channels_.find(fd);
+	assert(iter != channels_.end() && iter->second == ch);
+	channels_.erase(fd);
+	epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd, &ev);
 	ch->setMark(-1);
 
 }
 
 void kepoll::fillActiveChannels(int numevents_, channellist& active_channels_) {
-	assert(static_cast<size_t>(numevents_) <= events_.size());
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = (channel*)(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);

@@ -118,27 +118,27 @@ void eventloop::runAt(functor&& func, int64_t time) {
 
 void eventloop::runAfter(const functor &func, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += timer::getMicroUnixTime();
+	time += ktimer::getMicroUnixTime();
 	timerque_->addTimer(func, time);
 }
 
 void eventloop::runAfter(functor&& func, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += timer::getMicroUnixTime();
+	time += ktimer::getMicroUnixTime();
 	timerque_->addTimer(std::move(func), time);
 }
 
-const timer* eventloop::runEvery(const functor &func, double seconds) {
+const ktimer* eventloop::runEvery(const functor &func, double seconds) {
 	return timerque_->addTimer(func,
-		timer::getMicroUnixTime(), seconds);
+		ktimer::getMicroUnixTime(), seconds);
 }
 
-const timer* eventloop::runEvery(functor&& func, double seconds) {
+const ktimer* eventloop::runEvery(functor&& func, double seconds) {
 	return timerque_->addTimer(std::move(func),
-		timer::getMicroUnixTime(), seconds);
+		ktimer::getMicroUnixTime(), seconds);
 }
 
-void eventloop::cancelTimer(timer* timer1) {
+void eventloop::cancelTimer(ktimer* timer1) {
 	if (timer1)
 		timerque_->cancelTimer(timer1);
 }

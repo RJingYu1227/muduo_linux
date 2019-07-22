@@ -2,27 +2,27 @@
 
 #include"poller.h"
 
-#include<sys/epoll.h>
+#include<sys/poll.h>
 
-//默认水平触发，改为边沿触发
-class kepoll :public poller {
+//水平触发
+class kpoll :public poller {
 public:
 
-	kepoll(eventloop* loop);
-	~kepoll();
+	kpoll(eventloop* loop)
+		:poller(loop) {
+
+	}
+	~kpoll() = default;
 
 	void doPoll(int timeoutms, channellist& active_channels_);
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
 
 private:
-	typedef std::vector<epoll_event> event_list;
-
-	static const int kInitEventListSize = 128;
+	typedef std::vector<struct pollfd> pollfd_list;
 
 	void fillActiveChannels(int numevents, channellist& active_channels_);
 
-	int epollfd_;
-	event_list events_;
+	pollfd_list pollfds_;
 
 };

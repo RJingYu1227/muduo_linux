@@ -24,39 +24,39 @@ timerqueue::~timerqueue() {
 }
 
 void timerqueue::addTimer(const functor& func, int64_t time) {
-	timer* temp_ = new timer(func, time, 0);
+	ktimer* temp_ = new ktimer(func, time, 0);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 }
 
 void timerqueue::addTimer(functor&& func, int64_t time) {
-	timer* temp_ = new timer(std::move(func), time, 0);
+	ktimer* temp_ = new ktimer(std::move(func), time, 0);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 }
 
-timer* timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
-	timer* temp_ = new timer(func, time, seconds);
-	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
-	return temp_;
-}
-
-timer* timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
-	timer* temp_ = new timer(std::move(func), time, seconds);
+ktimer* timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
+	ktimer* temp_ = new ktimer(func, time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
 	return temp_;
 }
 
-void timerqueue::addTimerInLoop(timer* timer1) {
+ktimer* timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
+	ktimer* temp_ = new ktimer(std::move(func), time, seconds);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
+	return temp_;
+}
+
+void timerqueue::addTimerInLoop(ktimer* timer1) {
 	int64_t time = timer1->time_;
 	entry temp_(time, timer1);
 	if (insert(temp_))
 		resetTimerfd(time);
 }
 
-void timerqueue::cancelTimer(timer* timer1){
+void timerqueue::cancelTimer(ktimer* timer1){
 	loop_->runInLoop(std::bind(&timerqueue::cancelTimerInLoop, this, timer1));
 }
 
-void timerqueue::cancelTimerInLoop(timer* timer1) {
+void timerqueue::cancelTimerInLoop(ktimer* timer1) {
 	entry temp(timer1->time_, timer1);
 	if (timers_.erase(temp))
 		delete timer1;
@@ -70,13 +70,13 @@ void timerqueue::cancelTimerInLoop(timer* timer1) {
 void timerqueue::handleRead() {
 	int64_t now_;
 	read(fd_, &now_, sizeof now_);
-	now_ = timer::getMicroUnixTime();
+	now_ = ktimer::getMicroUnixTime();
 	expire_timers_.clear();
 	getTimers(now_);
 	for (entry& ey : expire_timers_) {
 		ey.second->run();
 		if (ey.second->repeat_) {
-			ey.second->restart(timer::getMicroUnixTime());
+			ey.second->restart(ktimer::getMicroUnixTime());
 			ey.first = ey.second->time_;
 			timers_.insert(ey);
 		}
@@ -100,14 +100,14 @@ bool timerqueue::insert(const timerqueue::entry &temp) {
 }
 
 void timerqueue::getTimers(int64_t now) {
-	entry ey(now, reinterpret_cast<timer*>(UINTPTR_MAX));
+	entry ey(now, reinterpret_cast<ktimer*>(UINTPTR_MAX));
 	auto end = timers_.lower_bound(ey);
 	std::copy(timers_.begin(), end, std::back_inserter(expire_timers_));
 	timers_.erase(timers_.begin(),end);
 }
 
 void timerqueue::setTimespec(int64_t now, timespec& temp) {
-	int64_t microseconds_ = now - timer::getMicroUnixTime();
+	int64_t microseconds_ = now - ktimer::getMicroUnixTime();
 	if (microseconds_ < 100)
 		microseconds_ = 100;
 	temp.tv_sec = microseconds_ / 1000000;

@@ -9,10 +9,12 @@
 class appendfile :uncopyable {
 public:
 	explicit appendfile(const char* filename);
-	~appendfile();
+	~appendfile() { 
+		fclose(fp_);
+	}
 
 	void append(const char* data, size_t len);
-	void flush();
+	void flush() { fflush(fp_); }
 	off_t writtenBytes() { return written_bytes_; }
 
 private:

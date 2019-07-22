@@ -7,7 +7,7 @@
 
 class channel;
 class poller;
-class timer;
+class ktimer;
 class timerqueue;
 class eventqueue;
 
@@ -37,9 +37,9 @@ public:
 	void runAt(functor&& func, int64_t time);
 	void runAfter(const functor& func, double seconds);
 	void runAfter(functor&& func, double seconds);
-	const timer* runEvery(const functor& func, double seconds);
-	const timer* runEvery(functor&& func, double seconds);
-	void cancelTimer(timer* timer1);
+	const ktimer* runEvery(const functor& func, double seconds);
+	const ktimer* runEvery(functor&& func, double seconds);
+	void cancelTimer(ktimer* timer1);
 
 private:
 

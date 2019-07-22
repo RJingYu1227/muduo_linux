@@ -1,8 +1,8 @@
-﻿#include"timer.h"
+﻿#include"ktimer.h"
 
 #include<string>
 
-timer::timer(const functor &cb, int64_t time, double seconds)
+ktimer::ktimer(const functor &cb, int64_t time, double seconds)
 	:Functor(cb),
 	time_(time) {
 
@@ -10,7 +10,7 @@ timer::timer(const functor &cb, int64_t time, double seconds)
 	repeat_ = (useconds_ > 0);
 }
 
-timer::timer(functor&& cb, int64_t time, double seconds)
+ktimer::ktimer(functor&& cb, int64_t time, double seconds)
 	:Functor(std::move(cb)),
 	time_(time) {
 
@@ -19,7 +19,7 @@ timer::timer(functor&& cb, int64_t time, double seconds)
 }
 
 /* (s) %Y/%m/%d-%H:%M:%S */
-std::string timer::timeToString(time_t time) {
+std::string ktimer::timeToString(time_t time) {
 	char timebuf[32];
 	tm tm_;
 	localtime_r(&time, &tm_);//该函数是可重入的
@@ -27,7 +27,7 @@ std::string timer::timeToString(time_t time) {
 	return timebuf;
 }
 
-int64_t timer::getMicroUnixTime() {
+int64_t ktimer::getMicroUnixTime() {
 	timeval tv;
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000000 + tv.tv_usec;

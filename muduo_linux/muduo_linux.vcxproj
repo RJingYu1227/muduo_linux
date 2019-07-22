@@ -83,6 +83,7 @@
     <ClCompile Include="base\asynclogging.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
+    <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
     <ClCompile Include="net\kepoll.cpp" />
@@ -100,12 +101,13 @@
     <ClCompile Include="net\poller.cpp" />
     <ClCompile Include="net\tcpconnection.cpp" />
     <ClCompile Include="net\tcpserver.cpp" />
-    <ClCompile Include="net\timer.cpp" />
+    <ClCompile Include="net\ktimer.cpp" />
     <ClCompile Include="net\timerqueue.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
     <ClInclude Include="base\kthread.h" />
+    <ClInclude Include="net\kpoll.h" />
     <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />
     <ClInclude Include="base\buffer.h" />
@@ -127,7 +129,7 @@
     <ClInclude Include="base\uncopyable.h" />
     <ClInclude Include="net\tcpconnection.h" />
     <ClInclude Include="net\tcpserver.h" />
-    <ClInclude Include="net\timer.h" />
+    <ClInclude Include="net\ktimer.h" />
     <ClInclude Include="net\timerqueue.h" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

@@ -1,6 +1,6 @@
 ﻿#include"logging.h"
 #include"asynclogging.h"
-#include"timer.h"
+#include"ktimer.h"
 
 #include<unistd.h>
 
@@ -46,7 +46,7 @@ logger::impl::impl(const char* basename, int line)
 	basename_(basename),
 	line_(line) {
 	
-	stream_ << timer::timeToString(timer::getUnixTime()) << '\n';
+	stream_ << ktimer::timeToString(ktimer::getUnixTime()) << '\n';
 }
 
 logger::logger(const char* filename, int line)

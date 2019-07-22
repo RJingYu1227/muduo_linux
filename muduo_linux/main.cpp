@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
-#include"timer.h"
+#include"ktimer.h"
 
 #include<unistd.h>
 #include<fcntl.h>
@@ -57,7 +57,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 		response.setStatu2("OK");
 		response.addHeader("Content-Type", "text/html");
 		response.addHeader("Server", "RJingYu");
-		string now = timer::timeToString(timer::getUnixTime());
+		string now = ktimer::timeToString(ktimer::getUnixTime());
 		response.getBody() = "<html><head><title>This is title</title></head>"
 			"<body><h1>Hello</h1>Now is " + now +
 			"</body></html>";
