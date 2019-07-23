@@ -3,6 +3,9 @@
 
 #include<assert.h>
 
+blockqueue<asynclogging::entry> asynclogging::async_queue_;
+thread_local asynclogging::buffer_queue asynclogging::thread_buffers_;
+
 asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_interval)
 	:basename_(basename),
 	rollsize_(rollsize),
@@ -13,8 +16,6 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 }
 
 void asynclogging::append(const char* data, size_t len) {
-	static thread_local buffer_queue thread_buffers_;
-
 	buffer* pbuf = nullptr;
 	vector<entry> vec;
 	while (!thread_buffers_.empty()) {
@@ -30,7 +31,7 @@ void asynclogging::append(const char* data, size_t len) {
 	}
 
 	if (!vec.empty())
-		async_buffers_.put(vec);
+		async_queue_.put(vec);
 
 	if (pbuf == nullptr) {
 		pbuf = new buffer;
@@ -45,16 +46,24 @@ void asynclogging::threadFunc() {
 	logfile output_(basename_.c_str(), rollsize_);
 
 	while (running_) {
-		entry temp = async_buffers_.take();
+		entry temp = async_queue_.take();
 		buffer* pbuf = temp.second;
-		output_.append(pbuf->getData(), pbuf->length());
-		if (temp.first->size() < 4) {
-			pbuf->reset();
-			temp.first->put(pbuf);
+		if (pbuf) {
+			output_.append(pbuf->getData(), pbuf->length());
+			if (temp.first->size() < 4) {
+				pbuf->reset();
+				temp.first->put(pbuf);
+			}
+			else
+				delete pbuf;
 		}
-		else
-			delete pbuf;
 
 		output_.flush();
 	}
+}
+
+void asynclogging::stop() {
+	running_ = 0;
+	async_queue_.put(entry(nullptr, nullptr));
+	thread_.join();
 }

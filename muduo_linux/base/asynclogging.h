@@ -17,11 +17,8 @@ public:
 		running_ = 1;
 		thread_.start();
 	}
-	void stop() {
-		running_ = 0;
-		cond_.notify();
-		thread_.join();
-	}
+	void stop();
+
 	void append(const char* data, size_t len);
 
 private:
@@ -29,18 +26,16 @@ private:
 	typedef blockqueue<buffer*> buffer_queue;
 	typedef std::pair<buffer_queue*, buffer*> entry;
 
+	static thread_local buffer_queue thread_buffers_;
+	static blockqueue<entry> async_queue_;
+
 	void threadFunc();
 
 	std::string basename_;
 	off_t rollsize_;
 	int flush_interval_;
 
-	kmutex lock_;
-	kcond cond_;
 	kthread thread_;
-
-	blockqueue<entry> async_buffers_;
-
 	bool running_;
 
 };
