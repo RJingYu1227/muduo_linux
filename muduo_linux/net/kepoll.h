@@ -4,7 +4,7 @@
 
 #include<sys/epoll.h>
 
-//默认水平触发，改为边沿触发
+//默认水平触发，listenfd改为边沿触发
 class kepoll :public poller {
 public:
 

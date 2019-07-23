@@ -24,6 +24,9 @@ public:
 	int getEvent()const { return event_; }
 	eventloop* getLoop() { return loop_; }
 
+	//server
+	void epollet() { event_ |= kEpollet; }
+
 	//event
 	void enableReading() 
 	{ event_ |= kReadEvent; update(); }
@@ -57,6 +60,7 @@ private:
 	static const int kNoneEvent;
 	static const int kReadEvent;
 	static const int kWriteEvent;
+	static const int kEpollet;
 
 	void update();
 

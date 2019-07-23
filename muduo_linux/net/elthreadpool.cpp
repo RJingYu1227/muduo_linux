@@ -1,6 +1,5 @@
 ﻿#include"elthreadpool.h"
 #include"eventloop.h"
-#include"kthread.h"
 
 elthreadpool::elthreadpool(int num)
 	:started_(0),
@@ -46,16 +45,14 @@ eventloop* elthreadpool::getLoop() {
 }
 
 void elthreadpool::threadFunc() {
-	static kmutex lock;
-
 	eventloop loop_;
 	{
-		klock<kmutex> x(&lock);
+		klock<kmutex> x(&lock_);
 		loops_.push_back(&loop_);
 		++current_num_;
 	}
 	loop_.loop();
 
-	klock<kmutex> x(&lock);
+	klock<kmutex> x(&lock_);
 	--current_num_;
 }

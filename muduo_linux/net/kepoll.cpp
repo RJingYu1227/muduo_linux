@@ -34,7 +34,6 @@ void kepoll::updateChannel(channel* ch) {
 	int fd = ch->getFd();
 	epoll_event ev;
 	ev.events = ch->getEvent();
-	ev.events |= EPOLLET;
 	ev.data.ptr = ch;
 
 	if (ch->getMark() == -1) {
@@ -60,7 +59,6 @@ void kepoll::removeChannel(channel* ch) {
 
 	epoll_event ev;
 	ev.events = ch->getEvent();
-	ev.events |= EPOLLET;
 	ev.data.ptr = ch;
 
 	auto iter = channels_.find(fd);

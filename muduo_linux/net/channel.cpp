@@ -7,6 +7,7 @@
 const int channel::kNoneEvent = 0;
 const int channel::kReadEvent = EPOLLIN | EPOLLPRI;
 const int channel::kWriteEvent = EPOLLOUT;
+const int channel::kEpollet = EPOLLET;
 
 channel::channel(eventloop* loop, int fd)
 	:loop_(loop),

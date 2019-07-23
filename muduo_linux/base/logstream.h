@@ -57,8 +57,7 @@ public:
 	self& operator<<(long long);
 	self& operator<<(unsigned long long);
 	self& operator<<(const void*);
-	self& operator<<(float v)
-	{
+	self& operator<<(float v) {
 		*this << static_cast<double>(v);
 		return *this;
 	}

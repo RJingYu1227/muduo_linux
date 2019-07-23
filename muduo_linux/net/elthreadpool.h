@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"kthread.h"
 
 #include<vector>
 
@@ -33,6 +33,7 @@ private:
 	int loop_num_;
 	int current_num_;//atmoic
 	int index_;
+	kmutex lock_;
 	std::vector<eventloop*> loops_;
 
 };

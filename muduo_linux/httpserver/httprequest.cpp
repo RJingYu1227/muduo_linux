@@ -96,7 +96,7 @@ bool httprequest::processRequestLine(const char* start, const char* end) {
 bool httprequest::praseRequest(buffer* buffer1) {
 	while (1) {
 		if (state_ == kExpectBody) {
-			if (buffer1->usedBytes() >= static_cast<size_t>(length_))
+			if (buffer1->usedBytes() >= length_)
 				state_ = kPraseDone;
 			break;
 		}

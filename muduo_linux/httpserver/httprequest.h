@@ -53,7 +53,7 @@ public:
 	const std::map<string, string>& getHeaders()const 
 	{ return headers_; }
 
-	int getLength()const 
+	size_t getLength()const 
 	{ return length_; }
 
 	void reset();
@@ -71,6 +71,6 @@ private:
 	string path_;
 	string query_;
 	std::map<string, string> headers_;
-	int length_;
+	size_t length_;
 
 };

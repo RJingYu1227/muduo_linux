@@ -20,9 +20,13 @@ private:
 	void append_unlock(const char* data, size_t len);
 
 	std::string basename_;
-	off_t rollsize_;
-	int count_limit_;
-	int count_;
 	appendfile* file_;
+	off_t rollsize_;
+
+	int count_;
+	int count_limit_;
+	long int last_roll_;
+
+	static const int kPeriod = 60 * 60;
 
 };

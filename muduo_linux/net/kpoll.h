@@ -4,7 +4,6 @@
 
 #include<sys/poll.h>
 
-//水平触发
 class kpoll :public poller {
 public:
 

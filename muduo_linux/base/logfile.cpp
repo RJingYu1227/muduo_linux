@@ -5,10 +5,11 @@
 
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)
 	:basename_(basename),
+	file_(nullptr),
 	rollsize_(rollsize),
-	count_limit_(count_limit),
 	count_(0),
-	file_(nullptr) {
+	count_limit_(count_limit),
+	last_roll_(time(NULL)) {
 
 	rollfile();
 }
@@ -33,8 +34,9 @@ void logfile::append_unlock(const char* data, size_t len) {
 	else {
 		++count_;
 		if (count_ > count_limit_) {
-			count_ = 0;
-			rollfile();
+			time_t now = time(NULL);
+			if (now - last_roll_ >= kPeriod)
+				rollfile();
 		}
 	}
 }
@@ -49,6 +51,8 @@ void logfile::rollfile() {
 		file_->~appendfile();
 		new(file_)appendfile(filename.c_str());
 	}
+	count_ = 0;
+	last_roll_ = time(NULL);
 }
 
 void logfile::setLogFileName(std::string& str) {

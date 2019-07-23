@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
     <ClInclude Include="base\kthread.h" />
+    <ClInclude Include="base\blockqueue.h" />
     <ClInclude Include="net\kpoll.h" />
     <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />

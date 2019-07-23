@@ -30,7 +30,7 @@ void buffer::append(const char* data, size_t len) {
 void buffer::prepend(const void* data, size_t len) {
 	assert(len <= begin_index_);
 	begin_index_ -= len;
-	const char* d = static_cast<const char*>(data);
+	const char* d = (const char*)(data);
 	std::copy(d, d + len, headPtr() + begin_index_);
 }
 
