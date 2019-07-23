@@ -17,27 +17,25 @@ asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_inter
 
 void asynclogging::append(const char* data, size_t len) {
 	buffer* pbuf = nullptr;
-	vector<entry> vec;
+
 	while (!thread_buffers_.empty()) {
-		pbuf = thread_buffers_.take();
+		pbuf = thread_buffers_.take_front();
 		if (pbuf->leftBytes() >= len) {
 			pbuf->append(data, len);
 			break;
 		}
 		else {
-			vec.push_back(entry(&thread_buffers_, pbuf));
+			async_queue_.put_back(entry(&thread_buffers_, pbuf));
 			pbuf = nullptr;
 		}
 	}
-
-	if (!vec.empty())
-		async_queue_.put(vec);
 
 	if (pbuf == nullptr) {
 		pbuf = new buffer;
 		pbuf->append(data, len);
 	}
-	thread_buffers_.put(pbuf);
+
+	thread_buffers_.put_front(pbuf);
 }
 
 void asynclogging::threadFunc() {
@@ -46,13 +44,13 @@ void asynclogging::threadFunc() {
 	logfile output_(basename_.c_str(), rollsize_);
 
 	while (running_) {
-		entry temp = async_queue_.take();
+		entry temp = async_queue_.take_front();
 		buffer* pbuf = temp.second;
 		if (pbuf) {
 			output_.append(pbuf->getData(), pbuf->length());
 			if (temp.first->size() < 4) {
 				pbuf->reset();
-				temp.first->put(pbuf);
+				temp.first->put_back(pbuf);
 			}
 			else
 				delete pbuf;
@@ -64,6 +62,6 @@ void asynclogging::threadFunc() {
 
 void asynclogging::stop() {
 	running_ = 0;
-	async_queue_.put(entry(nullptr, nullptr));
+	async_queue_.put_back(entry(nullptr, nullptr));
 	thread_.join();
 }
