@@ -20,11 +20,11 @@ public:
 	static bool deleteAsyncLogger();//并非线程安全的
 
 private:
-	typedef void(*outputFunc)(const char* data, size_t len);
+	typedef void(*outputFunc)(const char*, size_t, time_t);
 
 	static outputFunc output;
-	static void defaultOutput(const char* data, size_t len);
-	static void asyncOutput(const char* data, size_t len);
+	static void defaultOutput(const char* data, size_t len, time_t time);
+	static void asyncOutput(const char* data, size_t len, time_t time);
 
 	static asynclogging* async_;
 	static std::string log_filename_;
@@ -36,7 +36,7 @@ private:
 		logstream stream_;
 		std::string basename_;
 		int line_;
-
+		time_t time_;
 	};
 
 	impl impl_;

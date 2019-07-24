@@ -19,7 +19,7 @@ public:
 	}
 	void stop();
 
-	void append(const char* data, size_t len);
+	void append(const char* data, size_t len, time_t time);
 
 private:
 	typedef logbuffer<logstream::kLargeBuffer> buffer;
@@ -27,13 +27,13 @@ private:
 	typedef std::pair<buffer_queue*, buffer*> entry;
 
 	static thread_local buffer_queue thread_buffers_;
-	static blockqueue<entry> async_queue_;
+	static thread_local time_t last_put_;
+	static blockqueue<entry> async_buffers_;
 
 	void threadFunc();
 
 	std::string basename_;
 	off_t rollsize_;
-	//int flush_interval_;
 
 	kthread thread_;
 	bool running_;
