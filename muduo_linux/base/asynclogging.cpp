@@ -6,10 +6,9 @@
 blockqueue<asynclogging::entry> asynclogging::async_queue_;
 thread_local asynclogging::buffer_queue asynclogging::thread_buffers_;
 
-asynclogging::asynclogging(const char* basename, off_t rollsize, int flush_interval)
+asynclogging::asynclogging(const char* basename, off_t rollsize)
 	:basename_(basename),
 	rollsize_(rollsize),
-	flush_interval_(flush_interval),
 	thread_(std::bind(&asynclogging::threadFunc, this)),
 	running_(0) {
 
@@ -35,6 +34,8 @@ void asynclogging::append(const char* data, size_t len) {
 		pbuf->append(data, len);
 	}
 
+	//if (!async_queue_.tryput_back(entry(&thread_buffers_, pbuf)))
+	//wrk测试，qps下降幅度较大
 	thread_buffers_.put_front(pbuf);
 }
 
@@ -48,12 +49,12 @@ void asynclogging::threadFunc() {
 		buffer* pbuf = temp.second;
 		if (pbuf) {
 			output_.append(pbuf->getData(), pbuf->length());
-			if (temp.first->size() < 4) {
+			if (temp.first->size() >= 4)
+				delete pbuf;
+			else {
 				pbuf->reset();
 				temp.first->put_back(pbuf);
 			}
-			else
-				delete pbuf;
 		}
 
 		output_.flush();

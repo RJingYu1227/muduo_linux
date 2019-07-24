@@ -22,6 +22,9 @@ public:
 	bool tryput_back(T&& val);
 	T take_back();
 
+	//T take_back(int seconds);
+	//T take_front(int seconds);
+
 	T take_front();
 	bool tryput_front(T&& val);
 	bool tryput_front(const T& val);
@@ -106,6 +109,31 @@ T blockqueue<T>::take_back() {
 	queue_.pop_back();
 	return std::move(back);
 }
+
+/*
+template<typename T>
+T blockqueue<T>::take_back(int seconds) {
+	klock<kmutex> x(&lock_);
+	if (queue_.empty())
+		cond_.timedwait(&lock_, seconds);
+	if (queue_.empty())
+		return T();
+
+	T back(std::move(queue_.back()));
+	queue_.pop_back();
+	return std::move(back);
+}
+
+template<typename T>
+T blockqueue<T>::take_front(int seconds) {
+	klock<kmutex> x(&lock_);
+	if (queue_.empty())
+		cond_.timedwait(&lock_, seconds);
+	T front(std::move(queue_.front()));
+	queue_.pop_front();
+	return std::move(front);
+}
+*/
 
 template<typename T>
 T blockqueue<T>::take_front() {

@@ -3,19 +3,19 @@
 #include<string>
 
 ktimer::ktimer(const functor &cb, int64_t time, double seconds)
-	:Functor(cb),
-	time_(time) {
+	:func(cb),
+	born_(time),
+	time_(time),
+	interval_(static_cast<int64_t>(seconds * 1000000)) {
 
-	useconds_ = static_cast<int64_t>(seconds * 1000000);
-	repeat_ = (useconds_ > 0);
 }
 
 ktimer::ktimer(functor&& cb, int64_t time, double seconds)
-	:Functor(std::move(cb)),
-	time_(time) {
+	:func(std::move(cb)),
+	born_(time),
+	time_(time),
+	interval_(static_cast<int64_t>(seconds * 1000000)) {
 
-	useconds_ = static_cast<int64_t>(seconds * 1000000);
-	repeat_ = (useconds_ > 0);
 }
 
 /* (s) %Y/%m/%d-%H:%M:%S */

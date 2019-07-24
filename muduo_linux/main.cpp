@@ -106,3 +106,34 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+
+/*
+#include"eventloop.h"
+
+eventloop* loop;
+
+void timerFunc1() {
+	loop->quit();
+	LOG << "停止循环";
+}
+
+void timerFunc2(ktimerid id) {
+	loop->cancelTimer(id);
+	LOG << "取消id3";
+}
+
+void timerFunc3() {
+	static int x = 0;
+	x++;
+	LOG << x;
+}
+
+int main() {
+	loop = new eventloop();
+	ktimerid id3 = loop->runEvery(timerFunc3, 3);
+	ktimerid id2 = loop->runAfter(std::bind(timerFunc2, id3), 10);
+	ktimerid id1 = loop->runEvery(timerFunc1, 15);
+
+	loop->loop();
+}
+*/

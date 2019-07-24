@@ -6,7 +6,7 @@
 class asynclogging :uncopyable {
 public:
 
-	asynclogging(const char* basename, off_t rollsize, int flush_interval = 3);
+	asynclogging(const char* basename, off_t rollsize);
 	~asynclogging() {
 		if (running_)
 			stop();
@@ -33,7 +33,7 @@ private:
 
 	std::string basename_;
 	off_t rollsize_;
-	int flush_interval_;
+	//int flush_interval_;
 
 	kthread thread_;
 	bool running_;

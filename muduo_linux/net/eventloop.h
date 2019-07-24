@@ -1,13 +1,12 @@
 ﻿#pragma once
 
 #include"uncopyable.h"
+#include"ktimer.h"
 
 #include<vector>
-#include<functional>
 
 class channel;
 class poller;
-class ktimer;
 class timerqueue;
 class eventqueue;
 
@@ -33,13 +32,13 @@ public:
 	void queueInLoop(const functor& func);
 	void queueInLoop(functor&& func);
 
-	void runAt(const functor& func, int64_t time);
-	void runAt(functor&& func, int64_t time);
-	void runAfter(const functor& func, double seconds);
-	void runAfter(functor&& func, double seconds);
-	const ktimer* runEvery(const functor& func, double seconds);
-	const ktimer* runEvery(functor&& func, double seconds);
-	void cancelTimer(ktimer* timer1);
+	ktimerid runAt(const functor& func, int64_t time);
+	ktimerid runAt(functor&& func, int64_t time);
+	ktimerid runAfter(const functor& func, double seconds);
+	ktimerid runAfter(functor&& func, double seconds);
+	ktimerid runEvery(const functor& func, double seconds);
+	ktimerid runEvery(functor&& func, double seconds);
+	void cancelTimer(ktimerid timer1);
 
 private:
 

@@ -8,8 +8,8 @@
 #include<assert.h>
 
 timerqueue::timerqueue(eventloop* loop)
-	:loop_(loop),
-	fd_(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
+	:fd_(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
+	loop_(loop),
 	channel_(loop_, fd_) {
 
 	assert(fd_ > 0);
@@ -23,104 +23,92 @@ timerqueue::~timerqueue() {
 	close(fd_);
 }
 
-void timerqueue::addTimer(const functor& func, int64_t time) {
-	ktimer* temp_ = new ktimer(func, time, 0);
-	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
+ktimerid timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
+	ktimer* temp = new ktimer(func, time, seconds);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
+
+	return ktimerid(time, temp);
 }
 
-void timerqueue::addTimer(functor&& func, int64_t time) {
-	ktimer* temp_ = new ktimer(std::move(func), time, 0);
-	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
+ktimerid timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
+	ktimer* temp = new ktimer(std::move(func), time, seconds);
+	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
+
+	return ktimerid(time, temp);
 }
 
-ktimer* timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
-	ktimer* temp_ = new ktimer(func, time, seconds);
-	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
-	return temp_;
+void timerqueue::addTimerInLoop(ktimer* timer) {
+	auto iter = timers_.begin();
+	if (iter == timers_.end() || timer->time_ < iter->first)
+		resetTimerfd(timer->time_);
+
+	timers_.emplace(timer->time_, timer);
 }
 
-ktimer* timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
-	ktimer* temp_ = new ktimer(std::move(func), time, seconds);
-	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp_));
-	return temp_;
+void timerqueue::cancelTimer(ktimerid timerid){
+	if (timerid.born_ <= 0 || timerid.ptr_ == nullptr)
+		return;
+
+	loop_->runInLoop(std::bind(&timerqueue::cancelTimerInLoop, this, timerid));
 }
 
-void timerqueue::addTimerInLoop(ktimer* timer1) {
-	int64_t time = timer1->time_;
-	entry temp_(time, timer1);
-	if (insert(temp_))
-		resetTimerfd(time);
-}
-
-void timerqueue::cancelTimer(ktimer* timer1){
-	loop_->runInLoop(std::bind(&timerqueue::cancelTimerInLoop, this, timer1));
-}
-
-void timerqueue::cancelTimerInLoop(ktimer* timer1) {
-	entry temp(timer1->time_, timer1);
-	if (timers_.erase(temp))
-		delete timer1;
-	else
-		timer1->repeat_ = 0;
-	//只有取消重复事件才是指针安全的，建议修改handleRead
-	//也就是说一次性timer无法安全的取消
-	//muduo解决的方式是加中间层
+void timerqueue::cancelTimerInLoop(ktimerid timerid) {
+	//确保不会把正在处理或将要处理的ktimer销毁
+	entry temp(timerid.born_, timerid.ptr_);
+	cancel_timers_.insert(temp);
 }
 
 void timerqueue::handleRead() {
-	int64_t now_;
-	read(fd_, &now_, sizeof now_);
-	now_ = ktimer::getMicroUnixTime();
-	expire_timers_.clear();
-	getTimers(now_);
-	for (entry& ey : expire_timers_) {
-		ey.second->run();
-		if (ey.second->repeat_) {
-			ey.second->restart(ktimer::getMicroUnixTime());
-			ey.first = ey.second->time_;
-			timers_.insert(ey);
+	int64_t now;
+	read(fd_, &now, sizeof now);
+	now = ktimer::getMicroUnixTime();
+	setExpireTimers(now);
+
+	for (auto temp : expire_timers_) {
+		temp->run();
+		if (temp->interval_ > 0) {
+			temp->time_ = ktimer::getMicroUnixTime() + temp->interval_;
+			timers_.emplace(temp->time_, temp);
+			continue;
 		}
-		else
-			delete ey.second;
+		delete temp;
 	}
 
 	if (!timers_.empty()) {
-		now_ = timers_.begin()->first;
-		resetTimerfd(now_);
+		now = timers_.begin()->first;
+		resetTimerfd(now);
 	}
 }
 
-bool timerqueue::insert(const timerqueue::entry &temp) {
-	bool changed = 0;
+void timerqueue::setExpireTimers(int64_t now) {
+	expire_timers_.clear();
+	entry temp(now, reinterpret_cast<ktimer*>(UINTPTR_MAX));
 	auto iter = timers_.begin();
-	if (iter == timers_.end() || temp.first < iter->first)
-		changed = 1;
-	timers_.insert(temp);
-	return changed;
-}
+	auto end = timers_.lower_bound(temp);
 
-void timerqueue::getTimers(int64_t now) {
-	entry ey(now, reinterpret_cast<ktimer*>(UINTPTR_MAX));
-	auto end = timers_.lower_bound(ey);
-	std::copy(timers_.begin(), end, std::back_inserter(expire_timers_));
+	while (iter != end) {
+		ktimer* x = iter->second;
+		if (!cancel_timers_.erase(entry(x->born_, x)))
+			expire_timers_.push_back(x);
+		else
+			delete x;
+		++iter;
+	}
 	timers_.erase(timers_.begin(),end);
 }
 
-void timerqueue::setTimespec(int64_t now, timespec& temp) {
-	int64_t microseconds_ = now - ktimer::getMicroUnixTime();
+void timerqueue::resetTimerfd(int64_t time) {
+	itimerspec utmr;
+	bzero(&utmr, sizeof utmr);
+
+	int64_t microseconds_ = time - ktimer::getMicroUnixTime();
 	if (microseconds_ < 100)
 		microseconds_ = 100;
-	temp.tv_sec = microseconds_ / 1000000;
-	temp.tv_nsec = (microseconds_ % 1000000) * 1000;
-}
+	utmr.it_value.tv_sec = microseconds_ / 1000000;
+	utmr.it_value.tv_nsec = (microseconds_ % 1000000) * 1000;
 
-void timerqueue::resetTimerfd(int64_t time) {
-	itimerspec new_value_;
-	itimerspec old_value_;
-	bzero(&new_value_, sizeof new_value_);
-	setTimespec(time, new_value_.it_value);
-	int ret = timerfd_settime(fd_, 0, &new_value_, &old_value_);
+	//设置相对到期时间
+	int ret = timerfd_settime(fd_, 0, &utmr, NULL);
 	if (ret)
 		LOG << "定时器设置出错，errno = " << errno;
 }
-

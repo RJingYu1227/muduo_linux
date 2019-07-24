@@ -108,39 +108,40 @@ void eventloop::queueInLoop(functor&& func) {
 	eventque_->addFunctor(std::move(func));
 }
 
-void eventloop::runAt(const functor& func, int64_t time) {
-	timerque_->addTimer(func, time);
+ktimerid eventloop::runAt(const functor& func, int64_t time) {
+	return timerque_->addTimer(func, time, 0);
 }
 
-void eventloop::runAt(functor&& func, int64_t time) {
-	timerque_->addTimer(std::move(func), time);
+ktimerid eventloop::runAt(functor&& func, int64_t time) {
+	return timerque_->addTimer(std::move(func), time, 0);
 }
 
-void eventloop::runAfter(const functor &func, double seconds) {
+ktimerid eventloop::runAfter(const functor &func, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
 	time += ktimer::getMicroUnixTime();
-	timerque_->addTimer(func, time);
+	return timerque_->addTimer(func, time, 0);
 }
 
-void eventloop::runAfter(functor&& func, double seconds) {
+ktimerid eventloop::runAfter(functor&& func, double seconds) {
 	int64_t time = static_cast<int64_t>(seconds * 1000000);
 	time += ktimer::getMicroUnixTime();
-	timerque_->addTimer(std::move(func), time);
+	return timerque_->addTimer(std::move(func), time, 0);
 }
 
-const ktimer* eventloop::runEvery(const functor &func, double seconds) {
-	return timerque_->addTimer(func,
-		ktimer::getMicroUnixTime(), seconds);
+ktimerid eventloop::runEvery(const functor &func, double seconds) {
+	int64_t time = static_cast<int64_t>(seconds * 1000000);
+	time += ktimer::getMicroUnixTime();
+	return timerque_->addTimer(func, time, seconds);
 }
 
-const ktimer* eventloop::runEvery(functor&& func, double seconds) {
-	return timerque_->addTimer(std::move(func),
-		ktimer::getMicroUnixTime(), seconds);
+ktimerid eventloop::runEvery(functor&& func, double seconds) {
+	int64_t time = static_cast<int64_t>(seconds * 1000000);
+	time += ktimer::getMicroUnixTime();
+	return timerque_->addTimer(std::move(func), time, seconds);
 }
 
-void eventloop::cancelTimer(ktimer* timer1) {
-	if (timer1)
-		timerque_->cancelTimer(timer1);
+void eventloop::cancelTimer(ktimerid timerid) {
+	timerque_->cancelTimer(timerid);
 }
 
 void eventloop::doFunctors() {

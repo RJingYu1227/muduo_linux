@@ -17,12 +17,10 @@ public:
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
-	void addTimer(const functor& func, int64_t time);
-	void addTimer(functor&& func, int64_t time);
-	ktimer* addTimer(const functor& func, int64_t time, double seconds);
-	ktimer* addTimer(functor&& func, int64_t time, double seconds);
+	ktimerid addTimer(const functor& func, int64_t time, double seconds);
+	ktimerid addTimer(functor&& func, int64_t time, double seconds);
 
-	void cancelTimer(ktimer* timer1);//只限于取消重复事件
+	void cancelTimer(ktimerid timer1);
 
 private:
 	typedef std::pair<int64_t, ktimer*> entry;
@@ -30,21 +28,20 @@ private:
 
 	//为了尽快处理handleRead
 	void addTimerInLoop(ktimer* timer1);
-	void cancelTimerInLoop(ktimer* timer1);
+	void cancelTimerInLoop(ktimerid timer1);
 
 	void handleRead();
-	bool insert(const entry& temp);
-	void getTimers(int64_t now);
-
-	void setTimespec(int64_t now, timespec& temp);
+	void setExpireTimers(int64_t now);
 	void resetTimerfd(int64_t time);
 
-	eventloop* loop_;
 	int fd_;
+	eventloop* loop_;
 	channel channel_;
 	
+	//保存绝对到期时间
 	timer_set timers_;
-	std::vector<entry> expire_timers_;
+	timer_set cancel_timers_;
+	std::vector<ktimer*> expire_timers_;
 
 };
 
