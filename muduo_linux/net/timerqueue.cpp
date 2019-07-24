@@ -54,8 +54,7 @@ void timerqueue::cancelTimer(ktimerid timerid){
 
 void timerqueue::cancelTimerInLoop(ktimerid timerid) {
 	//确保不会把正在处理或将要处理的ktimer销毁
-	entry temp(timerid.born_, timerid.ptr_);
-	cancel_timers_.insert(temp);
+	cancel_timers_.emplace(timerid.born_, timerid.ptr_);
 }
 
 void timerqueue::handleRead() {
