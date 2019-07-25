@@ -3,6 +3,8 @@
 #include"logstream.h"
 #include"blockqueue.h"
 
+class logfile;
+
 class asynclogging :uncopyable {
 public:
 
@@ -19,16 +21,25 @@ public:
 	}
 	void stop();
 
-	void append(const char* data, size_t len, time_t time);
+	void append(const logstream::s_logbuffer& sbuff);
 
 private:
 	typedef logbuffer<logstream::kLargeBuffer> buffer;
 	typedef blockqueue<buffer*> buffer_queue;
-	typedef std::pair<buffer_queue*, buffer*> entry;
 
-	static thread_local buffer_queue thread_buffers_;
-	static thread_local time_t last_put_;
-	static blockqueue<entry> async_buffers_;
+	struct impl {
+		impl(buffer* buffer, buffer_queue* queue, logfile* output) :
+			buffer_(buffer),
+			queue_(queue),
+			output_(output)
+		{}
+		
+		buffer* buffer_ = nullptr;
+		buffer_queue* queue_ = nullptr;
+		logfile* output_ = nullptr;
+	};
+
+	static blockqueue<impl> async_buffers_;
 
 	void threadFunc();
 

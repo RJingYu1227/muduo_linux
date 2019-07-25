@@ -1,20 +1,19 @@
 ﻿#include"logging.h"
 #include"asynclogging.h"
-#include"ktimer.h"
 
 #include<unistd.h>
 
 logger::outputFunc logger::output = logger::defaultOutput;
 asynclogging* logger::async_ = nullptr;
-std::string logger::log_filename_ = "./RJingYu_LOG.";
+std::string logger::log_filename_ = "./RJingYu.";
 
-void logger::defaultOutput(const char* data, size_t len, time_t time) {
-	fwrite(data, 1, len, stdout);
+void logger::defaultOutput(const logstream::s_logbuffer& temp) {
+	fwrite(temp.getData(), 1, temp.length(), stdout);
 	fflush(stdout);
 }
 
-void logger::asyncOutput(const char* data, size_t len, time_t time) {
-	async_->append(data, len, time);
+void logger::asyncOutput(const logstream::s_logbuffer& temp) {
+	async_->append(temp);
 }
 
 bool logger::createAsyncLogger() {
@@ -43,10 +42,9 @@ bool logger::deleteAsyncLogger() {
 
 logger::impl::impl(const char* basename, int line)
 	:basename_(basename),
-	line_(line),
-	time_(ktimer::getUnixTime()) {
+	line_(line) {
 
-	stream_ << ktimer::timeToString(time_) << '\n';
+	stream_.appendTime(ktimer::getUnixTime());
 }
 
 logger::logger(const char* filename, int line)
@@ -56,6 +54,5 @@ logger::logger(const char* filename, int line)
 
 logger::~logger() {
 	impl_.stream_ << " -- " << impl_.basename_ << ' ' << impl_.line_ << '\n';
-	const logbuffer<logstream::kSmallBuffer>& temp = impl_.stream_.getBuffer();
-	output(temp.getData(), temp.length(), impl_.time_);
+	output(impl_.stream_.getBuffer());
 }
