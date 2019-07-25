@@ -65,17 +65,19 @@ void asynclogging::threadFunc() {
 	while (running_) {
 		impl impl_ = async_buffers_.take_front();
 		buffer* pbuf = impl_.buffer_;
+
 		if (pbuf) {
 			impl_.output_->append(pbuf->getData(), pbuf->length());
+
 			if (impl_.queue_->size() >= 4)
 				delete pbuf;
 			else {
 				pbuf->reset();
 				impl_.queue_->put_back(pbuf, 0);
 			}
-		}
 
-		impl_.output_->flush();
+			impl_.output_->flush();
+		}
 	}
 }
 
