@@ -1,39 +1,57 @@
 ﻿#pragma once
 
-#include"kthread.h"
 #include"logstream.h"
+#include"blockqueue.h"
 
 class logfile;
 
-//可以考虑改成singleton模式
-//因为实例本身并不包含append和threadFunc中的
-//thread_local，未命名空间变量
 class asynclogger :uncopyable {
 public:
 
-	asynclogger(const char* basename, off_t rollsize);
-	~asynclogger() {
-		if (running_)
-			stop();
+	static asynclogger* initialize(const char* basename, off_t rollsize) {
+		static asynclogger instance(basename, rollsize);
+		instance_ = &instance;
+		return instance_;
 	}
 
-	//kthread不会重复start和未开始就join
+	static asynclogger* instance() { return instance_; }
+
 	void start() {
 		running_ = 1;
 		thread_.start();
 	}
-	void stop();
 
 	void append(const s_logbuffer& sbuff);
 
+protected:
+
+	asynclogger(const char* basename, off_t rollsize);
+	~asynclogger();
+
 private:
+	typedef blockqueue<l_logbuffer*> buffer_queue;
+
+	static asynclogger* instance_;
 
 	void threadFunc();
 
+	struct impl {
+		impl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
+			buffer_(l_logbuffer),
+			queue_(queue),
+			output_(output)
+		{}
+
+		l_logbuffer* buffer_ = nullptr;
+		buffer_queue* queue_ = nullptr;
+		logfile* output_ = nullptr;
+	};
+
+	blockqueue<impl> async_impls_;
 	std::string basename_;
 	off_t rollsize_;
-
 	kthread thread_;
+
 	bool running_;
 
 };

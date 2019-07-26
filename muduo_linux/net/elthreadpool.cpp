@@ -2,7 +2,6 @@
 #include"eventloop.h"
 #include"kthread.h"
 
-
 elthreadpool::elthreadpool(int num)
 	:started_(0),
 	loop_num_(num),

@@ -22,10 +22,7 @@ void logger::defaultOutput(const s_logbuffer& temp) {
 }
 
 void logger::createAsyncLogger() {
-	static asynclogger initobj
-	(log_filename_.c_str(), kLargeBuffer * 2);
-
-	async_ = &initobj;
+	async_ = asynclogger::initialize(log_filename_.c_str(), kLargeBuffer * 2);
 	async_->start();
 	output = asyncOutput;
 

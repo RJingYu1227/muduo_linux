@@ -1,28 +1,9 @@
 ﻿#include"asynclogging.h"
 #include"logfile.h"
-#include"blockqueue.h"
 
 #include<assert.h>
 
-namespace {
-
-	typedef blockqueue<l_logbuffer*> buffer_queue;
-
-	struct impl {
-		impl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
-			buffer_(l_logbuffer),
-			queue_(queue),
-			output_(output)
-		{}
-
-		l_logbuffer* buffer_ = nullptr;
-		buffer_queue* queue_ = nullptr;
-		logfile* output_ = nullptr;
-	};
-
-	blockqueue<impl> async_impls_;
-
-}
+asynclogger* asynclogger::instance_ = nullptr;
 
 asynclogger::asynclogger(const char* basename, off_t rollsize)
 	:basename_(basename),
@@ -30,6 +11,14 @@ asynclogger::asynclogger(const char* basename, off_t rollsize)
 	thread_(std::bind(&asynclogger::threadFunc, this)),
 	running_(0) {
 
+}
+
+asynclogger::~asynclogger() {
+	if (running_) {
+		running_ = 0;
+		async_impls_.put_back(impl(0, 0, 0));
+		thread_.join();
+	}
 }
 
 void asynclogger::append(const s_logbuffer& sbuff) {
@@ -97,10 +86,4 @@ void asynclogger::threadFunc() {
 			impl_.output_->flush();
 		}
 	}
-}
-
-void asynclogger::stop() {
-	running_ = 0;
-	async_impls_.put_back(impl(0, 0, 0));
-	thread_.join();
 }
