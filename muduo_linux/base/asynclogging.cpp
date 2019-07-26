@@ -8,8 +8,8 @@ namespace {
 
 	typedef blockqueue<l_logbuffer*> buffer_queue;
 
-	struct asyncimpl {
-		asyncimpl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
+	struct impl {
+		impl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
 			buffer_(l_logbuffer),
 			queue_(queue),
 			output_(output)
@@ -20,7 +20,7 @@ namespace {
 		logfile* output_ = nullptr;
 	};
 
-	blockqueue<asyncimpl> async_impls_;
+	blockqueue<impl> async_impls_;
 
 }
 
@@ -36,7 +36,7 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	thread_local logfile output_
 	((basename_ + std::to_string(pthread_self()) + '.').c_str(), rollsize_);
 	thread_local buffer_queue thread_buffers_;
-	thread_local asyncimpl impl_(nullptr, &thread_buffers_, &output_);
+	thread_local impl impl_(nullptr, &thread_buffers_, &output_);
 	thread_local time_t last_put_ = ::time(NULL);
 
 	l_logbuffer* pbuf = nullptr;
@@ -81,7 +81,7 @@ void asynclogger::threadFunc() {
 	assert(running_);
 
 	while (running_) {
-		asyncimpl impl_ = async_impls_.take_front();
+		impl impl_ = async_impls_.take_front();
 		l_logbuffer* pbuf = impl_.buffer_;
 
 		if (pbuf) {
@@ -101,6 +101,6 @@ void asynclogger::threadFunc() {
 
 void asynclogger::stop() {
 	running_ = 0;
-	async_impls_.put_back(asyncimpl(0, 0, 0));
+	async_impls_.put_back(impl(0, 0, 0));
 	thread_.join();
 }
