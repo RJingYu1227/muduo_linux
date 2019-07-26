@@ -1,6 +1,5 @@
 #pragma once
 
-#include"uncopyable.h"
 #include"kthread.h"
 
 #include<queue>

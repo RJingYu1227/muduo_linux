@@ -3,31 +3,33 @@
 #include"logstream.h"
 
 #include<errno.h>
+#include<functional>
 
-class asynclogging;
+class asynclogger;
 
 class logger {
 public:
+	typedef std::function<void(const s_logbuffer&)> functor;
 
 	logger(const char* filename, int line);
 	~logger();
 
 	logstream& stream() { return impl_.stream_; }
 
-	static void setLogFilename(const char* filename) { log_filename_ = filename; }
-	static std::string getLogFilenname() { return log_filename_; }
-	static bool createAsyncLogger();
-	static bool deleteAsyncLogger();//并非线程安全的
+	static std::string getFilenname() { return log_filename_; }
+	static void setFilename(const char* filename) { log_filename_ = filename; }
+
+	static void setOutput(const functor& func) { output = func; }
+	static void setOutput(functor&& func) { output = std::move(func); }
+
+	static void createAsyncLogger();
 
 private:
-	typedef void(*outputFunc)(const logstream::s_logbuffer&);
 
-	static outputFunc output;
-	static void defaultOutput(const logstream::s_logbuffer&);
-	static void asyncOutput(const logstream::s_logbuffer&);
-
-	static asynclogging* async_;
 	static std::string log_filename_;
+
+	static functor output;
+	static void defaultOutput(const s_logbuffer&);
 
 	struct impl {
 

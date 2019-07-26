@@ -1,11 +1,13 @@
 ﻿#include"elthreadpool.h"
 #include"eventloop.h"
+#include"kthread.h"
+
 
 elthreadpool::elthreadpool(int num)
 	:started_(0),
 	loop_num_(num),
-	current_num_(0),
-	index_(0) {
+	index_(0),
+	current_num_(0) {
 
 }
 
@@ -39,6 +41,7 @@ void elthreadpool::stop() {
 eventloop* elthreadpool::getLoop() {
 	if (loop_num_ == 0)
 		return nullptr;
+
 	++index_;
 	index_ %= loop_num_;
 	return loops_[index_];
@@ -46,13 +49,11 @@ eventloop* elthreadpool::getLoop() {
 
 void elthreadpool::threadFunc() {
 	eventloop loop_;
-	{
-		klock<kmutex> x(&lock_);
-		loops_.push_back(&loop_);
-		++current_num_;
-	}
+
+	loops_.push_back(&loop_);
+	++current_num_;
+
 	loop_.loop();
 
-	klock<kmutex> x(&lock_);
 	--current_num_;
 }

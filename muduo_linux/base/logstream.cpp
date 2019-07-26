@@ -3,49 +3,50 @@
 #include<algorithm>
 #include<stdio.h>
 
-static const char logDigits[] = "9876543210123456789";
-static const char* logZero = logDigits + 9;
-static const char logDigitsHex[] = "0123456789ABCDEF";
+namespace {
 
-template<typename T>
-static size_t logConvert(char buf[], T value){
-	T i = value;
-	char* p = buf;
+	const char logDigits[] = "9876543210123456789";
+	const char* logZero = logDigits + 9;
+	const char logDigitsHex[] = "0123456789ABCDEF";
+	const int kMaxNumericSize = 32;
 
-	do {
-		int lsd = static_cast<int>(i % 10);
-		i /= 10;
-		*p++ = logZero[lsd];
-	} while (i != 0);
+	//这两个转换函数是复制muduo的
+	template<typename T>
+	size_t logConvert(char buf[], T value) {
+		T i = value;
+		char* p = buf;
 
-	if (value < 0)
-		*p++ = '-';
-	*p = '\0';
-	std::reverse(buf, p);
+		do {
+			int lsd = static_cast<int>(i % 10);
+			i /= 10;
+			*p++ = logZero[lsd];
+		} while (i != 0);
 
-	return p - buf;
+		if (value < 0)
+			*p++ = '-';
+		*p = '\0';
+		std::reverse(buf, p);
+
+		return p - buf;
+	}
+
+	size_t logConvertHex(char buf[], uintptr_t value) {
+		uintptr_t i = value;
+		char* p = buf;
+
+		do {
+			int lsd = static_cast<int>(i % 16);
+			i /= 16;
+			*p++ = logDigitsHex[lsd];
+		} while (i != 0);
+
+		*p = '\0';
+		std::reverse(buf, p);
+
+		return p - buf;
+	}
+
 }
-
-static size_t logConvertHex(char buf[], uintptr_t value) {
-	uintptr_t i = value;
-	char* p = buf;
-
-	do {
-		int lsd = static_cast<int>(i % 16);
-		i /= 16;
-		*p++ = logDigitsHex[lsd];
-	} while (i != 0);
-
-	*p = '\0';
-	std::reverse(buf, p);
-
-	return p - buf;
-}
-
-//这两个转换函数是复制muduo的
-
-template class logbuffer<logstream::kSmallBuffer>;
-template class logbuffer<logstream::kLargeBuffer>;
 
 void logstream::staticCheck() {
 	static_assert(kMaxNumericSize - 10 > std::numeric_limits<double>::digits10,

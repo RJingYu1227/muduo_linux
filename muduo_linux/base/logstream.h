@@ -42,15 +42,17 @@ private:
 
 };
 
+enum SIZE {
+	kSmallBuffer = 2048,
+	kLargeBuffer = 2048 * 1024
+};
+
+typedef logbuffer<kSmallBuffer> s_logbuffer;
+typedef logbuffer<kLargeBuffer> l_logbuffer;
+
 class logstream {
 public:
 	typedef logstream self;
-
-	static const int kSmallBuffer = 2048;
-	static const int kLargeBuffer = 2048 * 1024;
-	static const int kMaxNumericSize = 32;
-
-	typedef logbuffer<kSmallBuffer> s_logbuffer;
 
 	self& operator<<(bool v) {
 		buffer_.append(v ? "1" : "0", 1);

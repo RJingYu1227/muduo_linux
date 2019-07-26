@@ -3,42 +3,44 @@
 
 #include<unistd.h>
 
-logger::outputFunc logger::output = logger::defaultOutput;
-asynclogging* logger::async_ = nullptr;
 std::string logger::log_filename_ = "./RJingYu.";
+logger::functor logger::output = logger::defaultOutput;
 
-void logger::defaultOutput(const logstream::s_logbuffer& temp) {
+namespace {
+
+	asynclogger* async_ = nullptr;
+
+	void asyncOutput(const s_logbuffer& temp) {
+		async_->append(temp);
+	}
+
+}
+
+void logger::defaultOutput(const s_logbuffer& temp) {
 	fwrite(temp.getData(), 1, temp.length(), stdout);
 	fflush(stdout);
 }
 
-void logger::asyncOutput(const logstream::s_logbuffer& temp) {
-	async_->append(temp);
-}
+void logger::createAsyncLogger() {
+	static asynclogger initobj
+	(log_filename_.c_str(), kLargeBuffer * 2);
 
-bool logger::createAsyncLogger() {
-	if (output == asyncOutput)
-		return 0;
-
-	async_ = new asynclogging(log_filename_.c_str(), logstream::kLargeBuffer * 2);
+	async_ = &initobj;
 	async_->start();
 	output = asyncOutput;
 
 	LOG << "创建asyncLogger";
-	return 1;
 }
 
-bool logger::deleteAsyncLogger() {
-	if (output == defaultOutput)
-		return 0;
-
+/*
+void logger::deleteAsyncLogger() {
 	output = defaultOutput;
 	delete async_;
 	async_ = nullptr;
 
-	LOG << "关闭asyncLogger";
-	return 1;
+	LOG << "销毁asyncLogger";
 }
+*/
 
 logger::impl::impl(const char* basename, int line)
 	:basename_(basename),

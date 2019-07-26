@@ -37,8 +37,6 @@ int main(int argc, char* argv[]) {
 
 	server.start();
 
-	logger::deleteAsyncLogger();
-
 	return 0;
 }
 */
@@ -101,8 +99,6 @@ int main(int argc, char* argv[]) {
 	httpserver server(argv[1], atoi(argv[2]), atoi(argv[3]));
 	server.setHttpCallback(httpCallback);
 	server.start();
-
-	logger::deleteAsyncLogger();
 
 	return 0;
 }

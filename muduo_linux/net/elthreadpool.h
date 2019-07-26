@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include"kthread.h"
+#include"uncopyable.h"
 
 #include<vector>
+#include<atomic>
 
 class eventloop;
-class tcpserver;
 
 class elthreadpool :uncopyable {
 public:
@@ -31,9 +31,8 @@ private:
 
 	bool started_;
 	int loop_num_;
-	int current_num_;//atmoic
 	int index_;
-	kmutex lock_;
+	std::atomic_int32_t current_num_;
 	std::vector<eventloop*> loops_;
 
 };
