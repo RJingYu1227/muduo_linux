@@ -37,7 +37,6 @@ public:
 
 private:
 
-	void stopInLoop();
 	void acceptConn();
 	void removeConn(const tcpconn_ptr &conn);
 	void removeConnInLoop(const tcpconn_ptr &conn);

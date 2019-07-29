@@ -40,12 +40,10 @@ void tcpserver::start() {
 	if (listening_)
 		return;
 
-	serverloop_->assertInLoopThread();
+	looppool_->start();
 
 	socket_.listen();
 	channel_.enableReading();
-
-	looppool_->start();
 	listening_ = 1;
 	LOG << "TcpServer开始监听";
 	serverloop_->loop();
@@ -55,17 +53,10 @@ void tcpserver::stop() {
 	if (!listening_)
 		return;
 
-	serverloop_->runInLoop(std::bind(&tcpserver::stopInLoop, this));
-}
-
-void tcpserver::stopInLoop() {
-	if (!listening_)
-		return;
-
-	serverloop_->quit();
 	channel_.remove();
 	listening_ = 0;
 	LOG << "TcpServer停止监听";
+	serverloop_->quit();
 }
 
 void tcpserver::acceptConn() {

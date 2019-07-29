@@ -88,7 +88,6 @@ void ksocket::setReusePort(bool on) {
 		&optval, sizeof optval);
 	if (ret < 0 && on)
 		LOG << "setReusePort失败，errno = " << errno;
-
 }
 
 void ksocket::setTcpNodelay(bool on) {

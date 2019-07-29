@@ -52,6 +52,6 @@ private:
 	off_t rollsize_;
 	kthread thread_;
 
-	bool running_;
+	volatile bool running_;
 
 };

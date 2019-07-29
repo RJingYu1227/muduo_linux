@@ -45,9 +45,10 @@ private:
 	void doFunctors();
 
 	unsigned long tid_;
-	bool quit_;
+	volatile bool quit_;
 	bool looping_;
 	int timeout_;
+
 	poller* poller_;
 	eventqueue* eventque_;//最后执行
 	timerqueue* timerque_;//尽快执行
