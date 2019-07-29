@@ -76,7 +76,7 @@ void ksocket::shutdownAll() {
 
 void ksocket::setReuseAddr(bool on) {
 	int optval = on ? 1 : 0;
-	int ret = setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT,
+	int ret = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR,
 		&optval, sizeof optval);
 	if (ret < 0 && on)
 		LOG << "setReuseAddr失败，errno = " << errno;

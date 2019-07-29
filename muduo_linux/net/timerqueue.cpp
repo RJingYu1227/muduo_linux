@@ -23,14 +23,14 @@ timerqueue::~timerqueue() {
 	close(fd_);
 }
 
-ktimerid timerqueue::addTimer(const functor &func, int64_t time, double seconds) {
+ktimerid timerqueue::addTimer(const functor& func, int64_t time, double seconds) {
 	ktimer* temp = new ktimer(func, time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
 	return ktimerid(time, temp);
 }
 
-ktimerid timerqueue::addTimer(functor&&func, int64_t time, double seconds) {
+ktimerid timerqueue::addTimer(functor&& func, int64_t time, double seconds) {
 	ktimer* temp = new ktimer(std::move(func), time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
