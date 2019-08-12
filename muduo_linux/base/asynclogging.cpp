@@ -37,51 +37,51 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	//得想个办法去掉thread_local
 	thread_local time_t last_put = ::time(NULL);
 
-	impl* pimpl_ = thread_pimpl_.get();
-	if (pimpl_ == nullptr) {
+	impl* pimpl = thread_pimpl_.get();
+	if (pimpl == nullptr) {
 		impl* temp = new impl(
 			nullptr,
 			new buffer_queue(),
 			new logfile((basename_ + std::to_string(pthread_self()) + '.').c_str(), rollsize_));
 
 		thread_pimpl_.set(temp);
-		pimpl_ = temp;
+		pimpl = temp;
 	}
 
 	l_logbuffer* pbuf = nullptr;
-	size_t size = pimpl_->queue_->size();
+	size_t size = pimpl->queue_->size();
 	size_t length = sbuff.length();
 
 	if (size == 0)
 		pbuf = new l_logbuffer;
 	else {
-		pbuf = pimpl_->queue_->take_front();
-		pimpl_->buffer_ = pbuf;
+		pbuf = pimpl->queue_->take_front();
+		pimpl->buffer_ = pbuf;
 
 		if (pbuf->leftBytes() >= length) {
 			pbuf->append(sbuff.getData(), length);
 
 			if (sbuff.getTime() - last_put >= 3) {
 				last_put = sbuff.getTime();
-				async_impls_.put_back(*pimpl_);
+				async_impls_.put_back(*pimpl);
 			}
 			else
-				pimpl_->queue_->put_front(pbuf, 0);
+				pimpl->queue_->put_front(pbuf, 0);
 
 			return;
 		}
 		else
-			async_impls_.put_back(*pimpl_);
+			async_impls_.put_back(*pimpl);
 
 		if (size == 1)
 			pbuf = new l_logbuffer;
 		else
-			pbuf = pimpl_->queue_->take_front();
+			pbuf = pimpl->queue_->take_front();
 	}
 
-	pimpl_->buffer_ = pbuf;
+	pimpl->buffer_ = pbuf;
 	pbuf->append(sbuff.getData(), length);
-	pimpl_->queue_->put_front(pbuf, 0);
+	pimpl->queue_->put_front(pbuf, 0);
 }
 
 void asynclogger::threadFunc() {
