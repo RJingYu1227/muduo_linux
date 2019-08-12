@@ -1,46 +1,4 @@
 ﻿#include"logging.h"
-
-/*
-#include"tcpserver.h"
-#include"tcpconnection.h"
-
-void onConnected(const tcpconn_ptr& conn){
-
-}
-
-void onRecvDone(const tcpconn_ptr& conn) {
-	buffer* buff = conn->getRecvBuffer();
-	conn->send(buff);
-	buff->retrieveAll();
-}
-
-void onClosed(const tcpconn_ptr& conn) {
-	
-}
-
-void onSendDone(const tcpconn_ptr& conn) {
-	conn->shutDown();
-}
-
-int main(int argc, char* argv[]) {
-	if (argc != 4)
-		return 0;
-	logger::createAsyncLogger();
-	tcpconnection::ignoreSigPipe();
-
-	tcpserver server(argv[1], atoi(argv[2]));
-
-	server.setConnectedCallback(onConnected);
-	server.setClosedCallback(onClosed);
-	server.setRecvDoneCallback(onRecvDone);
-	server.setSendDoneCallback(onSendDone);
-
-	server.start();
-
-	return 0;
-}
-*/
-
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -102,34 +60,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-
-/*
-#include"eventloop.h"
-
-eventloop* loop;
-
-void timerFunc1() {
-	loop->quit();
-	LOG << "停止循环";
-}
-
-void timerFunc2(ktimerid id) {
-	loop->cancelTimer(id);
-	LOG << "取消id3";
-}
-
-void timerFunc3() {
-	static int x = 0;
-	x++;
-	LOG << x;
-}
-
-int main() {
-	loop = new eventloop();
-	ktimerid id3 = loop->runEvery(timerFunc3, 3);
-	ktimerid id2 = loop->runAfter(std::bind(timerFunc2, id3), 10);
-	ktimerid id1 = loop->runEvery(timerFunc1, 15);
-
-	loop->loop();
-}
-*/

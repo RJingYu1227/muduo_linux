@@ -6,6 +6,27 @@
 #include<functional>
 
 template<typename T>
+class kthreadlocal {
+public:
+
+	kthreadlocal() {
+		pthread_key_create(&key_, NULL);
+	}
+
+	~kthreadlocal() {
+		pthread_key_delete(key_);
+	}
+
+	void set(const T* ptr) { pthread_setspecific(key_, ptr); }
+	T* get() { return (T*)pthread_getspecific(key_); }
+
+private:
+
+	pthread_key_t key_;
+
+};
+
+template<typename T>
 class klock {
 public:
 

@@ -47,6 +47,7 @@ private:
 		logfile* output_ = nullptr;
 	};
 
+	kthreadlocal<impl> thread_pimpl_;
 	blockqueue<impl> async_impls_;
 	std::string basename_;
 	off_t rollsize_;

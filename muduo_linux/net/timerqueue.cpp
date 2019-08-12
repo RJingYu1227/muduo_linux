@@ -93,7 +93,7 @@ void timerqueue::setExpireTimers(int64_t now) {
 			delete x;
 		++iter;
 	}
-	timers_.erase(timers_.begin(),end);
+	timers_.erase(timers_.begin(), end);
 }
 
 void timerqueue::resetTimerfd(int64_t time) {
