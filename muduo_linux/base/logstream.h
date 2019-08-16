@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include"ktimer.h"
-
 #include<string>
 #include<string.h>
 
@@ -29,16 +27,12 @@ public:
 	void reset() { current_ = data_; }
 	void bzero() { memset(data_, 0, sizeof data_); }
 
-	void setTime(time_t time) { time_ = time; }
-	time_t getTime()const { return time_; }
-
 private:
 
 	const char* endPtr() { return data_ + sizeof data_; }
 
 	char data_[SIZE];
 	char* current_;
-	time_t time_;
 
 };
 
@@ -88,10 +82,6 @@ public:
 		return *this;
 	}
 
-	void appendTime(time_t time) {
-		buffer_.setTime(time);
-		*this << ktimer::timeToString(time) << '\n';
-	}
 	void append(const char* data, size_t len) { buffer_.append(data, len); }
 	const s_logbuffer& getBuffer() { return buffer_; }
 	void resetBuffer() { buffer_.reset(); }

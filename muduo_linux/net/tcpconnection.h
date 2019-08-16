@@ -3,21 +3,19 @@
 #include"buffer.h"
 #include"channel.h"
 #include"ksocket.h"
-#include"uncopyable.h"
 
 #include<memory>
-#include<functional>
 
 using std::string;
 
 class eventloop;
+class tcpconnection;
+
+typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
+typedef std::function<void(const tcpconn_ptr&)> event_callback;
 
 class tcpconnection :uncopyable, public std::enable_shared_from_this<tcpconnection> {
 public:
-	typedef std::shared_ptr<tcpconnection> tcpconn_ptr;
-	typedef std::function<void(const tcpconn_ptr&)> event_callback;
-
-	static void ignoreSigPipe();
 
 	tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr);
 	~tcpconnection();

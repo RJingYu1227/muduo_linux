@@ -3,9 +3,7 @@
 #include"memorypool.h"
 #include"channel.h"
 #include"ksocket.h"
-#include"uncopyable.h"
 
-#include<functional>
 #include<unordered_map>
 
 class elthreadpool;
@@ -19,13 +17,13 @@ class tcpserver :uncopyable {
 public:
 
 	tcpserver(const char* ip, int port, int loopnum = 2);
-	~tcpserver();
+	~tcpserver();//析构函数不能在loop循环内执行
 
 	eventloop* getLoop() { return serverloop_; }
 	bool isListening()const { return listening_; }
 	void start();
 	void stop();
-
+	
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
 	void setRecvDoneCallback(const event_callback& cb) { recvDoneCallback = cb; }
@@ -42,6 +40,7 @@ private:
 	void removeConnInLoop(const tcpconn_ptr &conn);
 	void deleter(tcpconnection* conn);
 	void deleterInLoop(tcpconnection* conn);
+	void stopInLoop();
 
 	eventloop* serverloop_;
 	elthreadpool* looppool_;

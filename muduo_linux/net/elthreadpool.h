@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"kthread.h"
 
 #include<vector>
 #include<atomic>
@@ -18,7 +18,8 @@ public:
 	{ return loops_; }
 
 	void start();
-	void stop();//在非线程池内线程调用；会等待loop结束
+	//在非线程池内线程调用；不允许通过其它方式使loop退出循环
+	void stop();
 
 	void setLoopNum(int num) 
 	{ loop_num_ = num; }
@@ -29,6 +30,7 @@ private:
 
 	void threadFunc();
 
+	kmutex lock_;
 	bool started_;
 	int loop_num_;
 	int index_;

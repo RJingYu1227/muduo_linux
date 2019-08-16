@@ -1,7 +1,10 @@
 ﻿#pragma once
 
+#include"uncopyable.h"
 #include"logstream.h"
 #include"blockqueue.h"
+
+#include<atomic>
 
 class logfile;
 
@@ -34,7 +37,7 @@ private:
 	static asynclogger* instance_;
 
 	void threadFunc();
-
+	
 	struct impl {
 		impl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
 			buffer_(l_logbuffer),
@@ -42,13 +45,18 @@ private:
 			output_(output)
 		{}
 
+		impl() {}
+
 		l_logbuffer* buffer_ = nullptr;
 		buffer_queue* queue_ = nullptr;
 		logfile* output_ = nullptr;
 	};
 
+	std::atomic_int16_t thread_num_;
 	kthreadlocal<impl> thread_pimpl_;
-	blockqueue<impl> async_impls_;
+	blockqueue<impl> full_impls_;
+	blockqueue<impl> empty_impls_;
+
 	std::string basename_;
 	off_t rollsize_;
 	kthread thread_;

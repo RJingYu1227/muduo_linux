@@ -2,7 +2,6 @@
 
 #include"tcpserver.h"
 #include"tcpconnection.h"
-#include"uncopyable.h"
 
 #include<functional>
 
@@ -10,7 +9,7 @@ class httprequest;
 class httpresponse;
 class eventloop;
 
-class httpserver :uncopyable {
+class httpserver {
 public:
 	typedef std::function<void(const httprequest&, httpresponse&)> callback;
 
@@ -18,7 +17,8 @@ public:
 
 	void setHttpCallback(const callback& cb) { httpCallback = cb; }
 	eventloop* getLoop();
-	void start();
+	void start(){ server_.start(); }
+	void stop() { server_.stop(); }
 
 private:
 

@@ -1,7 +1,6 @@
 ﻿#include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
-#include"logging.h"
 
 #include<string>
 
@@ -17,11 +16,6 @@ httpserver::httpserver(const char* ip, int port, int loopnum)
 
 eventloop* httpserver::getLoop() {
 	return server_.getLoop();
-}
-
-void httpserver::start() {
-	LOG << "Http服务器模式";
-	server_.start();
 }
 
 void httpserver::defaultCallback(const httprequest& request, httpresponse& response) {

@@ -1,5 +1,6 @@
 ﻿#include"logging.h"
 #include"asynclogging.h"
+#include"ktimer.h"
 
 #include<unistd.h>
 
@@ -29,26 +30,16 @@ void logger::createAsyncLogger() {
 	LOG << "创建asyncLogger";
 }
 
-/*
-void logger::deleteAsyncLogger() {
-	output = defaultOutput;
-	delete async_;
-	async_ = nullptr;
-
-	LOG << "销毁asyncLogger";
-}
-*/
-
 logger::impl::impl(const char* basename, int line)
 	:basename_(basename),
 	line_(line) {
 
-	stream_.appendTime(ktimer::getUnixTime());
 }
 
 logger::logger(const char* filename, int line)
 	:impl_(filename, line) {
 
+	impl_.stream_ << ktimer::timeToString(ktimer::getUnixTime()) << '\n';
 }
 
 logger::~logger() {

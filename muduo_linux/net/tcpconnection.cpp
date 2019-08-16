@@ -5,12 +5,6 @@
 
 #include<unistd.h>
 #include<assert.h>
-#include<signal.h>
-
-void tcpconnection::ignoreSigPipe() {
-	signal(SIGPIPE, SIG_IGN);
-	LOG << "忽略SIGPIPE";
-}
 
 tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 	:loop_(loop),

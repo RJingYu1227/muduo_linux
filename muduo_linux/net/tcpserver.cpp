@@ -50,6 +50,10 @@ void tcpserver::start() {
 }
 
 void tcpserver::stop() {
+	serverloop_->runInLoop(std::bind(&tcpserver::stopInLoop, this));
+}
+
+void tcpserver::stopInLoop() {
 	if (!listening_)
 		return;
 

@@ -8,24 +8,22 @@ template<typename T>
 class blockqueue :uncopyable {
 public:
 
-	bool timedwait(int seconds) {
+	size_t timedwait(int seconds) {
 		klock<kmutex> x(&lock_);
 		if (queue_.empty())
 			cond_.timedwait(&lock_, seconds);
-		return !queue_.empty();
+		return queue_.size();
 	}
 
-	void put_back(const T& val, bool notify = 1) {
+	void put_back(const T& val) {
 		klock<kmutex> x(&lock_);
 		queue_.push_back(val);
-		if (notify)
-			cond_.notify();
+		cond_.notify();
 	}
-	void put_back(T&& val, bool notify = 1) {
+	void put_back(T&& val) {
 		klock<kmutex> x(&lock_);
 		queue_.push_back(std::move(val));
-		if (notify)
-			cond_.notify();
+		cond_.notify();
 	}
 	bool tryput_back(const T& val);
 	bool tryput_back(T&& val);
@@ -37,17 +35,15 @@ public:
 	T take_front();
 	bool tryput_front(T&& val);
 	bool tryput_front(const T& val);
-	void put_front(T&& val, bool notify = 1) {
+	void put_front(T&& val) {
 		klock<kmutex> x(&lock_);
 		queue_.push_front(std::move(val));
-		if (notify)
-			cond_.notify();
+		cond_.notify();
 	}
-	void put_front(const T& val, bool notify = 1) {
+	void put_front(const T& val) {
 		klock<kmutex> x(&lock_);
 		queue_.push_front(val);
-		if (notify)
-			cond_.notify();
+		cond_.notify();
 	}
 
 	bool empty()const {
