@@ -1,8 +1,6 @@
 ﻿#include"asynclogging.h"
 #include"logfile.h"
 
-#include<vector>
-
 asynclogger* asynclogger::instance_ = nullptr;
 
 asynclogger::asynclogger(const char* basename, off_t rollsize)
