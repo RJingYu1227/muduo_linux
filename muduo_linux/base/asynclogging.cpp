@@ -4,8 +4,7 @@
 asynclogger* asynclogger::instance_ = nullptr;
 
 asynclogger::asynclogger(const char* basename, off_t rollsize)
-	:thread_num_(0),
-	basename_(basename),
+	:basename_(basename),
 	rollsize_(rollsize),
 	thread_(std::bind(&asynclogger::threadFunc, this)),
 	running_(0) {
@@ -39,8 +38,8 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 		pimpl->queue_->put_front(pimpl->buffer_);
 
 		pimpl->buffer_ = new l_logbuffer();
-		empty_impls_.put_back(*pimpl);
-		++thread_num_;
+		klock<kmutex> x(&lock_);
+		empty_impls_.push_back(*pimpl);
 
 		return;
 	}
@@ -77,7 +76,6 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 void asynclogger::threadFunc() {
 	impl impl_;
 	l_logbuffer* pbuf;
-	int16_t thnum;
 	size_t fsize;
 
 	while (running_) {
@@ -87,6 +85,7 @@ void asynclogger::threadFunc() {
 				impl_ = full_impls_.take_front();
 				pbuf = impl_.buffer_;
 				impl_.output_->append(pbuf->getData(), pbuf->length());
+				impl_.output_->flush();
 
 				if (impl_.queue_->size() >= 4)
 					delete pbuf;
@@ -94,25 +93,19 @@ void asynclogger::threadFunc() {
 					pbuf->reset();
 					impl_.queue_->put_back(pbuf);
 				}
-
-				impl_.output_->flush();
 			}
 		}
 		else {
-			thnum = thread_num_;
-			while (thnum--) {
-				impl_ = empty_impls_.take_front();
-				impl_.queue_->put_back(impl_.buffer_);
+			klock<kmutex> x(&lock_);
+			for (auto& temp : empty_impls_) {
+				temp.queue_->put_back(temp.buffer_);
+				temp.buffer_ = temp.queue_->take_front();
 
-				pbuf = impl_.queue_->take_front();
-				if (pbuf->length()) {
-					impl_.output_->append(pbuf->getData(), pbuf->length());
-					pbuf->reset();
-					impl_.output_->flush();
+				if (temp.buffer_->length()) {
+					temp.output_->append(temp.buffer_->getData(), temp.buffer_->length());
+					temp.output_->flush();
+					temp.buffer_->reset();
 				}
-
-				impl_.buffer_ = pbuf;
-				empty_impls_.put_back(impl_);
 			}
 		}
 	}

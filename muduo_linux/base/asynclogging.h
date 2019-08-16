@@ -4,7 +4,7 @@
 #include"logstream.h"
 #include"blockqueue.h"
 
-#include<atomic>
+#include<vector>
 
 class logfile;
 
@@ -52,10 +52,11 @@ private:
 		logfile* output_ = nullptr;
 	};
 
-	std::atomic_int16_t thread_num_;
 	kthreadlocal<impl> thread_pimpl_;
 	blockqueue<impl> full_impls_;
-	blockqueue<impl> empty_impls_;
+
+	kmutex lock_;
+	std::vector<impl> empty_impls_;
 
 	std::string basename_;
 	off_t rollsize_;
