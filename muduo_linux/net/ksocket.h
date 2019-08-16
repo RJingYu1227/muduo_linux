@@ -13,8 +13,9 @@ public:
 	~ksocket();
 
 	int getFd()const { return fd_; }
-	uint16_t getPort()const { return addr_.sin_port; }
-	uint32_t getAddr()const { return addr_.sin_addr.s_addr; }
+	uint16_t getPort()const { return htons(addr_.sin_port); }
+	uint32_t getAddr1()const { return addr_.sin_addr.s_addr; }
+	const char* getAddr2()const { return buf; }
 	bool getTcpInfo(tcp_info* info)const;
 
 	void bind();
@@ -35,6 +36,7 @@ private:
 	int fd_;
 	sockaddr_in addr_;
 	socklen_t len_;
+	char buf[16];
 
 };
 

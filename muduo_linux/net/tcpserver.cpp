@@ -19,7 +19,7 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	socket_.bind();
 	channel_.epollet();
 	channel_.setReadCallback(std::bind(&tcpserver::acceptConn, this));
-	LOG << "创建TcpServer：" << socket_.getAddr() << ' ' << socket_.getPort();
+	LOG << "创建TcpServer：" << socket_.getAddr2() << ' ' << socket_.getPort();
 }
 
 tcpserver::~tcpserver() {
@@ -33,7 +33,7 @@ tcpserver::~tcpserver() {
 
 	connections_.clear();
 	delete serverloop_;
-	LOG << "关闭TcpServer：" << socket_.getAddr() << ' ' << socket_.getPort();
+	LOG << "关闭TcpServer：" << socket_.getAddr2() << ' ' << socket_.getPort();
 }
 
 void tcpserver::start() {

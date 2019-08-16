@@ -11,8 +11,12 @@ ksocket::ksocket(const char* ip, int port)
 
 	assert(fd_ > 0);
 	bzero(&addr_, len_);
+
 	addr_.sin_family = AF_INET;
+
 	inet_pton(AF_INET, ip, &addr_.sin_addr);
+	strncpy(buf, ip, 16);
+
 	addr_.sin_port = htons(static_cast<uint16_t>(port));
 }
 
@@ -22,6 +26,7 @@ ksocket::ksocket(int fd, sockaddr_in& addr)
 	len_(sizeof(sockaddr_in)) {
 
 	assert(fd_ > 0);
+	inet_ntop(AF_INET, &addr_.sin_addr, buf, 16);
 }
 
 ksocket::~ksocket() {
