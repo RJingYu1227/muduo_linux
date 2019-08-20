@@ -27,7 +27,7 @@ coroutine::~coroutine() {
 	for (auto iter = comap_.begin(); iter != comap_.end(); ++iter) {
 		co = iter->second;
 		::free(co->ctx_.uc_stack.ss_sp);
-		delete co;
+		::free(co);
 	}
 }
 
@@ -46,7 +46,7 @@ void coroutine::makeCtx(impl* co) {
 }
 
 coroutine_t coroutine::create(const functor& func) {
-	impl* co = new impl();
+	impl* co = (impl*)malloc(sizeof(impl));
 	++coid_;
 	co->id_ = coid_;
 	co->coFunc = func;
@@ -57,7 +57,7 @@ coroutine_t coroutine::create(const functor& func) {
 }
 
 coroutine_t coroutine::create(functor&& func) {
-	impl* co = new impl();
+	impl* co = (impl*)malloc(sizeof(impl));
 	++coid_;
 	co->id_ = coid_;
 	co->coFunc = std::move(func);
@@ -75,7 +75,7 @@ void coroutine::free(coroutine_t id) {
 	assert(co->state_ == FREE || co->state_ == DONE);
 
 	::free(co->ctx_.uc_stack.ss_sp);
-	delete co;
+	::free(co);
 	comap_.erase(id);
 }
 
