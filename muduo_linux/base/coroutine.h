@@ -41,7 +41,7 @@ protected:
 
 private:
 
-	static coroutine* co_env_;
+	thread_local static coroutine* co_env_;
 
 	struct impl {
 		coroutine_t id_;

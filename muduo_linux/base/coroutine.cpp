@@ -3,7 +3,7 @@
 #include<malloc.h>
 #include<assert.h>
 
-coroutine* coroutine::co_env_ = nullptr;
+thread_local coroutine* coroutine::co_env_ = nullptr;
 
 void coroutine::coroutineFunc(impl* co) {
 	if (co->state_ == FREE) {
