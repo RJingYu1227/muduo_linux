@@ -71,3 +71,36 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+
+/*
+#include"coroutine.h"
+
+void func2(coroutine_t* id) {
+	printf("func2:1 %d\n", *id);
+	coroutine* env = coroutine::threadEnv();
+	env->yield();
+	printf("func2:2 %d\n", *id);
+}
+
+void func1(coroutine_t* id) {
+	printf("func1:1 %d\n", *id);
+	coroutine* env = coroutine::threadEnv();
+	coroutine_t child;
+	child = env->create(std::bind(func2, id));
+	env->resume(child);
+	printf("func1:2 %d\n", *id);
+	env->resume(child);
+	env->free(child);
+}
+
+void func3() {
+	coroutine* env = coroutine::threadEnv();
+	coroutine_t id;
+	for (int i = 0; i < 10; ++i) {
+		id = env->create(std::bind(func1, &id));
+		env->resume(id);
+		env->free(id);
+	}
+	coroutine::freeEnv();
+}
+*/

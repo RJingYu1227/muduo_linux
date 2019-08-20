@@ -3,7 +3,23 @@
 #include<malloc.h>
 #include<assert.h>
 
-thread_local coroutine* coroutine::co_env_ = nullptr;
+kthreadlocal<coroutine> coroutine::thread_env_;
+
+coroutine* coroutine::threadEnv() {
+	coroutine* env = thread_env_.get();
+	if (env == nullptr) {
+		env = new coroutine();
+		thread_env_.set(env);
+	}
+
+	return env;
+}
+
+void coroutine::freeEnv() {
+	coroutine* env = thread_env_.get();
+	assert(env != nullptr);
+	delete env;
+}
 
 void coroutine::coroutineFunc(impl* co) {
 	if (co->state_ == FREE) {
@@ -12,7 +28,7 @@ void coroutine::coroutineFunc(impl* co) {
 	}
 	co->state_ = DONE;
 
-	coroutine* env = instance();
+	coroutine* env = threadEnv();
 	env->yield();
 }
 
@@ -27,7 +43,7 @@ coroutine::~coroutine() {
 	for (auto iter = comap_.begin(); iter != comap_.end(); ++iter) {
 		co = iter->second;
 		::free(co->ctx_.uc_stack.ss_sp);
-		::free(co);
+		delete co;//注意这里
 	}
 }
 
@@ -46,7 +62,7 @@ void coroutine::makeCtx(impl* co) {
 }
 
 coroutine_t coroutine::create(const functor& func) {
-	impl* co = (impl*)malloc(sizeof(impl));
+	impl* co = new impl();
 	++coid_;
 	co->id_ = coid_;
 	co->coFunc = func;
@@ -57,7 +73,7 @@ coroutine_t coroutine::create(const functor& func) {
 }
 
 coroutine_t coroutine::create(functor&& func) {
-	impl* co = (impl*)malloc(sizeof(impl));
+	impl* co = new impl();
 	++coid_;
 	co->id_ = coid_;
 	co->coFunc = std::move(func);
@@ -75,7 +91,7 @@ void coroutine::free(coroutine_t id) {
 	assert(co->state_ == FREE || co->state_ == DONE);
 
 	::free(co->ctx_.uc_stack.ss_sp);
-	::free(co);
+	delete co;
 	comap_.erase(id);
 }
 
@@ -94,7 +110,7 @@ void coroutine::resume(coroutine_t id) {
 	}
 	else {
 		//注意这里
-		assert(costack_.size < 128);
+		assert(costack_.size() < 128);
 		impl* currco = costack_.top();
 		currco->state_ = SUSPEND;
 		costack_.push(pendco);

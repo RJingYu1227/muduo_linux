@@ -1,11 +1,10 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"kthread.h"
 
 #include<ucontext.h>
 #include<map>
 #include<stack>
-#include<functional>
 
 typedef unsigned int coroutine_t;
 
@@ -20,11 +19,8 @@ public:
 		DONE,
 	};
 
-	static coroutine* instance() {
-		static coroutine ins;
-		co_env_ = &ins;
-		return co_env_;
-	}
+	static coroutine* threadEnv();
+	static void freeEnv();
 
 	coroutine_t create(const functor& func);
 	coroutine_t create(functor&& func);
@@ -41,7 +37,7 @@ protected:
 
 private:
 
-	thread_local static coroutine* co_env_;
+	static kthreadlocal<coroutine> thread_env_;
 
 	struct impl {
 		coroutine_t id_;
