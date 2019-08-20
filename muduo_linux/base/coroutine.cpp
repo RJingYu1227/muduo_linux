@@ -93,6 +93,8 @@ void coroutine::resume(coroutine_t id) {
 		swapcontext(&env_ctx_, &pendco->ctx_);
 	}
 	else {
+		//注意这里
+		assert(costack_.size < 128);
 		impl* currco = costack_.top();
 		currco->state_ = SUSPEND;
 		costack_.push(pendco);
