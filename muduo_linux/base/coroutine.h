@@ -4,7 +4,6 @@
 
 #include<ucontext.h>
 #include<map>
-#include<stack>
 
 typedef unsigned int coroutine_t;
 
@@ -19,8 +18,8 @@ public:
 		DONE,
 	};
 
-	static coroutine* threadEnv();
-	static void freeEnv();
+	static coroutine* threadCoenv();
+	static void freeCoenv();
 
 	coroutine_t create(const functor& func);
 	coroutine_t create(functor&& func);
@@ -37,7 +36,7 @@ protected:
 
 private:
 
-	static kthreadlocal<coroutine> thread_env_;
+	static kthreadlocal<coroutine> thread_coenv_;
 
 	struct impl {
 		coroutine_t id_;
@@ -51,8 +50,10 @@ private:
 	static void coroutineFunc(impl* co);
 
 	std::map<coroutine_t, impl*> comap_;
-	std::stack<impl*> costack_;
 	ucontext_t env_ctx_;
+
+	impl* costack_[128];
+	int sindex_;
 	coroutine_t coid_;
 
 };

@@ -73,34 +73,79 @@ int main(int argc, char* argv[]) {
 }
 
 /*
-#include"coroutine.h"
+#include"coloop.h"
+#include"ksocket.h"
 
-void func2(coroutine_t* id) {
-	printf("func2:1 %d\n", *id);
-	coroutine* env = coroutine::threadEnv();
-	env->yield();
-	printf("func2:2 %d\n", *id);
-}
+#include<unistd.h>
+#include<string>
 
-void func1(coroutine_t* id) {
-	printf("func1:1 %d\n", *id);
-	coroutine* env = coroutine::threadEnv();
-	coroutine_t child;
-	child = env->create(std::bind(func2, id));
-	env->resume(child);
-	printf("func1:2 %d\n", *id);
-	env->resume(child);
-	env->free(child);
-}
+std::string msg =
+"HTTP/1.1 200 OK\r\n"
+"Connection: keep-alive\r\n"
+"Content-Length: 13\r\n"
+"Content-Type: text/plain\r\n"
+"Server: RJingYu\r\n"
+"\r\n"
+"hello, world\n";
 
-void func3() {
-	coroutine* env = coroutine::threadEnv();
-	coroutine_t id;
-	for (int i = 0; i < 10; ++i) {
-		id = env->create(std::bind(func1, &id));
-		env->resume(id);
-		env->free(id);
+void connection(ksocket* sokt) {
+	coroutine* env = coroutine::threadCoenv();
+	coloop* loop = coloop::threadColoop();
+
+	char buf[1024];
+	while (1) {
+		ssize_t nread = read(sokt->getFd(), buf, 1024);
+		if (nread <= 0)
+			break;
+		write(sokt->getFd(), msg.c_str(), msg.size());
+
+		env->yield();
 	}
-	coroutine::freeEnv();
+	coloop_t item;
+	item.fd_ = sokt->getFd();
+	loop->remove(item);
+
+	delete sokt;
+}
+
+void server(ksocket* sokt) {
+	coroutine* env = coroutine::threadCoenv();
+	coloop* loop = coloop::threadColoop();
+
+	coloop_t item;
+	sockaddr_in cliaddr_;
+	int clifd_;
+
+	item.events_ = coloop::kReadEvent;
+	while (1) {
+		clifd_ = sokt->accept(&cliaddr_);
+		if (clifd_ > 0) {
+			ksocket* cskt = new ksocket(clifd_, cliaddr_);
+			item.coid_ = env->create(std::bind(connection, cskt));
+			item.fd_ = clifd_;
+			loop->add(item);
+		}
+		env->yield();
+	}
+}
+
+int main() {
+	coroutine* env = coroutine::threadCoenv();
+	coloop* loop = coloop::threadColoop();
+
+	ksocket socket_("127.0.0.1", 6666);
+	socket_.bind();
+	socket_.listen();
+
+	coloop_t item;
+	item.fd_ = socket_.getFd();
+	item.coid_ = env->create(std::bind(server, &socket_));
+	item.events_ = coloop::kReadEvent;
+
+	loop->add(item);
+	loop->loop(-1);
+
+	coloop::freeColoop();
+	coroutine::freeCoenv();
 }
 */

@@ -3,20 +3,20 @@
 #include<malloc.h>
 #include<assert.h>
 
-kthreadlocal<coroutine> coroutine::thread_env_;
+kthreadlocal<coroutine> coroutine::thread_coenv_;
 
-coroutine* coroutine::threadEnv() {
-	coroutine* env = thread_env_.get();
+coroutine* coroutine::threadCoenv() {
+	coroutine* env = thread_coenv_.get();
 	if (env == nullptr) {
 		env = new coroutine();
-		thread_env_.set(env);
+		thread_coenv_.set(env);
 	}
 
 	return env;
 }
 
-void coroutine::freeEnv() {
-	coroutine* env = thread_env_.get();
+void coroutine::freeCoenv() {
+	coroutine* env = thread_coenv_.get();
 	assert(env != nullptr);
 	delete env;
 }
@@ -28,12 +28,13 @@ void coroutine::coroutineFunc(impl* co) {
 	}
 	co->state_ = DONE;
 
-	coroutine* env = threadEnv();
+	coroutine* env = threadCoenv();
 	env->yield();
 }
 
 coroutine::coroutine()
-	:coid_(0) {
+	:sindex_(-1),
+	coid_(0) {
 
 	getcontext(&env_ctx_);
 }
@@ -104,32 +105,34 @@ void coroutine::resume(coroutine_t id) {
 	if (pendco->state_ == SUSPEND)
 		pendco->state_ = RUNNING;
 
-	if (costack_.empty()) {
-		costack_.push(pendco);
+	if (sindex_ == -1) {
+		++sindex_;
+		costack_[sindex_] = pendco;
 		swapcontext(&env_ctx_, &pendco->ctx_);
 	}
 	else {
 		//注意这里
-		assert(costack_.size() < 128);
-		impl* currco = costack_.top();
+		assert(sindex_ < 127);
+		impl* currco = costack_[sindex_];
 		currco->state_ = SUSPEND;
-		costack_.push(pendco);
+		++sindex_;
+		costack_[sindex_] = pendco;
 		swapcontext(&currco->ctx_, &pendco->ctx_);
 	}
 }
 
 void coroutine::yield() {
-	assert(!costack_.empty());
+	assert(sindex_ != -1);
 
-	impl* thisco = costack_.top();
-	costack_.pop();
+	impl* thisco = costack_[sindex_];
+	--sindex_;
 	if (thisco->state_ == RUNNING)
 		thisco->state_ = SUSPEND;
 
-	if (costack_.empty())
+	if (sindex_ == -1)
 		swapcontext(&thisco->ctx_, &env_ctx_);
 	else {
-		impl* lastco = costack_.top();
+		impl* lastco = costack_[sindex_];
 		lastco->state_ = RUNNING;
 		swapcontext(&thisco->ctx_, &lastco->ctx_);
 	}

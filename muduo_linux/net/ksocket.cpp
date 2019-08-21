@@ -41,14 +41,14 @@ bool ksocket::getTcpInfo(tcp_info* info)const {
 
 void ksocket::bind() {
 	if (::bind(fd_, (sockaddr*)&addr_, sizeof addr_) == -1) {
-		LOG << "绑定监听端口失败，errno = " << errno;
+		perror("绑定监听端口失败：");
 		exit(1);
 	}
 }
 
 void ksocket::listen() {
 	if (::listen(fd_, SOMAXCONN) == -1) {
-		LOG << "监听失败，errno = " << errno;
+		perror("监听端口失败：");
 		exit(1);
 	}
 }
