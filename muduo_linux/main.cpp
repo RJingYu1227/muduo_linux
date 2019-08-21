@@ -101,9 +101,7 @@ void connection(ksocket* sokt) {
 
 		env->yield();
 	}
-	coloop_t item;
-	item.fd_ = sokt->getFd();
-	loop->remove(item);
+	loop->remove(sokt->getFd(), coloop::READ, env->self());
 
 	delete sokt;
 }
@@ -112,18 +110,16 @@ void server(ksocket* sokt) {
 	coroutine* env = coroutine::threadCoenv();
 	coloop* loop = coloop::threadColoop();
 
-	coloop_t item;
-	sockaddr_in cliaddr_;
-	int clifd_;
+	sockaddr_in cliaddr;
+	int clifd;
+	coroutine_t id;
 
-	item.events_ = coloop::kReadEvent;
 	while (1) {
-		clifd_ = sokt->accept(&cliaddr_);
-		if (clifd_ > 0) {
-			ksocket* cskt = new ksocket(clifd_, cliaddr_);
-			item.coid_ = env->create(std::bind(connection, cskt));
-			item.fd_ = clifd_;
-			loop->add(item);
+		clifd = sokt->accept(&cliaddr);
+		if (clifd > 0) {
+			ksocket* cskt = new ksocket(clifd, cliaddr);
+			id = env->create(std::bind(connection, cskt));
+			loop->add(clifd, coloop::READ, id);
 		}
 		env->yield();
 	}
@@ -137,12 +133,9 @@ int main() {
 	socket_.bind();
 	socket_.listen();
 
-	coloop_t item;
-	item.fd_ = socket_.getFd();
-	item.coid_ = env->create(std::bind(server, &socket_));
-	item.events_ = coloop::kReadEvent;
+	coroutine_t id = env->create(std::bind(server, &socket_));
+	loop->add(socket_.getFd(), coloop::READ, id);
 
-	loop->add(item);
 	loop->loop(-1);
 
 	coloop::freeColoop();

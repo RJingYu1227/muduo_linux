@@ -36,7 +36,7 @@ private:
 
 };
 
-enum SIZE {
+enum logbuffer_size {
 	kSmallBuffer = 2048,
 	kLargeBuffer = 2048 * 1024
 };

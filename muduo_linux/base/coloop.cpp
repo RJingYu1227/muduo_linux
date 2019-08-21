@@ -3,11 +3,6 @@
 #include<assert.h>
 #include<unistd.h>
 
-const int coloop::kNoneEvent = 0;
-const int coloop::kReadEvent = EPOLLIN | EPOLLPRI;
-const int coloop::kWriteEvent = EPOLLOUT;
-const int coloop::kEpollet = EPOLLET;
-
 kthreadlocal<coloop> coloop::thread_loop_;
 
 coloop* coloop::threadColoop() {
@@ -38,28 +33,28 @@ coloop::~coloop() {
 	close(epfd_);
 }
 
-int coloop::add(coloop_t item) {
+int coloop::add(int fd, coevent ce, coroutine_t id) {
 	epoll_event ev;
-	ev.events = item.events_;
-	ev.data.u32 = item.coid_;
+	ev.events = ce;
+	ev.data.u32 = id;
 	
-	return epoll_ctl(epfd_, EPOLL_CTL_ADD, item.fd_, &ev);
+	return epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
 }
 
-int coloop::update(coloop_t item) {
+int coloop::modify(int fd, coevent ce, coroutine_t id) {
 	epoll_event ev;
-	ev.events = item.events_;
-	ev.data.u32 = item.coid_;
+	ev.events = ce;
+	ev.data.u32 = id;
 
-	return epoll_ctl(epfd_, EPOLL_CTL_MOD, item.fd_, &ev);
+	return epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
 }
 
-int coloop::remove(coloop_t item) {
+int coloop::remove(int fd, coevent ce, coroutine_t id) {
 	epoll_event ev;
-	ev.events = item.events_;
-	ev.data.u32 = item.coid_;
+	ev.events = ce;
+	ev.data.u32 = id;
 
-	return epoll_ctl(epfd_, EPOLL_CTL_DEL, item.fd_, &ev);
+	return epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, &ev);
 }
 
 void coloop::loop(int timeoutms) {

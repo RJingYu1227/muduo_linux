@@ -5,26 +5,21 @@
 #include<sys/epoll.h>
 #include<vector>
 
-struct coloop_t {
-	int fd_;
-	uint32_t events_;
-	coroutine_t coid_;
-};
-
 class coloop :uncopyable {
 public:
-
-	static const int kNoneEvent;
-	static const int kReadEvent;
-	static const int kWriteEvent;
-	static const int kEpollet;
+	enum coevent {
+		NONE = 0,
+		READ = EPOLLIN | EPOLLPRI,
+		WRITE = EPOLLOUT,
+		ET = EPOLLET,
+	};
 
 	static coloop* threadColoop();
 	static void freeColoop();
 
-	int add(coloop_t item);
-	int update(coloop_t item);
-	int remove(coloop_t item);
+	int add(int fd, coevent ce, coroutine_t id);
+	int modify(int fd, coevent ce, coroutine_t id);
+	int remove(int fd, coevent ce, coroutine_t id);
 
 	void loop(int timeoutms);
 	void quit() { quit_ = 1; }

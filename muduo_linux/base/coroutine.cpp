@@ -40,6 +40,7 @@ coroutine::coroutine()
 }
 
 coroutine::~coroutine() {
+	assert(sindex_ == -1);
 	impl* co;
 	for (auto iter = comap_.begin(); iter != comap_.end(); ++iter) {
 		co = iter->second;
@@ -136,4 +137,11 @@ void coroutine::yield() {
 		lastco->state_ = RUNNING;
 		swapcontext(&thisco->ctx_, &lastco->ctx_);
 	}
+}
+
+coroutine_t coroutine::self() {
+	if (sindex_ == -1)
+		return 0;
+	else
+		return costack_[sindex_]->id_;
 }

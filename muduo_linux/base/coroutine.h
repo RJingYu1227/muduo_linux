@@ -11,13 +11,6 @@ class coroutine :uncopyable {
 public:
 	typedef std::function<void()> functor;
 
-	enum costate {
-		FREE,
-		RUNNING,
-		SUSPEND,
-		DONE,
-	};
-
 	static coroutine* threadCoenv();
 	static void freeCoenv();
 
@@ -29,14 +22,20 @@ public:
 	void resume(coroutine_t id);
 	void yield();
 
+	coroutine_t self();
+
 protected:
 
 	coroutine();
 	~coroutine();
 
 private:
-
-	static kthreadlocal<coroutine> thread_coenv_;
+	enum costate {
+		FREE,
+		RUNNING,
+		SUSPEND,
+		DONE,
+	};
 
 	struct impl {
 		coroutine_t id_;
@@ -48,6 +47,8 @@ private:
 
 	void makeCtx(impl* co);
 	static void coroutineFunc(impl* co);
+
+	static kthreadlocal<coroutine> thread_coenv_;
 
 	std::map<coroutine_t, impl*> comap_;
 	ucontext_t env_ctx_;
