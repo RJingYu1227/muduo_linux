@@ -98,16 +98,14 @@ void coloop::loop() {
 		int diff = static_cast<int>(now - last_time_);
 		last_time_ = now;
 
-		tindex_ += 1;
 		while (diff--) {
+			++tindex_;
 			if (tindex_ > 59999)
 				tindex_ = 0;
 
 			for (auto id : time_wheel_[tindex_])
 				coenv->resume(id);
 			time_wheel_[tindex_].clear();
-
-			++tindex_;
 		}
 	}
 }
