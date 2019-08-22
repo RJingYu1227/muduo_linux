@@ -101,7 +101,7 @@ void coroutine::resume(coroutine_t id) {
 	assert(iter != comap_.end());
 	
 	impl* pendco = iter->second;
-	assert(pendco->state_ != DONE);
+	assert(pendco->state_ == FREE || pendco->state_ == SUSPEND);
 	if (pendco->state_ == SUSPEND)
 		pendco->state_ = RUNNING;
 

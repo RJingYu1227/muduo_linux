@@ -100,7 +100,7 @@ void coloop::loop() {
 
 		while (diff--) {
 			++tindex_;
-			if (tindex_ > 59999)
+			if (tindex_ == 60000)
 				tindex_ = 0;
 
 			for (auto id : time_wheel_[tindex_])
