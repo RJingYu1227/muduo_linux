@@ -22,10 +22,9 @@ void coroutine::freeCoenv() {
 }
 
 void coroutine::coroutineFunc(impl* co) {
-	if (co->state_ == FREE) {
-		co->state_ = RUNNING;
-		co->coFunc();
-	}
+	assert(co->state_ == FREE);
+	co->state_ = RUNNING;
+	co->coFunc();
 	co->state_ = DONE;
 
 	coroutine* env = threadCoenv();

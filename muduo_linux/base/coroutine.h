@@ -3,7 +3,7 @@
 #include"kthread.h"
 
 #include<ucontext.h>
-#include<map>
+#include<unordered_map>
 
 typedef unsigned int coroutine_t;
 
@@ -50,7 +50,7 @@ private:
 
 	static kthreadlocal<coroutine> thread_coenv_;
 
-	std::map<coroutine_t, impl*> comap_;
+	std::unordered_map<coroutine_t, impl*> comap_;
 	ucontext_t env_ctx_;
 
 	impl* costack_[128];

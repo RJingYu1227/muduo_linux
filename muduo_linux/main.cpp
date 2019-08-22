@@ -1,4 +1,5 @@
-﻿#include"logging.h"
+﻿/*
+#include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -71,8 +72,8 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+*/
 
-/*
 #include"coloop.h"
 #include"ksocket.h"
 
@@ -92,16 +93,18 @@ void connection(ksocket* sokt) {
 	coroutine* env = coroutine::threadCoenv();
 	coloop* loop = coloop::threadColoop();
 
+	ssize_t nread;
 	char buf[1024];
 	while (1) {
-		ssize_t nread = read(sokt->getFd(), buf, 1024);
+		nread = read(sokt->getFd(), buf, 1024);
 		if (nread <= 0)
 			break;
 		write(sokt->getFd(), msg.c_str(), msg.size());
 
+		loop->runAfter(6666, env->self());
 		env->yield();
 	}
-	loop->remove(sokt->getFd(), coloop::READ, env->self());
+	printf("客户端关闭连接或者超时\n");
 
 	delete sokt;
 }
@@ -119,7 +122,8 @@ void server(ksocket* sokt) {
 		if (clifd > 0) {
 			ksocket* cskt = new ksocket(clifd, cliaddr);
 			id = env->create(std::bind(connection, cskt));
-			loop->add(clifd, coloop::READ, id);
+			loop->runAfter(6666, id);
+			continue;
 		}
 		env->yield();
 	}
@@ -134,11 +138,10 @@ int main() {
 	socket_.listen();
 
 	coroutine_t id = env->create(std::bind(server, &socket_));
-	loop->add(socket_.getFd(), coloop::READ, id);
-
-	loop->loop(-1);
+	loop->add(socket_.getFd(), coloop::READ | coloop::ET, id);
+	loop->loop();
+	loop->remove(socket_.getFd());
 
 	coloop::freeColoop();
 	coroutine::freeCoenv();
 }
-*/
