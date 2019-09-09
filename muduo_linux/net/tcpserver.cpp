@@ -17,7 +17,6 @@ tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	listening_(0) {
 
 	socket_.bind();
-	channel_.epollet();
 	channel_.setReadCallback(std::bind(&tcpserver::acceptConn, this));
 	LOG << "创建TcpServer：" << socket_.getAddr2() << ' ' << socket_.getPort();
 }

@@ -24,9 +24,6 @@ public:
 	int getEvent()const { return event_; }
 	eventloop* getLoop() { return loop_; }
 
-	//server
-	void epollet() { event_ |= kEpollet; }
-
 	//event
 	void enableReading() 
 	{ event_ |= kReadEvent; update(); }
