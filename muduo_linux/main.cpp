@@ -1,5 +1,4 @@
-﻿
-#include"logging.h"
+﻿#include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -26,8 +25,6 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 		response.addHeader("Content-Type", "text/html");
 		response.addHeader("Server", "RJingYu");
 
-		//注意文件权限
-		//png文件为大端序
 		int fd = open("/home/rjingyu/yujing.html", O_RDONLY);
 		char buf[64 * 1024];
 		ssize_t nread = 0;
@@ -41,8 +38,6 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 		response.addHeader("Content-Type", "text/css");
 		response.addHeader("Server", "RJingYu");
 
-		//注意文件权限
-		//png文件为大端序
 		int fd = open("/home/rjingyu/yujing.css", O_RDONLY);
 		char buf[64 * 1024];
 		ssize_t nread = 0;
