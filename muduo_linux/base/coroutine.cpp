@@ -19,6 +19,7 @@ void coroutine::freeCoenv() {
 	coroutine* env = thread_coenv_.get();
 	assert(env != nullptr);
 	delete env;
+	thread_coenv_.set(nullptr);
 }
 
 void coroutine::coroutineFunc(impl* co) {

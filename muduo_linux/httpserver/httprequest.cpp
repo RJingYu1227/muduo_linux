@@ -28,7 +28,7 @@ void httprequest::addHeader(const char* start, const char* colon, const char* en
 	while (colon < end && *colon == ' ')
 		++colon;
 
-	while (end > colon && *(end-1) == ' ')
+	while (end > colon && *(end - 1) == ' ')
 		--end;
 	string value(colon, end);
 	//value大小写转换
@@ -123,7 +123,7 @@ bool httprequest::praseRequest(buffer* buffer1) {
 			}
 			else {
 				length_ = atoi(headers_["Content-Length"].c_str());
-				if (length_ <= 0) {
+				if (length_ == 0) {
 					state_ = kPraseDone;
 					break;
 				}

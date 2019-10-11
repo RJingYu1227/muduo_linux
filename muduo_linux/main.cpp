@@ -1,4 +1,4 @@
-﻿/*
+﻿
 #include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
@@ -23,12 +23,27 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 	else if (request.getPath() == "/yujing") {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
-		response.addHeader("Content-Type", "image/png");
+		response.addHeader("Content-Type", "text/html");
 		response.addHeader("Server", "RJingYu");
 
 		//注意文件权限
 		//png文件为大端序
-		int fd = open("/home/rjingyu/yujing.png", O_RDONLY);
+		int fd = open("/home/rjingyu/yujing.html", O_RDONLY);
+		char buf[64 * 1024];
+		ssize_t nread = 0;
+		while ((nread = read(fd, buf, 64 * 1024)) > 0)
+			response.getBody().append(buf, buf + nread);
+		close(fd);
+	}
+	else if (request.getPath() == "/yujing.css") {
+		response.setStatu1(httpresponse::k200OK);
+		response.setStatu2("OK");
+		response.addHeader("Content-Type", "text/css");
+		response.addHeader("Server", "RJingYu");
+
+		//注意文件权限
+		//png文件为大端序
+		int fd = open("/home/rjingyu/yujing.css", O_RDONLY);
 		char buf[64 * 1024];
 		ssize_t nread = 0;
 		while ((nread = read(fd, buf, 64 * 1024)) > 0)
@@ -72,8 +87,8 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-*/
 
+/*
 #include"coloop.h"
 #include"ksocket.h"
 
@@ -145,3 +160,4 @@ int main() {
 	coloop::freeColoop();
 	coroutine::freeCoenv();
 }
+*/

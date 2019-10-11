@@ -20,6 +20,7 @@ void coloop::freeColoop() {
 	coloop* cp = thread_loop_.get();
 	assert(cp != nullptr);
 	delete cp;
+	thread_loop_.set(nullptr);
 }
 
 coloop::coloop()
