@@ -8,30 +8,34 @@
 
 class kmysql :uncopyable {
 public:
-	
+
+	kmysql() :
+		connected_(0) {
+
+	}
+
 	~kmysql() {
-		mysql_free_result(res_);
-		mysql_close(&sql_);
+		if (connected_)
+			mysql_close(&sql_);
 	}
 
-	void setQuery(const char* query) 
-	{ query_ = query; }
+	bool isconnected()const { return connected_; }
+	bool connect(const char *host,
+		const char *user,
+		const char *passwd,
+		const char *db,
+		unsigned int port,
+		const char *unix_socket,
+		unsigned long clientflag);
+	void close();
 
-	void send() { 
-		mysql_free_result(res_);
-		mysql_query(&sql_, query_.c_str()); 
-	}
+	bool sendQuery(const char* query, size_t length);
+	bool sendQuery(const std::string& query);
+	MYSQL_RES* getResult();
 
 private:
 
+	bool connected_;
 	MYSQL sql_;
 
-	std::string query_;
-
-	MYSQL_RES* res_;
-	MYSQL_FIELD* field_;
-	MYSQL_ROW row_;
-
 };
-
-//未完待续

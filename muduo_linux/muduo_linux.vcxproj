@@ -80,11 +80,14 @@
     <IncludePath>D:\编程练习\muduo_linux\muduo_linux\httpserver;D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="..\webserver.cpp" />
     <ClCompile Include="base\asynclogging.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="base\coroutine.cpp" />
     <ClCompile Include="base\coloop.cpp" />
+    <ClCompile Include="co_server.cpp" />
+    <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
@@ -139,7 +142,7 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>pthread;protobuf</LibraryDependencies>
+      <LibraryDependencies>pthread;protobuf;mysqlclient</LibraryDependencies>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>%(ClCompile.AdditionalIncludeDirectories);/usr/include/mysql</AdditionalIncludeDirectories>
