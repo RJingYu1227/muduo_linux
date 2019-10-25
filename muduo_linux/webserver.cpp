@@ -9,24 +9,64 @@
 #include<fcntl.h>
 #include<signal.h>
 
-bool login(char type, const string& id, const string& pswd) {
+bool login(const string& query) {
 	thread_local kmysql sql;
-	string query = "select * from user_map where user_id=\'" + id + "\';";
-
 	bool login_ok = 0;
-	if (sql.isconnected() || sql.connect("localhost", "root", "981227", "test0", 3306, "/var/run/mysqld/mysqld.sock", 0)) {
-		if (sql.sendQuery(query)) {
+
+	if (sql.isconnected() || 
+		sql.connect("localhost", "root", "981227", "test0", 3306, "/var/run/mysqld/mysqld.sock", 0)) {
+
+		size_t left = 11, right = 12;
+		while (query[right] != '&')
+			++right;
+		string id(query.begin() + left, query.begin() + right);
+
+		left = right + 6;
+		right = left + 1;
+		while (right != query.size() && query[right] != '&')
+			++right;
+		string pswd(query.begin() + left, query.begin() + right);
+
+		string sql_query = "select * from user_map where user_id=\'" + id + "\';";
+		if (sql.sendQuery(sql_query)) {
 			kmysqlres res(sql.getResult());
 			int i = res.getColumn("user_pswd");
 
-			if (type == '0' && res.numOfRow()) {
-				if (res[0]->data[i] == pswd)
+			switch (query[6]) {
+			case('0'):
+				if (res.numOfRow() && res[0]->data[i] == pswd)
 					login_ok = 1;
-			}
-			else if (type == '1' && !res.numOfRow()) {
-				query = "insert into user_map values(\'" + id + "\',\'" + pswd + "\');";
-				if (sql.sendQuery(query))
-					login_ok = 1;
+
+				break;
+			case('1'):
+				if (res.numOfRow() == 0) {
+					sql_query = "insert into user_map values(\'" + id + "\',\'" + pswd + "\');";
+					if (sql.sendQuery(sql_query))
+						login_ok = 1;
+				}
+
+				break;
+			case('2'):
+				if (res.numOfRow() && res[0]->data[i] == pswd) {
+					sql_query = "update user_map set user_pswd=\'";
+					sql_query.append(query.begin() + right + 7, query.end());
+					sql_query = sql_query + "\' where user_id=\'" + id + "\';";
+					if (sql.sendQuery(sql_query))
+						login_ok = 1;
+				}
+
+				break;
+			case('3'):
+				if (res.numOfRow() && res[0]->data[i] == pswd) {
+					sql_query = "delete from user_map where user_id=\'" + id + "\';";
+					if (sql.sendQuery(sql_query))
+						login_ok = 1;
+				}
+
+				break;
+			default:
+
+				break;
 			}
 		}
 	}
@@ -38,16 +78,7 @@ bool login(char type, const string& id, const string& pswd) {
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
 	if (request.getPath() == "/login") {
-		int left = 11;
-		string id, pswd;
-		while (request.getQuery()[left] != '&') {
-			id += request.getQuery()[left];
-			++left;
-		}
-		left += 6;
-		pswd.assign(request.getQuery().begin() + left, request.getQuery().end());
-
-		bool login_ok = login(request.getQuery()[6], id, pswd);
+		bool login_ok = login(request.getQuery());
 		if (login_ok) {
 			response.setStatu1(httpresponse::k200OK);
 			response.setStatu2("OK");
