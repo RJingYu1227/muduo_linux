@@ -5,6 +5,7 @@
 #include<mysql/mysql.h>
 #include<mysql/my_global.h>
 #include<string>
+#include<vector>
 
 class kmysql :uncopyable {
 public:
@@ -39,3 +40,48 @@ private:
 	MYSQL sql_;
 
 };
+
+class kmysqlres :uncopyable {
+public:
+
+	kmysqlres(MYSQL_RES* res);
+
+	~kmysqlres() {
+		mysql_free_result(res_);
+	}
+
+	int getColumn(const std::string& str)const;
+	int getColumn(const char* str)const;
+	inline unsigned int numOfField()const;
+	inline MYSQL_FIELD* getFields();
+
+	inline size_t numOfRow()const;
+	inline MYSQL_ROWS* operator[](size_t idx);
+
+private:
+
+	MYSQL_RES* res_;
+	std::vector<MYSQL_ROWS*> rows_;
+
+};
+
+unsigned int kmysqlres::numOfField()const {
+	return res_->data->fields;
+}
+
+MYSQL_FIELD* kmysqlres::getFields() {
+	return res_->fields;
+}
+
+size_t kmysqlres::numOfRow()const {
+	return res_->data->rows;
+}
+
+MYSQL_ROWS* kmysqlres::operator[](size_t idx) {
+	return rows_[idx];
+}
+
+/*
+MYSQL_ROW以链表形式存储
+MYSQL_FIELD以数组形式存储
+*/

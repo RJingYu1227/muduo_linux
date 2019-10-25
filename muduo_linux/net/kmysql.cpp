@@ -1,4 +1,4 @@
-#include"kmysql.h"
+﻿#include"kmysql.h"
 #include"logging.h"
 
 bool kmysql::connect(const char *host,
@@ -57,4 +57,33 @@ MYSQL_RES* kmysql::getResult() {
 		return mysql_store_result(&sql_);
 	else
 		return nullptr;
+}
+
+kmysqlres::kmysqlres(MYSQL_RES* res) :
+	res_(res) {
+
+	rows_.reserve(res_->data->rows);
+	MYSQL_ROWS* node = res_->data_cursor;
+	for (size_t i = 0; i < res_->data->rows; ++i) {
+		rows_[i] = node;
+		node = node->next;
+	}
+}
+
+int kmysqlres::getColumn(const std::string& str)const {
+	for (unsigned int i = 0; i < res_->data->fields; ++i) {
+		if (res_->fields[i].name == str)
+			return i;//注意这里
+	}
+
+	return -1;
+}
+
+int kmysqlres::getColumn(const char* str)const {
+	for (unsigned int i = 0; i < res_->data->fields; ++i) {
+		if (strcmp(res_->fields[i].name, str) == 0)
+			return i;//注意这里
+	}
+
+	return -1;
 }

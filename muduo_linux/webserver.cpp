@@ -11,29 +11,25 @@
 
 bool login(char type, const string& id, const string& pswd) {
 	thread_local kmysql sql;
-	MYSQL_RES* res = nullptr;
 	string query = "select * from user_map where user_id=\'" + id + "\';";
 
 	bool login_ok = 0;
-	if (sql.isconnected() || sql.connect("localhost", "root", "981227", "test0", 3306, NULL, 0)) {
+	if (sql.isconnected() || sql.connect("localhost", "root", "981227", "test0", 3306, "/var/run/mysqld/mysqld.sock", 0)) {
 		if (sql.sendQuery(query)) {
-			res = sql.getResult();
-			unsigned int num_row = static_cast<unsigned int>(mysql_num_rows(res));
+			kmysqlres res(sql.getResult());
+			int i = res.getColumn("user_pswd");
 
-			if (type == '0' && num_row) {
-				MYSQL_ROW row = mysql_fetch_row(res);
-				if (row[1] == pswd)
+			if (type == '0' && res.numOfRow()) {
+				if (res[0]->data[i] == pswd)
 					login_ok = 1;
 			}
-			else if (type == '1' && !num_row) {
+			else if (type == '1' && !res.numOfRow()) {
 				query = "insert into user_map values(\'" + id + "\',\'" + pswd + "\');";
 				if (sql.sendQuery(query))
 					login_ok = 1;
 			}
 		}
 	}
-
-	mysql_free_result(res);
 
 	return login_ok;
 }
