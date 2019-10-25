@@ -8,6 +8,7 @@
 2019/6/21 更新了一个http测试用例。
 2019/7/23 全新的asynclogging。
 2019/8/20 更新了基于ucontext的coroutine。
+2019/10/25 更新了对mysql相关api的简单封装。
 
 特征：
 1.Reactor模式
