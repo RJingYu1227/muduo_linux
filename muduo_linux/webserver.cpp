@@ -1,4 +1,4 @@
-#include"logging.h"
+﻿#include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -33,32 +33,35 @@ bool login(const string& query) {
 			int i = res.getColumn("user_pswd");
 
 			switch (query[6]) {
-			case('0'):
+			case('0')://登陆
 				if (res.numOfRow() && res[0]->data[i] == pswd)
 					login_ok = 1;
 
 				break;
-			case('1'):
+			case('1')://注册
 				if (res.numOfRow() == 0) {
 					sql_query = "insert into user_map values(\'" + id + "\',\'" + pswd + "\');";
+
 					if (sql.sendQuery(sql_query))
 						login_ok = 1;
 				}
 
 				break;
-			case('2'):
+			case('2')://修改密码
 				if (res.numOfRow() && res[0]->data[i] == pswd) {
 					sql_query = "update user_map set user_pswd=\'";
 					sql_query.append(query.begin() + right + 7, query.end());
 					sql_query = sql_query + "\' where user_id=\'" + id + "\';";
+
 					if (sql.sendQuery(sql_query))
 						login_ok = 1;
 				}
 
 				break;
-			case('3'):
+			case('3')://注销
 				if (res.numOfRow() && res[0]->data[i] == pswd) {
 					sql_query = "delete from user_map where user_id=\'" + id + "\';";
+
 					if (sql.sendQuery(sql_query))
 						login_ok = 1;
 				}
@@ -78,8 +81,7 @@ bool login(const string& query) {
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
 	if (request.getPath() == "/login") {
-		bool login_ok = login(request.getQuery());
-		if (login_ok) {
+		if (login(request.getQuery())) {
 			response.setStatu1(httpresponse::k200OK);
 			response.setStatu2("OK");
 			response.addHeader("Content-Type", "text/html");
