@@ -102,6 +102,7 @@ private:
 	std::vector<epoll_event> revents_;
 
 	int tindex_;
+	size_t count_;
 	uint64_t last_time_;
 	std::vector<klinknode<coloop_item*>> time_wheel_;
 

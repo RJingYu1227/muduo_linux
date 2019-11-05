@@ -86,7 +86,7 @@ coloop::coloop()
 	epfd_(epoll_create1(EPOLL_CLOEXEC)),
 	revents_(128),
 	tindex_(0),
-	last_time_(getMilliSeconds()),
+	count_(0),
 	time_wheel_(60 * 1000) {
 
 	assert(epfd_ > 0);
@@ -130,15 +130,20 @@ uint64_t coloop::getMilliSeconds() {
 }
 
 void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timeout) {
+	uint64_t expire = getMilliSeconds();
+	if (count_ == 0)
+		last_time_ = expire;
+
 	if (ms == 0)
 		ms = 1;
-	uint64_t expire = getMilliSeconds() + ms;
+	expire += ms;
 
 	int diff = static_cast<int>(expire - last_time_);
 	if (diff > 59999)
 		diff = 59999;
 
 	timeout->join(&time_wheel_[(tindex_ + diff) % 60000]);
+	++count_;
 }
 
 void coloop::loopFunc() {
@@ -158,21 +163,24 @@ void coloop::loopFunc() {
 				revents_.resize(revents_.size() * 2);
 		}
 
-		uint64_t now = getMilliSeconds();
-		int diff = static_cast<int>(now - last_time_);
-		last_time_ = now;
+		if (count_) {
+			uint64_t now = getMilliSeconds();
+			int diff = static_cast<int>(now - last_time_);
+			last_time_ = now;
 
-		klinknode<coloop_item*>* node;
-		while (diff--) {
-			++tindex_;
-			if (tindex_ == 60000)
-				tindex_ = 0;
+			klinknode<coloop_item*>* node;
+			while (diff--) {
+				++tindex_;
+				if (tindex_ == 60000)
+					tindex_ = 0;
 
-			while ((node = time_wheel_[tindex_].next_)) {
-				node->remove();
+				while ((node = time_wheel_[tindex_].next_)) {
+					node->remove();
+					--count_;
 
-				node->val_->revents_ = 0;
-				node->val_->resume();
+					node->val_->revents_ = 0;
+					node->val_->resume();
+				}
 			}
 		}
 	}
