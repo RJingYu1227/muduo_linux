@@ -11,6 +11,6 @@
 2019/10/25 更新了对mysql相关api的简单封装。
 
 注意：
-目前出现了一个重大bug，在由coroutine::create产生的协程当中使用unordered_map时，会导致程序无异常退出。\n
-目前发现的场景是在执行_M_insert_unique_node函数中判断是否需要rehash操作。\n
-gdb调试信息为[Inferior 1 (process xxxx) exited with code 0222]。\n
+目前出现了一个重大bug，在由coroutine::create产生的协程当中使用unordered_map时，会导致程序无异常退出。
+目前发现的场景是在执行_M_insert_unique_node函数中判断是否需要rehash操作。
+gdb调试信息为[Inferior 1 (process xxxx) exited with code 0222]。
