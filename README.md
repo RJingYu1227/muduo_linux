@@ -10,9 +10,7 @@
 2019/8/20 更新了基于ucontext的coroutine。
 2019/10/25 更新了对mysql相关api的简单封装。
 
-特征：
-1.Reactor模式
-2.主线程为处理tcpserver的线程，线程池为处理tcpconnection的线程，附加线程为日志线程
-3.一个连接建立的过程为：
-poller监听到listenfd可读-->在loop循环中handleevent-->accept4，getIoloop，从memorypool中获取地址-->构造tcpconnection-->推送到对应的Ioloop-->Ioloop完成fd的注册
-4.主动断开连接方式：shutdown/forceclose(withdelay)
+注意：
+目前出现了一个重大bug，在由coroutine::create产生的协程当中使用unordered_map时，会导致程序无异常退出。
+目前发现的场景是在执行_M_insert_unique_node函数时。
+gdb调试信息为[Inferior 1 (process xxxx) exited with code 0222]。
