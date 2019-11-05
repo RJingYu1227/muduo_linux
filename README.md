@@ -9,7 +9,3 @@
 2019/7/23 全新的asynclogging。
 2019/8/20 更新了基于ucontext的coroutine。
 2019/10/25 更新了对mysql相关api的简单封装。
-
-注意：
-目前出现了一个重大bug，在由coroutine::create产生的协程当中操作浮点寄存器会导致进程无异常退出。
-gdb调试信息为[Inferior 1 (process xxxx) exited with code 0222]。
