@@ -2,7 +2,6 @@
 
 #include<malloc.h>
 #include<assert.h>
-#include<string.h>
 
 kthreadlocal<coroutine> coroutine::thread_coenv_(coroutine::freeCoenv);
 
@@ -27,8 +26,7 @@ void coroutine::coroutineFunc(impl* co) {
 	co->coFunc();
 	co->state_ = DONE;
 
-	coroutine* env = threadCoenv();
-	env->yield();
+	threadCoenv()->yieldFunc();
 }
 
 coroutine::coroutine()
@@ -49,19 +47,19 @@ coroutine::~coroutine() {
 }
 
 void coroutine::makeCtx(impl* co) {
+	getcontext(&co->ctx_);
+
 	co->ctx_.uc_flags = env_ctx_.uc_flags;
 	co->ctx_.uc_link = 0;
 	co->ctx_.uc_sigmask = env_ctx_.uc_sigmask;
 
 	void* sp = malloc(64 * 1024);
-	memset(sp, 0, 64 * 1024);
+	//memset(sp, 0, 64 * 1024);
 
 	co->ctx_.uc_stack.ss_sp = sp;
 	co->ctx_.uc_stack.ss_size = 64 * 1024;
 	co->ctx_.uc_stack.ss_flags = 0;
 
-	//注意这里
-	co->ctx_.uc_mcontext.fpregs = &co->ctx_.__fpregs_mem;
 	makecontext(&co->ctx_, (void(*)())coroutine::coroutineFunc, 1, co);
 }
 
