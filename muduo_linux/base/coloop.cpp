@@ -82,7 +82,8 @@ void coloop::freeColoop(void* ptr) {
 }
 
 coloop::coloop()
-	:quit_(0),
+	:running_(0),
+	quit_(0),
 	epfd_(epoll_create1(EPOLL_CLOEXEC)),
 	revents_(128),
 	tindex_(0),
@@ -155,6 +156,9 @@ void coloop::cancelTimeout(klinknode<coloop_item*>* timeout) {
 }
 
 void coloop::loopFunc() {
+	assert(!running_);
+	running_ = 1;
+
 	while (!quit_) {
 		int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
 		if (numevents > 0) {
@@ -197,4 +201,6 @@ void coloop::loopFunc() {
 			}
 		}
 	}
+
+	running_ = 0;
 }
