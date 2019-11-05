@@ -4,7 +4,7 @@
 
 #include<unistd.h>
 
-std::string logger::log_filename_ = "./RJingYu.";
+std::string logger::log_filename_ = "./rjingyu_log/RJingYu.";
 logger::functor logger::output = logger::defaultOutput;
 
 namespace {

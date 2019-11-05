@@ -1,4 +1,5 @@
-﻿#include"logging.h"
+﻿/*
+#include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -80,25 +81,41 @@ bool login(const string& query) {
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
-	if (request.getPath() == "/login") {
-		if (login(request.getQuery())) {
-			response.setStatu1(httpresponse::k200OK);
-			response.setStatu2("OK");
-			response.addHeader("Content-Type", "text/html");
-			string now = ktimer::timeToString(ktimer::getUnixTime());
-			response.getBody() = "<html><head><title>This is title</title></head>"
-				"<body><h1>Hello</h1>Now is " + now +
-				"</body></html>";
-		}
-		else {
-			response.setStatu1(httpresponse::k400BadRequest);
-			response.setStatu2("Bad Request");
-		}
+	if (request.getPath() == "/") {
+		response.setStatu1(httpresponse::k200OK);
+		response.setStatu2("OK");
+		response.addHeader("Content-Type", "text/html");
+		int fd = open("./html/index.html", O_RDONLY);
+		char buf[1024];
+		ssize_t nread = 0;
+		while ((nread = read(fd, &buf, 1024)) > 0)
+			response.getBody().append(buf, nread);
+		close(fd);
 	}
 	else {
-		response.setStatu1(httpresponse::k404NotFound);
-		response.setStatu2("Not Found");
-		response.setKeepAlive(0);
+		string path = "/home/rjingyu/html" + request.getPath();
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd < 0) {
+			response.setStatu1(httpresponse::k404NotFound);
+			response.setStatu2("Not Found");
+			response.setKeepAlive(0);
+		}
+		else {
+			response.setStatu1(httpresponse::k200OK);
+			response.setStatu2("OK");
+
+			size_t i = 0;
+			string head = request.getHeader("Accept");
+			while (i != head.size() && head[i] != ',')
+				++i;
+			response.addHeader("Content-Type", string(head.begin(), head.begin() + i));
+
+			char buf[1024];
+			ssize_t nread = 0;
+			while ((nread = read(fd, &buf, 1024)) > 0)
+				response.getBody().append(buf, nread);
+			close(fd);
+		}
 	}
 }
 
@@ -125,3 +142,4 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+*/

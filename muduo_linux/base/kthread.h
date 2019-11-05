@@ -9,8 +9,8 @@ template<typename T>
 class kthreadlocal {
 public:
 
-	kthreadlocal() {
-		pthread_key_create(&key_, NULL);
+	explicit kthreadlocal(void(*func)(void*)) {
+		pthread_key_create(&key_, func);
 	}
 
 	~kthreadlocal() {

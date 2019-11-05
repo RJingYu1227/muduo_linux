@@ -4,7 +4,23 @@
 #include<unistd.h>
 #include<sys/time.h>
 
-kthreadlocal<coloop> coloop::thread_loop_;
+kthreadlocal<coloop> coloop::thread_loop_(coloop::freeColoop);
+
+coloop::coloop_item::coloop_item(coroutine_t id, int fd) :
+	loop_(threadColoop()),
+	id_(id),
+	fd_(fd),
+	events_(0),
+	revents_(0),
+	timeout_({ 0,this,0 }) {
+
+	loop_->add(this);
+}
+
+coloop::coloop_item::~coloop_item() {
+
+	loop_->remove(this);
+}
 
 coloop* coloop::threadColoop() {
 	coloop* cp = thread_loop_.get();
@@ -16,11 +32,9 @@ coloop* coloop::threadColoop() {
 	return cp;
 }
 
-void coloop::freeColoop() {
-	coloop* cp = thread_loop_.get();
-	assert(cp != nullptr);
+void coloop::freeColoop(void* ptr) {
+	coloop* cp = (coloop*)ptr;
 	delete cp;
-	thread_loop_.set(nullptr);
 }
 
 coloop::coloop()
@@ -38,24 +52,28 @@ coloop::~coloop() {
 	close(epfd_);
 }
 
-int coloop::add(int fd, int ce, coroutine_t id) {
+void coloop::add(coloop_item* cpt) {
 	epoll_event ev;
-	ev.events = ce;
-	ev.data.u32 = id;
-	
-	return epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
+	ev.events = cpt->events_;
+	ev.data.ptr = cpt;
+	int fd = cpt->fd_;
+
+	epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
 }
 
-int coloop::modify(int fd, int ce, coroutine_t id) {
+void coloop::modify(coloop_item* cpt) {
 	epoll_event ev;
-	ev.events = ce;
-	ev.data.u32 = id;
+	ev.events = cpt->events_;
+	ev.data.ptr = cpt;
+	int fd = cpt->fd_;
 
-	return epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
+	epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
 }
 
-int coloop::remove(int fd) {
-	return epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL);
+void coloop::remove(coloop_item* cpt) {
+	int fd = cpt->fd_;
+
+	epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL);
 }
 
 uint64_t coloop::getMilliSeconds() {
@@ -67,28 +85,42 @@ uint64_t coloop::getMilliSeconds() {
 	return u;
 }
 
-void coloop::runAfter(unsigned int ms, coroutine_t id) {
-	uint64_t now = getMilliSeconds();
+void coloop::setTimeout(unsigned int ms, coloop_item::timeout_t* timeout) {
 	if (ms == 0)
 		ms = 1;
-	now += ms;
+	uint64_t expire = getMilliSeconds() + ms;
 
-	int diff = static_cast<int>(now - last_time_);
+	int diff = static_cast<int>(expire - last_time_);
 	if (diff > 59999)
 		diff = 59999;
 
-	time_wheel_[(tindex_ + diff) % 60000].push_back(id);
+	coloop_item::timeout_t* head = &time_wheel_[(tindex_ + diff) % 60000];
+	if (head->next_) {
+		timeout->next_ = head->next_;
+		head->next_->prev_ = timeout;
+	}
+	timeout->prev_ = head;
+	head->next_ = timeout;
+	
 }
 
-void coloop::loop() {
-	coroutine* coenv = coroutine::threadCoenv();
-	coroutine_t id;
+void coloop::loopFunc() {
 	while (!quit_) {
 		int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
-				id = revents_[i].data.u32;
-				coenv->resume(id);
+				coloop_item* cpt = (coloop_item*)revents_[i].data.ptr;
+				cpt->revents_ = revents_[i].events;
+				if (cpt->timeout_.prev_) {
+					cpt->timeout_.prev_->next_ = cpt->timeout_.next_;
+					if (cpt->timeout_.next_)
+						cpt->timeout_.next_->prev_ = cpt->timeout_.prev_;
+					
+					cpt->timeout_.prev_ = nullptr;
+					cpt->timeout_.next_ = nullptr;
+				}
+
+				coroutine::resume(cpt->id_);
 			}
 
 			if (static_cast<size_t>(numevents) == revents_.size())
@@ -104,9 +136,16 @@ void coloop::loop() {
 			if (tindex_ == 60000)
 				tindex_ = 0;
 
-			for (auto id : time_wheel_[tindex_])
-				coenv->resume(id);
-			time_wheel_[tindex_].clear();
+			coloop_item::timeout_t* node = time_wheel_[tindex_].next_;
+			while (node) {
+				node->prev_->next_ = nullptr;
+				node->prev_ = nullptr;
+
+				node->cpt_->revents_ = 0;
+				coroutine::resume(node->cpt_->id_);
+
+				node = node->next_;
+			}
 		}
 	}
 }

@@ -2,8 +2,9 @@
 
 #include<malloc.h>
 #include<assert.h>
+#include<string.h>
 
-kthreadlocal<coroutine> coroutine::thread_coenv_;
+kthreadlocal<coroutine> coroutine::thread_coenv_(coroutine::freeCoenv);
 
 coroutine* coroutine::threadCoenv() {
 	coroutine* env = thread_coenv_.get();
@@ -15,11 +16,9 @@ coroutine* coroutine::threadCoenv() {
 	return env;
 }
 
-void coroutine::freeCoenv() {
-	coroutine* env = thread_coenv_.get();
-	assert(env != nullptr);
+void coroutine::freeCoenv(void* ptr) {
+	coroutine* env = (coroutine*)ptr;
 	delete env;
-	thread_coenv_.set(nullptr);
 }
 
 void coroutine::coroutineFunc(impl* co) {
@@ -54,7 +53,10 @@ void coroutine::makeCtx(impl* co) {
 	co->ctx_.uc_link = 0;
 	co->ctx_.uc_sigmask = env_ctx_.uc_sigmask;
 
-	co->ctx_.uc_stack.ss_sp = malloc(64 * 1024);
+	void* sp = malloc(64 * 1024);
+	memset(sp, 0, 64 * 1024);
+
+	co->ctx_.uc_stack.ss_sp = sp;
 	co->ctx_.uc_stack.ss_size = 64 * 1024;
 	co->ctx_.uc_stack.ss_flags = 0;
 
@@ -63,7 +65,7 @@ void coroutine::makeCtx(impl* co) {
 	makecontext(&co->ctx_, (void(*)())coroutine::coroutineFunc, 1, co);
 }
 
-coroutine_t coroutine::create(const functor& func) {
+coroutine_t coroutine::createFunc(const functor& func) {
 	impl* co = new impl();
 	++coid_;
 	co->id_ = coid_;
@@ -74,7 +76,7 @@ coroutine_t coroutine::create(const functor& func) {
 	return coid_;
 }
 
-coroutine_t coroutine::create(functor&& func) {
+coroutine_t coroutine::createFunc(functor&& func) {
 	impl* co = new impl();
 	++coid_;
 	co->id_ = coid_;
@@ -85,7 +87,7 @@ coroutine_t coroutine::create(functor&& func) {
 	return coid_;
 }
 
-void coroutine::free(coroutine_t id) {
+void coroutine::freeFunc(coroutine_t id) {
 	auto iter = comap_.find(id);
 	assert(iter != comap_.end());
 	
@@ -97,7 +99,7 @@ void coroutine::free(coroutine_t id) {
 	comap_.erase(id);
 }
 
-void coroutine::resume(coroutine_t id) {
+void coroutine::resumeFunc(coroutine_t id) {
 	auto iter = comap_.find(id);
 	assert(iter != comap_.end());
 	
@@ -122,7 +124,7 @@ void coroutine::resume(coroutine_t id) {
 	}
 }
 
-void coroutine::yield() {
+void coroutine::yieldFunc() {
 	assert(sindex_ != -1);
 
 	impl* thisco = costack_[sindex_];
@@ -139,7 +141,7 @@ void coroutine::yield() {
 	}
 }
 
-coroutine_t coroutine::self() {
+coroutine_t coroutine::selfFunc() {
 	if (sindex_ == -1)
 		return 0;
 	else

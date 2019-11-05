@@ -34,6 +34,7 @@ protected:
 private:
 	typedef blockqueue<l_logbuffer*> buffer_queue;
 
+	//static void implDestory(void* ptr);
 	static asynclogger* instance_;
 
 	void threadFunc();

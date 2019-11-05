@@ -3,8 +3,9 @@
 
 asynclogger* asynclogger::instance_ = nullptr;
 
-asynclogger::asynclogger(const char* basename, off_t rollsize)
-	:basename_(basename),
+asynclogger::asynclogger(const char* basename, off_t rollsize) 
+	:thread_pimpl_(nullptr),
+	basename_(basename),
 	rollsize_(rollsize),
 	thread_(std::bind(&asynclogger::threadFunc, this)),
 	running_(0) {
@@ -58,10 +59,8 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 
 			return;
 		}
-		else {
-			pimpl->buffer_ = pbuf;
-			full_impls_.put_back(*pimpl);
-		}
+		else
+			full_impls_.put_back(impl(pbuf, pimpl->queue_, pimpl->output_));//注意这里
 
 		if (size == 1)
 			pbuf = new l_logbuffer();
