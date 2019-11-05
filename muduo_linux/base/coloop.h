@@ -51,6 +51,7 @@ public:
 		bool isNoneEvent()const { return events_ == NONE; }
 
 		inline void setTimeout(unsigned int ms);
+		inline void cancelTimeout();
 
 		inline void updateEvents();
 		uint32_t getRevents()const { return revents_; }
@@ -92,7 +93,8 @@ private:
 	void add(coloop_item* cpt);
 	void modify(coloop_item* cpt);
 	void remove(coloop_item* cpt);
-	void setTimeout(unsigned int ms, klinknode<coloop_item*>* cpt);
+	void setTimeout(unsigned int ms, klinknode<coloop_item*>* timeout);
+	void cancelTimeout(klinknode<coloop_item*>* timeout);
 	void loopFunc();
 
 	bool running_;
@@ -117,7 +119,12 @@ void coloop::quit() {
 }
 
 void coloop::coloop_item::setTimeout(unsigned int ms) {
+	timeout_.val_ = this;
 	loop_->setTimeout(ms, &timeout_);
+}
+
+void coloop::coloop_item::cancelTimeout() {
+	loop_->cancelTimeout(&timeout_);
 }
 
 void coloop::coloop_item::updateEvents() {

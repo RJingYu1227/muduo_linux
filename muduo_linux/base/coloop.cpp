@@ -33,7 +33,7 @@ void klinknode<T>::join(klinknode<T>* phead) {
 void coloop::coloop_item::coroutineFunc(coloop_item* cpt) {
 	cpt->Func();
 
-	cpt->timeout_.remove();
+	cpt->cancelTimeout();
 	cpt->loop_->remove(cpt);
 }
 
@@ -43,7 +43,7 @@ coloop::coloop_item::coloop_item(int fd, const functor& func) :
 	fd_(fd),
 	events_(0),
 	revents_(0),
-	timeout_({ 0,this,0 }),
+	timeout_({ 0,0,0 }),
 	Func(func) {
 
 	loop_->add(this);
@@ -55,14 +55,14 @@ coloop::coloop_item::coloop_item(int fd, functor&& func) :
 	fd_(fd),
 	events_(0),
 	revents_(0),
-	timeout_({ 0,this,0 }),
+	timeout_({ 0,0,0 }),
 	Func(std::move(func)) {
 
 	loop_->add(this);
 }
 
 coloop::coloop_item::~coloop_item() {
-	timeout_.remove();
+	cancelTimeout();
 	loop_->remove(this);
 }
 
@@ -146,6 +146,14 @@ void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timeout) {
 	++count_;
 }
 
+void coloop::cancelTimeout(klinknode<coloop_item*>* timeout) {
+	if (timeout->val_ != nullptr) {
+		timeout->remove();
+		timeout->val_ = nullptr;
+		--count_;
+	}
+}
+
 void coloop::loopFunc() {
 	while (!quit_) {
 		int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
@@ -153,7 +161,7 @@ void coloop::loopFunc() {
 			for (int i = 0; i < numevents; ++i) {
 				coloop_item* cpt = (coloop_item*)revents_[i].data.ptr;
 
-				cpt->timeout_.remove();
+				cpt->cancelTimeout();
 
 				cpt->revents_ = revents_[i].events;
 				cpt->resume();
@@ -169,17 +177,22 @@ void coloop::loopFunc() {
 			last_time_ = now;
 
 			klinknode<coloop_item*>* node;
-			while (diff--) {
+			coloop_item* cpt;
+			while (diff && count_) {
+				--diff;
 				++tindex_;
 				if (tindex_ == 60000)
 					tindex_ = 0;
 
 				while ((node = time_wheel_[tindex_].next_)) {
+					cpt = node->val_;
+
 					node->remove();
+					node->val_ = nullptr;
 					--count_;
 
-					node->val_->revents_ = 0;
-					node->val_->resume();
+					cpt->revents_ = 0;
+					cpt->resume();
 				}
 			}
 		}

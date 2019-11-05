@@ -30,19 +30,15 @@ void connect_handler(connection* con) {
 	ssize_t nread;
 	char buf[1024];
 	while (1) {
-		if (con->cpt_->getRevents()) {
-			nread = read(con->sock_->getFd(), &buf, 1024);
-			if (nread == 0)
-				break;
-
-			write(con->sock_->getFd(), msg.c_str(), msg.size());
-			con->cpt_->setTimeout(6666);
-			coroutine::yield();
-		}
-		else
+		nread = read(con->sock_->getFd(), &buf, 1024);
+		if (nread == 0)
 			break;
+
+		write(con->sock_->getFd(), msg.c_str(), msg.size());
+		con->cpt_->setTimeout(6666);
+		coroutine::yield();
 	}
-	printf("客户端关闭连接或超时\n");
+	printf("客户端关闭连接\n");
 }
 
 void accept_handler(connection* con) {
