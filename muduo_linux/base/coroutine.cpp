@@ -5,6 +5,16 @@
 
 kthreadlocal<coroutine> coroutine::thread_coenv_(coroutine::freeCoenv);
 
+coroutine::coroutine()
+	:sindex_(-1) {
+
+	::getcontext(&env_ctx_);
+}
+
+coroutine::~coroutine() {
+	assert(sindex_ == -1);
+}
+
 coroutine* coroutine::threadCoenv() {
 	coroutine* env = thread_coenv_.get();
 	if (env == nullptr) {
@@ -20,128 +30,84 @@ void coroutine::freeCoenv(void* ptr) {
 	delete env;
 }
 
-void coroutine::coroutineFunc(impl* co) {
+void coroutine::coroutine_item::coroutineFunc(coroutine_item* co) {
 	assert(co->state_ == FREE);
 	co->state_ = RUNNING;
 	co->coFunc();
 	co->state_ = DONE;
 
-	threadCoenv()->yieldFunc();
+	co->yield();
 }
 
-coroutine::coroutine()
-	:sindex_(-1),
-	coid_(0) {
+void coroutine::coroutine_item::makeContext(coroutine::coroutine_item* co) {
+	::getcontext(&co->ctx_);
 
-	getcontext(&env_ctx_);
-}
-
-coroutine::~coroutine() {
-	assert(sindex_ == -1);
-	impl* co;
-	for (auto iter = comap_.begin(); iter != comap_.end(); ++iter) {
-		co = iter->second;
-		::free(co->ctx_.uc_stack.ss_sp);
-		delete co;//注意这里
-	}
-}
-
-void coroutine::makeCtx(impl* co) {
-	getcontext(&co->ctx_);
-
-	co->ctx_.uc_flags = env_ctx_.uc_flags;
 	co->ctx_.uc_link = 0;
-	co->ctx_.uc_sigmask = env_ctx_.uc_sigmask;
 
-	void* sp = malloc(64 * 1024);
+	void* sp = ::malloc(64 * 1024);
 	//memset(sp, 0, 64 * 1024);
-
 	co->ctx_.uc_stack.ss_sp = sp;
 	co->ctx_.uc_stack.ss_size = 64 * 1024;
 	co->ctx_.uc_stack.ss_flags = 0;
 
-	makecontext(&co->ctx_, (void(*)())coroutine::coroutineFunc, 1, co);
+	::makecontext(&co->ctx_, (void(*)())coroutineFunc, 1, co);
 }
 
-coroutine_t coroutine::createFunc(const functor& func) {
-	impl* co = new impl();
-	++coid_;
-	co->id_ = coid_;
-	co->coFunc = func;
-	makeCtx(co);
+coroutine::coroutine_item::coroutine_item(const functor& func) :
+	coenv_(threadCoenv()),
+	state_(FREE),
+	coFunc(func) {
 
-	comap_[coid_] = co;
-	return coid_;
+	makeContext(this);
 }
 
-coroutine_t coroutine::createFunc(functor&& func) {
-	impl* co = new impl();
-	++coid_;
-	co->id_ = coid_;
-	co->coFunc = std::move(func);
-	makeCtx(co);
+coroutine::coroutine_item::coroutine_item(functor&& func) :
+	coenv_(threadCoenv()),
+	state_(FREE),
+	coFunc(std::move(func)) {
 
-	comap_[coid_] = co;
-	return coid_;
+	makeContext(this);
 }
 
-void coroutine::freeFunc(coroutine_t id) {
-	auto iter = comap_.find(id);
-	assert(iter != comap_.end());
-	
-	impl* co = iter->second;
-	assert(co->state_ == FREE || co->state_ == DONE);
-
-	::free(co->ctx_.uc_stack.ss_sp);
-	delete co;
-	comap_.erase(id);
+coroutine::coroutine_item::~coroutine_item() {
+	assert(state_ == FREE || state_ == DONE);
+	::free(ctx_.uc_stack.ss_sp);
 }
 
-void coroutine::resumeFunc(coroutine_t id) {
-	auto iter = comap_.find(id);
-	assert(iter != comap_.end());
-	
-	impl* pendco = iter->second;
-	assert(pendco->state_ == FREE || pendco->state_ == SUSPEND);
-	if (pendco->state_ == SUSPEND)
-		pendco->state_ = RUNNING;
+void coroutine::resumeFunc(coroutine_item* co) {
+	assert(co->state_ == coroutine_item::FREE || co->state_ == coroutine_item::SUSPEND);
+	if (co->state_ == coroutine_item::SUSPEND)
+		co->state_ = coroutine_item::RUNNING;
 
 	if (sindex_ == -1) {
 		++sindex_;
-		costack_[sindex_] = pendco;
-		swapcontext(&env_ctx_, &pendco->ctx_);
+		costack_[sindex_] = co;
+		::swapcontext(&env_ctx_, &co->ctx_);
 	}
 	else {
 		//注意这里
 		assert(sindex_ < 127);
-		impl* currco = costack_[sindex_];
-		currco->state_ = SUSPEND;
+		coroutine_item* currco = costack_[sindex_];
+		currco->state_ = coroutine_item::SUSPEND;
 		++sindex_;
-		costack_[sindex_] = pendco;
-		swapcontext(&currco->ctx_, &pendco->ctx_);
+		costack_[sindex_] = co;
+		::swapcontext(&currco->ctx_, &co->ctx_);
 	}
 }
 
 void coroutine::yieldFunc() {
 	assert(sindex_ != -1);
 
-	impl* thisco = costack_[sindex_];
+	coroutine_item* thisco = costack_[sindex_];
 	--sindex_;
-	if (thisco->state_ == RUNNING)
-		thisco->state_ = SUSPEND;
+	if (thisco->state_ == coroutine_item::RUNNING)
+		thisco->state_ = coroutine_item::SUSPEND;
 
 	if (sindex_ == -1)
-		swapcontext(&thisco->ctx_, &env_ctx_);
+		::swapcontext(&thisco->ctx_, &env_ctx_);
 	else {
-		impl* lastco = costack_[sindex_];
-		lastco->state_ = RUNNING;
-		swapcontext(&thisco->ctx_, &lastco->ctx_);
+		coroutine_item* lastco = costack_[sindex_];
+		lastco->state_ = coroutine_item::RUNNING;
+		::swapcontext(&thisco->ctx_, &lastco->ctx_);
 	}
-}
-
-coroutine_t coroutine::selfFunc() {
-	if (sindex_ == -1)
-		return 0;
-	else
-		return costack_[sindex_]->id_;
 }

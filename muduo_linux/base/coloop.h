@@ -4,21 +4,36 @@
 
 #include<sys/epoll.h>
 #include<vector>
-#include<list>
+
+template<typename T>
+struct klinknode {
+
+	void remove();
+	void join(klinknode* phead);
+
+	klinknode* prev_;
+	T val_;
+	klinknode* next_;
+
+};
 
 class coloop :uncopyable {
 public:
+	typedef std::function<void()> functor;
 
 	static uint64_t getMilliSeconds();
 	inline static void loop();
 	inline static void quit();
 
-	class coloop_item :uncopyable {
+	class coloop_item :public coroutine::coroutine_item {
 		friend class coloop;
 	public:
 
-		coloop_item(coroutine_t id, int fd);
+		coloop_item(int fd, const functor& func);
+		coloop_item(int fd, functor&& func);
 		~coloop_item();
+
+		int getFd()const { return fd_; }
 
 		void enableReading() { events_ |= READ; }
 		void disableReading() { events_ &= ~READ; }
@@ -42,13 +57,7 @@ public:
 
 	private:
 
-		struct timeout_t {
-
-			timeout_t* prev_;
-			coloop_item* cpt_;
-			timeout_t* next_;
-
-		};
+		static void coroutineFunc(coloop_item* cpt);
 
 		enum coevent {
 			NONE = 0,
@@ -58,12 +67,13 @@ public:
 		};
 
 		coloop* loop_;
-		coroutine_t id_;
 		int fd_;
 
 		uint32_t events_;
 		uint32_t revents_;
-		timeout_t timeout_;
+		klinknode<coloop_item*> timeout_;
+
+		functor Func;
 
 	};
 
@@ -82,7 +92,7 @@ private:
 	void add(coloop_item* cpt);
 	void modify(coloop_item* cpt);
 	void remove(coloop_item* cpt);
-	void setTimeout(unsigned int ms, coloop_item::timeout_t* cpt);
+	void setTimeout(unsigned int ms, klinknode<coloop_item*>* cpt);
 	void loopFunc();
 
 	bool running_;
@@ -93,7 +103,7 @@ private:
 
 	int tindex_;
 	uint64_t last_time_;
-	std::vector<coloop_item::timeout_t> time_wheel_;
+	std::vector<klinknode<coloop_item*>> time_wheel_;
 
 };
 

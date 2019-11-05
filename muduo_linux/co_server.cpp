@@ -16,6 +16,11 @@ std::string msg =
 
 struct connection {
 
+	~connection() {
+		delete sock_;
+		delete cpt_;
+	}
+
 	ksocket* sock_;
 	coloop::coloop_item* cpt_;
 
@@ -38,25 +43,21 @@ void connect_handler(connection* con) {
 			break;
 	}
 	printf("客户端关闭连接或超时\n");
-
-	delete con->cpt_;
-	delete con->sock_;
-	delete con;
 }
 
 void accept_handler(connection* con) {
 	sockaddr_in cliaddr;
 	int clifd;
-	coroutine_t id;
+	coloop::coloop_item* cpt;
 
 	while (1) {
 		clifd = con->sock_->accept(&cliaddr);
 		if (clifd > 0) {
 			connection* temp = new connection();
-			id = coroutine::create(std::bind(connect_handler, temp));
+			cpt = new coloop::coloop_item(clifd, std::bind(connect_handler, temp));
 
 			temp->sock_ = new ksocket(clifd, cliaddr);
-			temp->cpt_ = new coloop::coloop_item(id, clifd);
+			temp->cpt_ = cpt;
 			temp->cpt_->enableReading();
 			temp->cpt_->updateEvents();
 
@@ -67,14 +68,12 @@ void accept_handler(connection* con) {
 }
 
 int main() {
-	connection con;
-	coroutine_t id = coroutine::create(std::bind(accept_handler, &con));
-
 	ksocket sock("127.0.0.1", 7777);
 	sock.bind();
 	sock.listen();
 
-	coloop::coloop_item cpt(id, sock.getFd());
+	connection con;
+	coloop::coloop_item cpt(sock.getFd(), std::bind(accept_handler, &con));
 	cpt.enableReading();
 	cpt.enableEpollet();
 	cpt.updateEvents();
