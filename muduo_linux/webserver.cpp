@@ -1,5 +1,4 @@
-﻿/*
-#include"logging.h"
+﻿#include"logging.h"
 #include"httpserver.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -142,4 +141,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-*/

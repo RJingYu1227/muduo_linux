@@ -101,13 +101,11 @@
     <ClCompile Include="base\logfile.cpp" />
     <ClCompile Include="base\logging.cpp" />
     <ClCompile Include="base\logstream.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="net\poller.cpp" />
     <ClCompile Include="net\tcpconnection.cpp" />
     <ClCompile Include="net\tcpserver.cpp" />
     <ClCompile Include="net\ktimer.cpp" />
     <ClCompile Include="net\timerqueue.cpp" />
-    <ClCompile Include="webserver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />

@@ -15,14 +15,12 @@ struct connection {
 		delete cpt_;
 	}
 
-	static std::vector<connection*> conmap_;
-
 	ksocket* sock_;
 	coloop::coloop_item* cpt_;
 
 };
 
-std::vector<connection*> connection::conmap_;
+thread_local std::vector<connection*> free_conmap;
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
@@ -132,7 +130,7 @@ void connect_handler(connection* con) {
 		coroutine::yield();
 	}
 	printf("关闭一个连接\n");
-	connection::conmap_.push_back(con);
+	free_conmap.push_back(con);
 }
 
 void accept_handler(connection* con) {
@@ -152,18 +150,20 @@ void accept_handler(connection* con) {
 			continue;
 		}
 
-		for (auto ptr : connection::conmap_)
+		for (auto ptr : free_conmap)
 			delete ptr;
-		connection::conmap_.clear();
+		free_conmap.clear();
 
 		coroutine::yield();
 	}
 }
 
-int main() {
+void thread_func(void* arg) {
 	connection con;
 
 	ksocket sock("127.0.0.1", 7777);
+	sock.setReuseAddr(1);
+	sock.setReusePort(1);
 	sock.bind();
 	sock.listen();
 
@@ -174,6 +174,23 @@ int main() {
 
 	con = { &sock,&cpt };
 	coloop::loop();
+}
+
+int main() {
+	kthread t1(std::bind(thread_func, nullptr));
+	kthread t2(std::bind(thread_func, nullptr));
+	kthread t3(std::bind(thread_func, nullptr));
+	kthread t4(std::bind(thread_func, nullptr));
+
+	t1.start();
+	t2.start();
+	t3.start();
+	t4.start();
+
+	t1.join();
+	t2.join();
+	t3.join();
+	t4.join();
 
 	return 0;
 }
