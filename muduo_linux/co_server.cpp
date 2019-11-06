@@ -28,6 +28,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
 		response.addHeader("Content-Type", "text/html");
+
 		int fd = open("./html/index.html", O_RDONLY);
 		char buf[1024];
 		ssize_t nread = 0;
@@ -98,7 +99,6 @@ void connect_handler(connection* con) {
 	httprequest request;
 	int fd = con->cpt_->getFd();
 
-	printf("建立一个连接\n");
 	while (1) {
 		while ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
 			buff.hasUsed(nread);
@@ -129,7 +129,6 @@ void connect_handler(connection* con) {
 		}
 		coroutine::yield();
 	}
-	printf("关闭一个连接\n");
 	free_conmap.push_back(con);
 }
 
@@ -141,7 +140,10 @@ void accept_handler(connection* con) {
 		clifd = con->sock_->accept(&cliaddr);
 		if (clifd > 0) {
 			connection* temp = new connection();
+
 			temp->sock_ = new ksocket(clifd, cliaddr);
+			temp->sock_->setTcpNodelay(1);
+
 			temp->cpt_ = new coloop::coloop_item(clifd, std::bind(connect_handler, temp));
 			temp->cpt_->enableReading();
 			temp->cpt_->enableEpollet();
@@ -158,7 +160,7 @@ void accept_handler(connection* con) {
 	}
 }
 
-void thread_func(void* arg) {
+void thread_func() {
 	connection con;
 
 	ksocket sock("127.0.0.1", 7777);
@@ -176,21 +178,25 @@ void thread_func(void* arg) {
 	coloop::loop();
 }
 
-int main() {
-	kthread t1(std::bind(thread_func, nullptr));
-	kthread t2(std::bind(thread_func, nullptr));
-	kthread t3(std::bind(thread_func, nullptr));
-	kthread t4(std::bind(thread_func, nullptr));
+int main(int argc, char* argv[]) {
+	int thread_num = 4;
+	if (argc == 1) {
+		thread_num = atoi(argv[0]);
+		if (thread_num < 4)
+			thread_num = 4;
+		if (thread_num > 8)
+			thread_num = 8;
+	}
 
-	t1.start();
-	t2.start();
-	t3.start();
-	t4.start();
-
-	t1.join();
-	t2.join();
-	t3.join();
-	t4.join();
+	std::vector<kthread*> thread_vec(thread_num);
+	for (auto& x : thread_vec) {
+		x = new kthread(thread_func);
+		x->start();
+	}
+	for (auto& x : thread_vec)
+		x->join();
+	for (auto& x : thread_vec)
+		delete x;
 
 	return 0;
 }
