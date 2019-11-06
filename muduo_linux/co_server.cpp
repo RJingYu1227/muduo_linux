@@ -69,7 +69,7 @@ void sendBuff(connection* con, buffer* buff) {
 	int fd = con->cpt_->getFd();
 	while (1) {
 		nwrote = write(fd, buff->beginPtr(), buff->usedBytes());
-		if (nwrote <= 0) {
+		if (nwrote < 0) {
 			coroutine::yield();
 			continue;
 		}
