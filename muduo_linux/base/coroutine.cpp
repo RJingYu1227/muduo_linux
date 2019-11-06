@@ -75,7 +75,9 @@ coroutine::coroutine_item::~coroutine_item() {
 }
 
 void coroutine::resumeFunc(coroutine_item* co) {
+	assert(co->coenv_ == threadCoenv());
 	assert(co->state_ == coroutine_item::FREE || co->state_ == coroutine_item::SUSPEND);
+
 	if (co->state_ == coroutine_item::SUSPEND)
 		co->state_ = coroutine_item::RUNNING;
 

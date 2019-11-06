@@ -44,16 +44,13 @@ void connect_handler(connection* con) {
 void accept_handler(connection* con) {
 	sockaddr_in cliaddr;
 	int clifd;
-	coloop::coloop_item* cpt;
 
 	while (1) {
 		clifd = con->sock_->accept(&cliaddr);
 		if (clifd > 0) {
 			connection* temp = new connection();
-			cpt = new coloop::coloop_item(clifd, std::bind(connect_handler, temp));
-
 			temp->sock_ = new ksocket(clifd, cliaddr);
-			temp->cpt_ = cpt;
+			temp->cpt_ = new coloop::coloop_item(clifd, std::bind(connect_handler, temp));
 			temp->cpt_->enableReading();
 			temp->cpt_->updateEvents();
 
@@ -64,11 +61,12 @@ void accept_handler(connection* con) {
 }
 
 int main() {
+	connection con;
+
 	ksocket sock("127.0.0.1", 7777);
 	sock.bind();
 	sock.listen();
 
-	connection con;
 	coloop::coloop_item cpt(sock.getFd(), std::bind(accept_handler, &con));
 	cpt.enableReading();
 	cpt.enableEpollet();

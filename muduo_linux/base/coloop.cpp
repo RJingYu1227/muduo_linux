@@ -62,8 +62,10 @@ coloop::coloop_item::coloop_item(int fd, functor&& func) :
 }
 
 coloop::coloop_item::~coloop_item() {
-	cancelTimeout();
-	loop_->remove(this);
+	if (getState() != coroutine_item::DONE) {
+		cancelTimeout();
+		loop_->remove(this);
+	}
 }
 
 coloop* coloop::threadColoop() {
@@ -191,9 +193,7 @@ void coloop::loopFunc() {
 				while ((node = time_wheel_[tindex_].next_)) {
 					cpt = node->val_;
 
-					node->remove();
-					node->val_ = nullptr;
-					--count_;
+					cancelTimeout(node);
 
 					cpt->revents_ = 0;
 					cpt->resume();
