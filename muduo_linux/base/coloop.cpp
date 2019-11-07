@@ -39,10 +39,8 @@ void coloop::coloop_item::coroutineFunc(coloop_item* cpt) {
 
 coloop::coloop_item::coloop_item(int fd, const functor& func) :
 	coroutine_item(std::bind(coroutineFunc, this)),
+	coevent(fd),
 	loop_(threadColoop()),
-	fd_(fd),
-	events_(0),
-	revents_(0),
 	timeout_({ 0,0,0 }),
 	Func(func) {
 
@@ -51,10 +49,8 @@ coloop::coloop_item::coloop_item(int fd, const functor& func) :
 
 coloop::coloop_item::coloop_item(int fd, functor&& func) :
 	coroutine_item(std::bind(coroutineFunc, this)),
+	coevent(fd),
 	loop_(threadColoop()),
-	fd_(fd),
-	events_(0),
-	revents_(0),
 	timeout_({ 0,0,0 }),
 	Func(std::move(func)) {
 
@@ -101,24 +97,24 @@ coloop::~coloop() {
 
 void coloop::add(coloop_item* cpt) {
 	epoll_event ev;
-	ev.events = cpt->events_;
+	ev.events = cpt->getEvents();
 	ev.data.ptr = cpt;
-	int fd = cpt->fd_;
+	int fd = cpt->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
 }
 
 void coloop::modify(coloop_item* cpt) {
 	epoll_event ev;
-	ev.events = cpt->events_;
+	ev.events = cpt->getEvents();
 	ev.data.ptr = cpt;
-	int fd = cpt->fd_;
+	int fd = cpt->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
 }
 
 void coloop::remove(coloop_item* cpt) {
-	int fd = cpt->fd_;
+	int fd = cpt->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL);
 }
@@ -169,7 +165,7 @@ void coloop::loopFunc() {
 
 				cpt->cancelTimeout();
 
-				cpt->revents_ = revents_[i].events;
+				cpt->setRevents(revents_[i].events);
 				cpt->resume();
 			}
 
@@ -195,7 +191,7 @@ void coloop::loopFunc() {
 
 					cancelTimeout(node);
 
-					cpt->revents_ = 0;
+					cpt->setRevents(0);
 					cpt->resume();
 				}
 			}

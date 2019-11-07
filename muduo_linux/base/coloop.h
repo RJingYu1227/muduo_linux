@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include"coroutine.h"
+#include"coevent.h"
 
-#include<sys/epoll.h>
 #include<vector>
 
 template<typename T>
@@ -25,7 +25,9 @@ public:
 	inline static void loop();
 	inline static void quit();
 
-	class coloop_item :public coroutine::coroutine_item {
+	class coloop_item :
+		public coroutine::coroutine_item, 
+		public coevent {
 		friend class coloop;
 	public:
 
@@ -33,47 +35,16 @@ public:
 		coloop_item(int fd, functor&& func);
 		~coloop_item();
 
-		int getFd()const { return fd_; }
-
-		void enableReading() { events_ |= READ; }
-		void disableReading() { events_ &= ~READ; }
-		bool isReading()const { return events_ & READ; }
-
-		void enableWriting() { events_ |= WRITE; }
-		void disableWrting() { events_ &= ~WRITE; }
-		bool isWriting()const { return events_ & WRITE; }
-
-		void enableEpollet() { events_ |= ET; }
-		void disableEpollet() { events_ &= ~ET; }
-		bool isEpollet()const { return events_ & ET; }
-
-		void disableALL() { events_ = NONE; }
-		bool isNoneEvent()const { return events_ == NONE; }
-
 		inline void setTimeout(unsigned int ms);
 		inline void cancelTimeout();
-
 		inline void updateEvents();
-		uint32_t getRevents()const { return revents_; }
 
 	private:
 
 		static void coroutineFunc(coloop_item* cpt);
 
-		enum coevent {
-			NONE = 0,
-			READ = EPOLLIN | EPOLLPRI,
-			WRITE = EPOLLOUT,
-			ET = EPOLLET,
-		};
-
 		coloop* loop_;
-		int fd_;
-
-		uint32_t events_;
-		uint32_t revents_;
 		klinknode<coloop_item*> timeout_;
-
 		functor Func;
 
 	};

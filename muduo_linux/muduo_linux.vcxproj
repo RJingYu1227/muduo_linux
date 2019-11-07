@@ -81,11 +81,12 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
+    <ClCompile Include="base\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="base\coroutine.cpp" />
     <ClCompile Include="base\coloop.cpp" />
-    <ClCompile Include="co_server.cpp" />
+    <ClCompile Include="co_webserver.cpp" />
     <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />
@@ -109,10 +110,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
+    <ClInclude Include="base\coevent.h" />
     <ClInclude Include="base\kthread.h" />
     <ClInclude Include="base\blockqueue.h" />
     <ClInclude Include="base\coroutine.h" />
     <ClInclude Include="base\coloop.h" />
+    <ClInclude Include="base\coservice.h" />
     <ClInclude Include="net\kpoll.h" />
     <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />
