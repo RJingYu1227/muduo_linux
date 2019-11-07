@@ -3,7 +3,6 @@
 #include"kthread.h"
 
 #include<ucontext.h>
-#include<map>
 
 class coroutine :uncopyable {
 public:

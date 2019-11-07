@@ -141,7 +141,7 @@ void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timeout) {
 		ms = 1;
 	expire += ms;
 
-	int diff = static_cast<int>(expire - last_time_);
+	size_t diff = expire - last_time_;
 	if (diff > 59999)
 		diff = 59999;
 
@@ -179,7 +179,7 @@ void coloop::loopFunc() {
 
 		if (count_) {
 			uint64_t now = getMilliSeconds();
-			int diff = static_cast<int>(now - last_time_);
+			size_t diff = now - last_time_;
 			last_time_ = now;
 
 			klinknode<coloop_item*>* node;

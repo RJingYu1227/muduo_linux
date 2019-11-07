@@ -20,7 +20,7 @@ struct connection {
 
 };
 
-thread_local std::vector<connection*> free_conmap;
+thread_local std::vector<connection*> done_connections;
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
@@ -129,7 +129,7 @@ void connect_handler(connection* con) {
 		}
 		coroutine::yield();
 	}
-	free_conmap.push_back(con);
+	done_connections.push_back(con);
 }
 
 void accept_handler(connection* con) {
@@ -152,9 +152,9 @@ void accept_handler(connection* con) {
 			continue;
 		}
 
-		for (auto ptr : free_conmap)
+		for (auto ptr : done_connections)
 			delete ptr;
-		free_conmap.clear();
+		done_connections.clear();
 
 		coroutine::yield();
 	}
