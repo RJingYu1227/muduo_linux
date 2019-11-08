@@ -13,7 +13,8 @@ coservice::coservice_item::coservice_item(int fd, const functor& func, coservice
 	coroutine_item(std::bind(coroutineFunc, this)),
 	coevent(fd),
 	service_(service),
-	Func(func) {
+	Func(func),
+	inqueue_(0) {
 
 	service_->add(this);
 }
@@ -22,7 +23,8 @@ coservice::coservice_item::coservice_item(int fd, functor&& func, coservice* ser
 	coroutine_item(std::bind(coroutineFunc, this)),
 	coevent(fd),
 	service_(service),
-	Func(std::move(func)) {
+	Func(std::move(func)),
+	inqueue_(0) {
 
 	service_->add(this);
 }
@@ -58,17 +60,27 @@ size_t coservice::run() {
 				numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 0);
 
 			if (numevents > 0) {
-				for (int i = 0; i < numevents; ++i)
-					queue_.put_back((coservice_item*)revents_[i].data.ptr);
+				for (int i = 0; i < numevents; ++i) {
+					task = (coservice_item*)revents_[i].data.ptr;
+					if (task->inqueue_)
+						continue;
+
+					task->inqueue_ = 1;
+					task->setRevents(revents_[i].events);
+					queue_.put_back(task);
+				}
 
 				if (static_cast<size_t>(numevents) == revents_.size())
 					revents_.resize(revents_.size() * 2);
 			}
 
-			queue_.put_back(task);
+			queue_.put_back(nullptr);
 		}
-		else {
+		else if (task->getState() != coroutine::coroutine_item::DONE) {
+			//当一个协程执行完毕时，会将inqueue_置为0，此时有可能会再次被添加进queue_
+			//此时执行resume是不被允许的
 			task->resume();
+			task->inqueue_ = 0;
 		}
 		++count;
 	}

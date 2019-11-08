@@ -4,6 +4,7 @@
 #include"httpresponse.h"
 #include"ktimer.h"
 #include"buffer.h"
+#include"logging.h"
 
 #include<unistd.h>
 #include<fcntl.h>
@@ -17,7 +18,7 @@ struct connection {
 
 	ksocket* sock_;
 	coservice::coservice_item* cst_;
-
+	
 };
 
 coservice service;
@@ -29,7 +30,9 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 	if (request.getPath() == "/") {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
-		response.addHeader("Content-Type", "text/html");
+		response.addHeader("Content-Type", "text/plain");
+		response.getBody() = "hello, world!\n";
+		return;
 
 		int fd = open("./html/index.html", O_RDONLY);
 		char buf[1024];
@@ -102,7 +105,7 @@ void connect_handler(connection* con) {
 	int fd = con->cst_->getFd();
 
 	while (1) {
-		while ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
+		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
 			buff.hasUsed(nread);
 			buff.ensureLeftBytes(1024);
 		}
@@ -110,6 +113,7 @@ void connect_handler(connection* con) {
 		if (nread == 0 || !request.praseRequest(&buff))
 			break;
 		else if (request.praseDone()) {
+			LOG << "成功解析一次httprequest";
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
@@ -123,6 +127,7 @@ void connect_handler(connection* con) {
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(con, &buff2);
+			LOG << "成功发送一次httpresponse";
 
 			if (!response.keepAlive()) {
 				con->sock_->shutdownWrite();
@@ -131,7 +136,7 @@ void connect_handler(connection* con) {
 		}
 		coroutine::yield();
 	}
-
+	LOG << "连接处理完毕";
 	klock<kmutex> x(&lock);
 	done_connections.push_back(con);
 }
@@ -150,10 +155,9 @@ void accept_handler(connection* con) {
 
 			temp->cst_ = new coservice::coservice_item(clifd, std::bind(connect_handler, temp), &service);
 			temp->cst_->enableReading();
-			temp->cst_->enableEpollet();
+			//temp->cst_->enableEpollet();
 			temp->cst_->updateEvents();
-
-			continue;
+			LOG << "建立一个新连接";
 		}
 
 		{
@@ -161,6 +165,7 @@ void accept_handler(connection* con) {
 			for (auto ptr : done_connections)
 				delete ptr;
 			done_connections.clear();
+			LOG << "清理connections";
 		}
 
 		coroutine::yield();
@@ -172,6 +177,8 @@ void thread_func() {
 }
 
 int main(int argc, char* argv[]) {
+	logger::createAsyncLogger();
+
 	connection con;
 
 	ksocket sock("127.0.0.1", 7777);
@@ -180,7 +187,7 @@ int main(int argc, char* argv[]) {
 
 	coservice::coservice_item cst(sock.getFd(), std::bind(accept_handler, &con), &service);
 	cst.enableReading();
-	cst.enableEpollet();
+	//cst.enableEpollet();
 	cst.updateEvents();
 
 	con = { &sock,&cst };

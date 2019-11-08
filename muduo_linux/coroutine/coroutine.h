@@ -26,9 +26,11 @@ public:
 		~coroutine_item();//暂时不需要virtual
 
 		costate getState()const { return state_; }
-
-		inline void resume();
 		inline void yield();
+
+	protected:
+
+		inline void resume();//resume方法不应该被暴露在外面
 
 	private:
 
