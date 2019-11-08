@@ -77,15 +77,15 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\编程练习\muduo_linux\muduo_linux\httpserver;D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
+    <IncludePath>D:\编程练习\muduo_linux\muduo_linux\coroutine;D:\编程练习\muduo_linux\muduo_linux\http;D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
-    <ClCompile Include="base\coservice.cpp" />
+    <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
-    <ClCompile Include="base\coroutine.cpp" />
-    <ClCompile Include="base\coloop.cpp" />
+    <ClCompile Include="coroutine\coroutine.cpp" />
+    <ClCompile Include="coroutine\coloop.cpp" />
     <ClCompile Include="co_webserver.cpp" />
     <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
@@ -95,9 +95,9 @@
     <ClCompile Include="net\eventloop.cpp" />
     <ClCompile Include="net\eventqueue.cpp" />
     <ClCompile Include="base\fileutil.cpp" />
-    <ClCompile Include="httpserver\httprequest.cpp" />
-    <ClCompile Include="httpserver\httpresponse.cpp" />
-    <ClCompile Include="httpserver\httpserver.cpp" />
+    <ClCompile Include="http\httprequest.cpp" />
+    <ClCompile Include="http\httpresponse.cpp" />
+    <ClCompile Include="http\httpserver.cpp" />
     <ClCompile Include="net\ksocket.cpp" />
     <ClCompile Include="base\logfile.cpp" />
     <ClCompile Include="base\logging.cpp" />
@@ -110,12 +110,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
-    <ClInclude Include="base\coevent.h" />
+    <ClInclude Include="coroutine\coevent.h" />
     <ClInclude Include="base\kthread.h" />
     <ClInclude Include="base\blockqueue.h" />
-    <ClInclude Include="base\coroutine.h" />
-    <ClInclude Include="base\coloop.h" />
-    <ClInclude Include="base\coservice.h" />
+    <ClInclude Include="coroutine\coroutine.h" />
+    <ClInclude Include="coroutine\coloop.h" />
+    <ClInclude Include="coroutine\coservice.h" />
     <ClInclude Include="net\kpoll.h" />
     <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />
@@ -126,9 +126,9 @@
     <ClInclude Include="net\eventloop.h" />
     <ClInclude Include="net\eventqueue.h" />
     <ClInclude Include="base\fileutil.h" />
-    <ClInclude Include="httpserver\httprequest.h" />
-    <ClInclude Include="httpserver\httpresponse.h" />
-    <ClInclude Include="httpserver\httpserver.h" />
+    <ClInclude Include="http\httprequest.h" />
+    <ClInclude Include="http\httpresponse.h" />
+    <ClInclude Include="http\httpserver.h" />
     <ClInclude Include="net\ksocket.h" />
     <ClInclude Include="base\logfile.h" />
     <ClInclude Include="base\logging.h" />

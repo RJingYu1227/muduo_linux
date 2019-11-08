@@ -5,18 +5,6 @@
 
 #include<vector>
 
-template<typename T>
-struct klinknode {
-
-	void remove();
-	void join(klinknode* phead);
-
-	klinknode* prev_;
-	T val_;
-	klinknode* next_;
-
-};
-
 class coloop :uncopyable {
 public:
 	typedef std::function<void()> functor;

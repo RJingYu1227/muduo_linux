@@ -40,6 +40,9 @@ private:
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
 
+	bool running_;
+	bool quit_;
+
 	int epfd_;
 	std::vector<epoll_event> revents_;
 

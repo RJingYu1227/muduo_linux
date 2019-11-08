@@ -35,8 +35,6 @@ public:
 		static void coroutineFunc(coroutine_item* co);
 		static void makeContext(coroutine_item* co);
 
-		coroutine* coenv_;
-
 		costate state_;
 		functor coFunc;
 		ucontext_t ctx_;
@@ -70,9 +68,9 @@ void coroutine::yield() {
 }
 
 void coroutine::coroutine_item::resume() {
-	coenv_->resumeFunc(this);
+	threadCoenv()->resumeFunc(this);
 }
 
 void coroutine::coroutine_item::yield() {
-	coenv_->yieldFunc();
+	threadCoenv()->yieldFunc();
 }

@@ -45,7 +45,35 @@ coservice::~coservice() {
 }
 
 size_t coservice::run() {
+	size_t count = 0;
+	coservice_item* task;
+	int numevents;
 
+	while (1) {
+		task = queue_.take_front();
+		if (task == nullptr) {
+			if (queue_.empty())
+				numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), -1);
+			else
+				numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 0);
+
+			if (numevents > 0) {
+				for (int i = 0; i < numevents; ++i)
+					queue_.put_back((coservice_item*)revents_[i].data.ptr);
+
+				if (static_cast<size_t>(numevents) == revents_.size())
+					revents_.resize(revents_.size() * 2);
+			}
+
+			queue_.put_back(task);
+		}
+		else {
+			task->resume();
+		}
+		++count;
+	}
+
+	return count;
 }
 
 void coservice::add(coservice_item* cst) {

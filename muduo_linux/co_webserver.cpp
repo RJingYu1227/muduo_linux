@@ -1,4 +1,4 @@
-﻿#include"coloop.h"
+﻿#include"coservice.h"
 #include"ksocket.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -12,15 +12,17 @@ struct connection {
 
 	~connection() {
 		delete sock_;
-		delete cpt_;
+		delete cst_;
 	}
 
 	ksocket* sock_;
-	coloop::coloop_item* cpt_;
+	coservice::coservice_item* cst_;
 
 };
 
-thread_local std::vector<connection*> done_connections;
+coservice service;
+kmutex lock;
+std::vector<connection*> done_connections;
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
@@ -65,7 +67,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 
 void sendBuff(connection* con, buffer* buff) {
 	ssize_t nwrote;
-	int fd = con->cpt_->getFd();
+	int fd = con->cst_->getFd();
 	while (1) {
 		nwrote = write(fd, buff->beginPtr(), buff->usedBytes());
 		if (nwrote < 0) {
@@ -75,21 +77,21 @@ void sendBuff(connection* con, buffer* buff) {
 		buff->retrieve(nwrote);
 
 		if (buff->usedBytes()) {
-			if (con->cpt_->isWriting())
+			if (con->cst_->isWriting())
 				coroutine::yield();
 			else {
-				con->cpt_->disableReading();
-				con->cpt_->enableWriting();
-				con->cpt_->updateEvents();
+				con->cst_->disableReading();
+				con->cst_->enableWriting();
+				con->cst_->updateEvents();
 			}
 		}
 		else
 			break;
 	}
-	if (con->cpt_->isWriting()) {
-		con->cpt_->disableWrting();
-		con->cpt_->enableReading();
-		con->cpt_->updateEvents();
+	if (con->cst_->isWriting()) {
+		con->cst_->disableWrting();
+		con->cst_->enableReading();
+		con->cst_->updateEvents();
 	}
 }
 
@@ -97,7 +99,7 @@ void connect_handler(connection* con) {
 	ssize_t nread;
 	buffer buff;
 	httprequest request;
-	int fd = con->cpt_->getFd();
+	int fd = con->cst_->getFd();
 
 	while (1) {
 		while ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
@@ -129,6 +131,8 @@ void connect_handler(connection* con) {
 		}
 		coroutine::yield();
 	}
+
+	klock<kmutex> x(&lock);
 	done_connections.push_back(con);
 }
 
@@ -144,41 +148,43 @@ void accept_handler(connection* con) {
 			temp->sock_ = new ksocket(clifd, cliaddr);
 			temp->sock_->setTcpNodelay(1);
 
-			temp->cpt_ = new coloop::coloop_item(clifd, std::bind(connect_handler, temp));
-			temp->cpt_->enableReading();
-			temp->cpt_->enableEpollet();
-			temp->cpt_->updateEvents();
+			temp->cst_ = new coservice::coservice_item(clifd, std::bind(connect_handler, temp), &service);
+			temp->cst_->enableReading();
+			temp->cst_->enableEpollet();
+			temp->cst_->updateEvents();
 
 			continue;
 		}
 
-		for (auto ptr : done_connections)
-			delete ptr;
-		done_connections.clear();
+		{
+			klock<kmutex> x(&lock);
+			for (auto ptr : done_connections)
+				delete ptr;
+			done_connections.clear();
+		}
 
 		coroutine::yield();
 	}
 }
 
 void thread_func() {
-	connection con;
-
-	ksocket sock("127.0.0.1", 7777);
-	sock.setReuseAddr(1);
-	sock.setReusePort(1);
-	sock.bind();
-	sock.listen();
-
-	coloop::coloop_item cpt(sock.getFd(), std::bind(accept_handler, &con));
-	cpt.enableReading();
-	cpt.enableEpollet();
-	cpt.updateEvents();
-
-	con = { &sock,&cpt };
-	coloop::loop();
+	service.run();
 }
 
 int main(int argc, char* argv[]) {
+	connection con;
+
+	ksocket sock("127.0.0.1", 7777);
+	sock.bind();
+	sock.listen();
+
+	coservice::coservice_item cst(sock.getFd(), std::bind(accept_handler, &con), &service);
+	cst.enableReading();
+	cst.enableEpollet();
+	cst.updateEvents();
+
+	con = { &sock,&cst };
+	
 	int thread_num = 4;
 	if (argc == 1) {
 		thread_num = atoi(argv[0]);

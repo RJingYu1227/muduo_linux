@@ -54,7 +54,6 @@ void coroutine::coroutine_item::makeContext(coroutine::coroutine_item* co) {
 }
 
 coroutine::coroutine_item::coroutine_item(const functor& func) :
-	coenv_(threadCoenv()),
 	state_(FREE),
 	coFunc(func) {
 
@@ -62,7 +61,6 @@ coroutine::coroutine_item::coroutine_item(const functor& func) :
 }
 
 coroutine::coroutine_item::coroutine_item(functor&& func) :
-	coenv_(threadCoenv()),
 	state_(FREE),
 	coFunc(std::move(func)) {
 
@@ -75,7 +73,6 @@ coroutine::coroutine_item::~coroutine_item() {
 }
 
 void coroutine::resumeFunc(coroutine_item* co) {
-	assert(co->coenv_ == threadCoenv());
 	assert(co->state_ == coroutine_item::FREE || co->state_ == coroutine_item::SUSPEND);
 
 	if (co->state_ == coroutine_item::SUSPEND)

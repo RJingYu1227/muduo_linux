@@ -1,15 +1,17 @@
 BASE_DIR = ./base
+COROUTINE_DIR = ./coroutine
 NET_DIR = ./net
-HTTP_DIR = ./httpserver
+HTTP_DIR = ./http
 
 INC_DIR = -I${BASE_DIR} \
+      -I${COROUTINE_DIR} \
 	  -I${NET_DIR} \
 	  -I${HTTP_DIR} 
 
 SRC = $(wildcard ${BASE_DIR}/*.cpp) \
+      $(wildcard &{COROUTINE_DIR}/*.cpp) \
       $(wildcard ${NET_DIR}/*.cpp) \
-      $(wildcard ${HTTP_DIR}/*.cpp) \
-      ./main.cpp
+      $(wildcard ${HTTP_DIR}/*.cpp)
 
 OBJ = $(patsubst %.cpp, %.o, ${SRC})
 

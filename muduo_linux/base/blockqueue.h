@@ -8,52 +8,21 @@ template<typename T>
 class blockqueue :uncopyable {
 public:
 
-	size_t timedwait(int seconds) {
-		klock<kmutex> x(&lock_);
-		if (queue_.empty())
-			cond_.timedwait(&lock_, seconds);
-		return queue_.size();
-	}
+	size_t timedwait(int seconds);
+	inline bool empty()const;
+	inline size_t size()const;
 
-	void put_back(const T& val) {
-		klock<kmutex> x(&lock_);
-		queue_.push_back(val);
-		cond_.notify();
-	}
-	void put_back(T&& val) {
-		klock<kmutex> x(&lock_);
-		queue_.push_back(std::move(val));
-		cond_.notify();
-	}
+	void put_front(const T& val);
+	void put_front(T&& val);
+	bool tryput_front(const T& val);
+	bool tryput_front(T&& val);
+	T take_front();
+
+	void put_back(const T& val);
+	void put_back(T&& val);
 	bool tryput_back(const T& val);
 	bool tryput_back(T&& val);
 	T take_back();
-
-	//T take_back(int seconds);
-	//T take_front(int seconds);
-
-	T take_front();
-	bool tryput_front(T&& val);
-	bool tryput_front(const T& val);
-	void put_front(T&& val) {
-		klock<kmutex> x(&lock_);
-		queue_.push_front(std::move(val));
-		cond_.notify();
-	}
-	void put_front(const T& val) {
-		klock<kmutex> x(&lock_);
-		queue_.push_front(val);
-		cond_.notify();
-	}
-
-	bool empty()const {
-		klock<kmutex> x(&lock_);
-		return queue_.empty();
-	}
-	size_t size()const {
-		klock<kmutex> x(&lock_);
-		return queue_.size();
-	}
 
 private:
 
@@ -63,27 +32,85 @@ private:
 
 };
 
-/*
 template<typename T>
-void blockqueue<T>::put_back(const vector<T>& vec) {
+size_t blockqueue<T>::timedwait(int seconds) {
 	klock<kmutex> x(&lock_);
-	for (const T& val : vec)
-		queue_.push_back(val);
+	if (queue_.empty())
+		cond_.timedwait(&lock_, seconds);
+	return queue_.size();
+}
+
+template<typename T>
+bool blockqueue<T>::empty()const {
+	klock<kmutex> x(&lock_);
+	return queue_.empty();
+}
+
+template<typename T>
+size_t blockqueue<T>::size()const {
+	klock<kmutex> x(&lock_);
+	return queue_.size();
+}
+
+template<typename T>
+void blockqueue<T>::put_front(const T& val) {
+	klock<kmutex> x(&lock_);
+	queue_.push_front(val);
 	cond_.notify();
 }
 
 template<typename T>
-bool blockqueue<T>::tryput_back(const vector<T>& vec) {
+void blockqueue<T>::put_front(T&& val) {
+	klock<kmutex> x(&lock_);
+	queue_.push_front(std::move(val));
+	cond_.notify();
+}
+
+template<typename T>
+bool blockqueue<T>::tryput_front(const T& val) {
 	if (lock_.trylock()) {
-		for (const T& val : vec)
-			queue_.push_back(val);
+		queue_.push_front(val);
 		cond_.notify();
 		lock_.unlock();
 		return 1;
 	}
 	return 0;
 }
-*/
+
+template<typename T>
+bool blockqueue<T>::tryput_front(T&& val) {
+	if (lock_.trylock()) {
+		queue_.push_front(std::move(val));
+		cond_.notify();
+		lock_.unlock();
+		return 1;
+	}
+	return 0;
+}
+
+template<typename T>
+T blockqueue<T>::take_front() {
+	klock<kmutex> x(&lock_);
+	while (queue_.empty())
+		cond_.wait(&lock_);
+	T front(std::move(queue_.front()));
+	queue_.pop_front();
+	return std::move(front);
+}
+
+template<typename T>
+void blockqueue<T>::put_back(const T& val) {
+	klock<kmutex> x(&lock_);
+	queue_.push_back(val);
+	cond_.notify();
+}
+
+template<typename T>
+void blockqueue<T>::put_back(T&& val) {
+	klock<kmutex> x(&lock_);
+	queue_.push_back(std::move(val));
+	cond_.notify();
+}
 
 template<typename T>
 bool blockqueue<T>::tryput_back(const T& val) {
@@ -110,66 +137,9 @@ bool blockqueue<T>::tryput_back(T&& val) {
 template<typename T>
 T blockqueue<T>::take_back() {
 	klock<kmutex> x(&lock_);
-	if (queue_.empty())
+	while (queue_.empty())
 		cond_.wait(&lock_);
 	T back(std::move(queue_.back()));
 	queue_.pop_back();
 	return std::move(back);
-}
-
-/*
-template<typename T>
-T blockqueue<T>::take_back(int seconds) {
-	klock<kmutex> x(&lock_);
-	if (queue_.empty())
-		cond_.timedwait(&lock_, seconds);
-	if (queue_.empty())
-		return T();
-
-	T back(std::move(queue_.back()));
-	queue_.pop_back();
-	return std::move(back);
-}
-
-template<typename T>
-T blockqueue<T>::take_front(int seconds) {
-	klock<kmutex> x(&lock_);
-	if (queue_.empty())
-		cond_.timedwait(&lock_, seconds);
-	T front(std::move(queue_.front()));
-	queue_.pop_front();
-	return std::move(front);
-}
-*/
-
-template<typename T>
-T blockqueue<T>::take_front() {
-	klock<kmutex> x(&lock_);
-	if (queue_.empty())
-		cond_.wait(&lock_);
-	T front(std::move(queue_.front()));
-	queue_.pop_front();
-	return std::move(front);
-}
-
-template<typename T>
-bool blockqueue<T>::tryput_front(T&& val) {
-	if (lock_.trylock()) {
-		queue_.push_front(std::move(val));
-		cond_.notify();
-		lock_.unlock();
-		return 1;
-	}
-	return 0;
-}
-
-template<typename T>
-bool blockqueue<T>::tryput_front(const T& val) {
-	if (lock_.trylock()) {
-		queue_.push_front(val);
-		cond_.notify();
-		lock_.unlock();
-		return 1;
-	}
-	return 0;
 }

@@ -52,3 +52,39 @@ private:
 	uint32_t revents_;
 
 };
+
+template<typename T>
+struct klinknode {
+
+	void remove();
+	void join(klinknode* phead);
+
+	klinknode* prev_;
+	T val_;
+	klinknode* next_;
+
+};
+
+template<typename T>
+void klinknode<T>::remove() {
+	if (prev_)
+		prev_->next_ = next_;
+	if (next_)
+		next_->prev_ = prev_;
+
+	prev_ = nullptr;
+	next_ = nullptr;
+}
+
+template<typename T>
+void klinknode<T>::join(klinknode<T>* phead) {
+	if (phead == nullptr)
+		return;
+
+	if (phead->next_) {
+		next_ = phead->next_;
+		phead->next_->prev_ = this;
+	}
+	prev_ = phead;
+	phead->next_ = this;
+}

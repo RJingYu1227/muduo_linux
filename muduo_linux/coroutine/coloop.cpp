@@ -6,30 +6,6 @@
 
 kthreadlocal<coloop> coloop::thread_loop_(coloop::freeColoop);
 
-template<typename T>
-void klinknode<T>::remove() {
-	if (prev_)
-		prev_->next_ = next_;
-	if (next_)
-		next_->prev_ = prev_;
-
-	prev_ = nullptr;
-	next_ = nullptr;
-}
-
-template<typename T>
-void klinknode<T>::join(klinknode<T>* phead) {
-	if (phead == nullptr)
-		return;
-
-	if (phead->next_) {
-		next_ = phead->next_;
-		phead->next_->prev_ = this;
-	}
-	prev_ = phead;
-	phead->next_ = this;
-}
-
 void coloop::coloop_item::coroutineFunc(coloop_item* cpt) {
 	cpt->Func();
 
