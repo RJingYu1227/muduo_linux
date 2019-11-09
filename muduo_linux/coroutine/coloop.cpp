@@ -90,7 +90,6 @@ void coloop::loop() {
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
 				coloop_item* cpt = (coloop_item*)revents_[i].data.ptr;
-				//这里有线程安全问题，cpt可能未执行就已经被析构
 				if (cpt->timenode_.isInlink())
 					cpt->loop_->time_wheel_.cancelTimeout(&cpt->timenode_);
 

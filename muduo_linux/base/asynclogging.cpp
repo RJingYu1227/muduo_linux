@@ -24,7 +24,7 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	这两种实现方式的转变对qps的影响不大
 	thread_local buffer_queue thread_buffers;
 	thread_local logfile output((basename_ + std::to_string(pthread_self()) + '.').c_str(), rollsize_);
-	thread_local impl impl_(nullptr, &thread_buffers_, &output_);
+	thread_local impl tie_(nullptr, &thread_buffers_, &output_);
 	*/
 
 	impl* pimpl = thread_pimpl_.get();

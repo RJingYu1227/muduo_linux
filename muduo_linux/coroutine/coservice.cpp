@@ -6,6 +6,7 @@
 void coservice::coservice_item::coroutineFunc(coservice_item* cst) {
 	cst->Func();
 
+	cst->tie_->done_ = 1;//注意这里
 	cst->service_->remove(cst);
 }
 
@@ -13,8 +14,8 @@ coservice::coservice_item::coservice_item(int fd, const functor& func, coservice
 	coroutine_item(std::bind(coroutineFunc, this)),
 	coevent(fd),
 	service_(service),
-	Func(func),
-	inqueue_(0) {
+	tie_(new impl(this)),
+	Func(func) {
 
 	service_->add(this);
 }
@@ -23,8 +24,8 @@ coservice::coservice_item::coservice_item(int fd, functor&& func, coservice* ser
 	coroutine_item(std::bind(coroutineFunc, this)),
 	coevent(fd),
 	service_(service),
-	Func(std::move(func)),
-	inqueue_(0) {
+	tie_(new impl(this)),
+	Func(std::move(func)) {
 
 	service_->add(this);
 }
@@ -50,7 +51,7 @@ coservice::~coservice() {
 void coservice::add(coservice_item* cst) {
 	epoll_event ev;
 	ev.events = cst->getEvents();
-	ev.data.ptr = cst;
+	ev.data.ptr = cst->tie_;
 	int fd = cst->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
@@ -60,7 +61,7 @@ void coservice::add(coservice_item* cst) {
 void coservice::modify(coservice_item* cst) {
 	epoll_event ev;
 	ev.events = cst->getEvents();
-	ev.data.ptr = cst;
+	ev.data.ptr = cst->tie_;
 	int fd = cst->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
@@ -74,42 +75,52 @@ void coservice::remove(coservice_item* cst) {
 }
 
 size_t coservice::run() {
+	thread_local std::vector<impl*> done_ties;
+
 	size_t count = 0;
-	coservice_item* task;
+	impl* tie;
+	coservice_item* cst;
 	int numevents, timeout;
 	
 	while (item_count_) {
-		task = queue_.take_front();
-		if (task == nullptr) {
+		tie = queue_.take_front();
+		if (tie == nullptr) {
 			if (queue_.empty())
 				timeout = 100;
 			else
 				timeout = 0;
-
 			numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), timeout);
+
 			if (numevents > 0) {
 				for (int i = 0; i < numevents; ++i) {
-					task = (coservice_item*)revents_[i].data.ptr;
-					//这里有线程安全问题，task可能被析构了（未执行）
-					if (task->inqueue_)
+					tie = (impl*)revents_[i].data.ptr;
+					if (tie->inqueue_)
 						continue;
 
-					task->inqueue_ = 1;
-					task->setRevents(revents_[i].events);
-					queue_.put_back(task);
+					tie->inqueue_ = 1;
+					cst = (coservice_item*)tie->ptr_;
+					cst->setRevents(revents_[i].events);
+
+					queue_.put_back(tie);
 				}
 
 				if (static_cast<size_t>(numevents) == revents_.size())
 					revents_.resize(revents_.size() * 2);
 			}
-
 			queue_.put_back(nullptr);
+
+			for (auto ptr : done_ties)
+				delete ptr;
+			done_ties.clear();
 		}
 		else {
-			task->resume();
-			//这里有线程安全问题，task可能被析构了
-			if (task->getState() == coroutine::coroutine_item::SUSPEND)
-				task->inqueue_ = 0;
+			cst = (coservice_item*)tie->ptr_;
+			cst->resume();
+
+			if (tie->done_)
+				done_ties.push_back(tie);
+			else
+				tie->inqueue_ = 0;
 		}
 		++count;
 	}

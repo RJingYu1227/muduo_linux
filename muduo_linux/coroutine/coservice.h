@@ -7,6 +7,23 @@
 #include<atomic>
 
 class coservice :uncopyable {
+private:
+
+	struct impl {
+		impl() {}
+
+		impl(void* ptr) :
+			inqueue_(0),
+			done_(0),
+			ptr_(ptr) {
+
+		}
+
+		bool inqueue_;
+		bool done_;
+		void* ptr_;
+	};
+
 public:
 	typedef std::function<void()> functor;
 
@@ -33,11 +50,13 @@ public:
 
 	private:
 
+	
+
 		static void coroutineFunc(coservice_item* cst);
 
 		coservice* service_;
+		impl* tie_;
 		functor Func;
-		volatile bool inqueue_;
 
 	};
 
@@ -52,7 +71,7 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
-	blockqueue<coservice_item*> queue_;
+	blockqueue<impl*> queue_;
 
 };
 
