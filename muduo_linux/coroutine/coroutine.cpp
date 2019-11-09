@@ -36,7 +36,7 @@ void coroutine::coroutine_item::coroutineFunc(coroutine_item* co) {
 	co->coFunc();
 	co->state_ = DONE;
 
-	co->yield();
+	coroutine::yield();
 }
 
 void coroutine::coroutine_item::makeContext(coroutine::coroutine_item* co) {

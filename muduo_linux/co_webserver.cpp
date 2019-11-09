@@ -1,4 +1,4 @@
-﻿#include"coservice.h"
+﻿#include"coloop.h"
 #include"ksocket.h"
 #include"httprequest.h"
 #include"httpresponse.h"
@@ -17,13 +17,15 @@ struct connection {
 	}
 
 	ksocket* sock_;
-	coservice::coservice_item* cst_;
+	coloop::coloop_item* cst_;
 	
 };
 
-coservice service;
-kmutex lock;
+kmutex con_mutex;
 std::vector<connection*> done_connections;
+kmutex loop_mutex;
+std::vector<coloop*> ioloops;
+int thread_num = 4;
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
@@ -137,12 +139,14 @@ void connect_handler(connection* con) {
 		coroutine::yield();
 	}
 	LOG << "连接处理完毕";
-	klock<kmutex> x(&lock);
+	klock<kmutex> x(&con_mutex);
 	done_connections.push_back(con);
 }
 
 void accept_handler(connection* con) {
 	sockaddr_in cliaddr;
+	coloop* ioloop;
+	int index = 0;
 	int clifd;
 
 	while (1) {
@@ -153,48 +157,42 @@ void accept_handler(connection* con) {
 			temp->sock_ = new ksocket(clifd, cliaddr);
 			temp->sock_->setTcpNodelay(1);
 
-			temp->cst_ = new coservice::coservice_item(clifd, std::bind(connect_handler, temp), &service);
+			ioloop = ioloops[index];
+			index = (index + 1) % thread_num;
+
+			temp->cst_ = new coloop::coloop_item(clifd, std::bind(connect_handler, temp), ioloop);
 			temp->cst_->enableReading();
-			//temp->cst_->enableEpollet();
 			temp->cst_->updateEvents();
 			LOG << "建立一个新连接";
 		}
 
 		{
-			klock<kmutex> x(&lock);
+			klock<kmutex> x(&con_mutex);
 			for (auto ptr : done_connections)
 				delete ptr;
 			done_connections.clear();
-			LOG << "清理connections";
 		}
+
+		LOG << "清理connections";
 
 		coroutine::yield();
 	}
 }
 
 void thread_func() {
-	service.run();
+	coloop ioloop;
+	{
+		klock<kmutex> x(&loop_mutex);
+		ioloops.push_back(&ioloop);
+	}
+
+	ioloop.loop();
 }
 
 int main(int argc, char* argv[]) {
 	logger::createAsyncLogger();
-
-	connection con;
-
-	ksocket sock("127.0.0.1", 7777);
-	sock.bind();
-	sock.listen();
-
-	coservice::coservice_item cst(sock.getFd(), std::bind(accept_handler, &con), &service);
-	cst.enableReading();
-	//cst.enableEpollet();
-	cst.updateEvents();
-
-	con = { &sock,&cst };
-	
-	int thread_num = 4;
-	if (argc == 1) {
-		thread_num = atoi(argv[0]);
+	if (argc == 2) {
+		thread_num = atoi(argv[1]);
 		if (thread_num < 4)
 			thread_num = 4;
 		if (thread_num > 8)
@@ -206,6 +204,21 @@ int main(int argc, char* argv[]) {
 		x = new kthread(thread_func);
 		x->start();
 	}
+
+	coloop loop;
+	connection con;
+
+	ksocket sock("127.0.0.1", 7777);
+	sock.bind();
+	sock.listen();
+
+	coloop::coloop_item cst(sock.getFd(), std::bind(accept_handler, &con), &loop);
+	cst.enableReading();
+	cst.updateEvents();
+
+	con = { &sock,&cst };
+	loop.loop();
+
 	for (auto& x : thread_vec)
 		x->join();
 	for (auto& x : thread_vec)
