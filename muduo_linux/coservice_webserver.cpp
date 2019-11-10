@@ -145,8 +145,8 @@ void accept_handler(ksocket* sock) {
 
 			coservice_item* temp_cst = coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
 			temp_cst->enableReading();
-			temp_cst->updateEvents();
 			temp_cst->setTimeout(6666);
+			temp_cst->updateEvents();
 			LOG << "建立一个新连接";
 		}
 

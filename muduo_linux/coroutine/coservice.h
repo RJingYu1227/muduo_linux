@@ -14,7 +14,7 @@ class coservice :uncopyable {
 public:
 
 	coservice();
-	~coservice();//请确保析构函数在最后调用
+	~coservice();
 
 	size_t run();
 

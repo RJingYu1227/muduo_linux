@@ -85,9 +85,11 @@ void coservice::doItem(coservice_item* cst) {
 	coservice_item::running_cst_ = nullptr;
 
 	if (cst->getState() == coservice_item::DONE) {
-		klock<kmutex> x(&time_mutex_);
-		if (cst->timenode_.isInlink())
-			timewheel_.cancelTimeout(&cst->timenode_);
+		{
+			klock<kmutex> x(&time_mutex_);
+			if (cst->timenode_.isInlink())
+				timewheel_.cancelTimeout(&cst->timenode_);
+		}
 		remove(cst);
 	}
 	else
@@ -104,8 +106,11 @@ void coservice::getItems() {
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
 				cst = (coservice_item*)revents_[i].data.ptr;
-				if (cst->timenode_.isInlink())
+				if (cst->timenode_.isInlink())//这一步必做
 					timewheel_.cancelTimeout(&cst->timenode_);
+
+				if (cst->handling_)//这一步很重要，考虑setTimeout在这之后才拿到锁
+					revents_[i].data.ptr = nullptr;
 			}
 		}
 		timewheel_.getTimeout(timenodes_);
@@ -113,8 +118,7 @@ void coservice::getItems() {
 
 	for (int i = 0; i < numevents; ++i) {
 		cst = (coservice_item*)revents_[i].data.ptr;
-		//不能对一个正在执行的协程调用resume
-		if (cst->handling_)
+		if (cst == nullptr)
 			continue;
 
 		cst->handling_ = 1;

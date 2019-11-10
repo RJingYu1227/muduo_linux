@@ -155,8 +155,8 @@ void accept_handler(ksocket* sock) {
 
 			coloop_item* temp_cpt = coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
 			temp_cpt->enableReading();
-			temp_cpt->updateEvents();
 			temp_cpt->setTimeout(6666);
+			temp_cpt->updateEvents();
 			LOG << "建立一个新连接";
 		}
 
