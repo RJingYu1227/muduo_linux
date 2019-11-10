@@ -8,8 +8,7 @@ thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 	coroutine_item(func),
 	coevent(fd),
-	loop_(loop),
-	Func(func) {
+	loop_(loop) {
 
 	timenode_.setValue(this);
 	loop_->add(this);
@@ -18,8 +17,7 @@ coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
 	coroutine_item(std::move(func)),
 	coevent(fd),
-	loop_(loop),
-	Func(std::move(func)) {
+	loop_(loop) {
 
 	timenode_.setValue(this);
 	loop_->add(this);
@@ -29,12 +27,9 @@ coloop_item::~coloop_item() {
 	assert(getState() == DONE);
 }
 
-void coloop::epollTimeout(unsigned int ms) {
-	coloop_item* cpt = coloop_item::running_cpt_;
-	assert(cpt != nullptr);
-	cpt->loop_->time_wheel_.setTimeout(ms, &cpt->timenode_);
-
-	coroutine::yield();
+void coloop_item::setTimeout(unsigned int ms) {
+	klock<kmutex> x(&loop_->time_mutex_);
+	loop_->timewheel_.setTimeout(ms, &timenode_);
 }
 
 coloop::coloop() :
@@ -42,7 +37,7 @@ coloop::coloop() :
 	quit_(0),
 	epfd_(epoll_create1(EPOLL_CLOEXEC)),
 	revents_(128),
-	time_wheel_(60 * 1000) {
+	timewheel_(60 * 1000) {
 
 	assert(epfd_ > 0);
 }
@@ -98,8 +93,12 @@ void coloop::loop() {
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
 				cpt = (coloop_item*)revents_[i].data.ptr;
-				if (cpt->timenode_.isInlink())
-					cpt->loop_->time_wheel_.cancelTimeout(&cpt->timenode_);
+
+				{
+					klock<kmutex> x(&time_mutex_);
+					if (cpt->timenode_.isInlink())
+						timewheel_.cancelTimeout(&cpt->timenode_);
+				}
 
 				cpt->setRevents(revents_[i].events);
 				doItem(cpt);
@@ -109,16 +108,17 @@ void coloop::loop() {
 				revents_.resize(revents_.size() * 2);
 		}
 
-		if (time_wheel_.getTimeout(timenodes_)) {
-			for (auto node : timenodes_) {
-				cpt = node->getValue();
-
-				cpt->setRevents(0);
-				doItem(cpt);
-			}
-
-			timenodes_.clear();
+		{
+			klock<kmutex> x(&time_mutex_);
+			timewheel_.getTimeout(timenodes_);
 		}
+		for (auto node : timenodes_) {
+			cpt = node->getValue();
+
+			cpt->setRevents(0);
+			doItem(cpt);
+		}
+		timenodes_.clear();
 	}
 
 	looping_ = 0;

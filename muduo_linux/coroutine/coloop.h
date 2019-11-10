@@ -13,8 +13,6 @@ class coloop :uncopyable {
 	friend class coloop_item;
 public:
 
-	static void epollTimeout(unsigned int ms);
-
 	coloop();
 	~coloop();
 
@@ -34,8 +32,9 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
+	kmutex time_mutex_;
 	std::vector<klinknode<coloop_item*>*> timenodes_;
-	timewheel<coloop_item*> time_wheel_;
+	timewheel<coloop_item*> timewheel_;
 
 };
 
@@ -51,6 +50,7 @@ public:
 	inline static coloop_item* self();
 
 	inline void updateEvents();
+	void setTimeout(unsigned int ms);
 
 protected:
 
@@ -64,7 +64,6 @@ private:
 
 	coloop* loop_;
 	klinknode<coloop_item*> timenode_;
-	functor Func;
 
 };
 

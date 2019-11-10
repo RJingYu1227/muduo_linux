@@ -88,17 +88,20 @@ void sendBuff(buffer* buff) {
 }
 
 void connect_handler(ksocket* sock) {
+	coloop_item* cpt = coloop_item::self();
+	if (cpt->getRevents() == 0) {
+		LOG << "客户端超时";
+		klock<kmutex> x(&sock_mutex);
+		done_ksockets.push_back(sock);
+
+		return;
+	}
 	ssize_t nread;
 	buffer buff;
 	httprequest request;
-	coloop_item* cpt = coloop_item::self();
 	int fd = cpt->getFd();
 
 	while (1) {
-		if (cpt->getRevents() == 0) {
-			LOG << "客户端超时";
-			break;
-		}
 		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
 			buff.hasUsed(nread);
 			buff.ensureLeftBytes(1024);
@@ -153,6 +156,7 @@ void accept_handler(ksocket* sock) {
 			coloop_item* temp_cpt = coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
 			temp_cpt->enableReading();
 			temp_cpt->updateEvents();
+			temp_cpt->setTimeout(6666);
 			LOG << "建立一个新连接";
 		}
 

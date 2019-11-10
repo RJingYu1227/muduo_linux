@@ -87,7 +87,7 @@ private:
 
 	size_t tindex_;
 	uint64_t last_time_;
-	std::vector<klinknode<T>> time_wheel_;
+	std::vector<klinknode<T>> time_wheels_;
 
 };
 
@@ -107,7 +107,7 @@ timewheel<T>::timewheel(size_t wheels) :
 	count_(0),
 	tindex_(0),
 	last_time_(0),
-	time_wheel_(wheels) {
+	time_wheels_(wheels) {
 
 }
 
@@ -124,7 +124,7 @@ void timewheel<T>::setTimeout(uint64_t ms, klinknode<T>* timenode) {
 	if (diff > wheels_)
 		diff = wheels_;
 
-	timenode->join(&time_wheel_[(tindex_ + diff) % wheels_]);
+	timenode->join(&time_wheels_[(tindex_ + diff) % wheels_]);
 	++count_;
 }
 
@@ -149,7 +149,7 @@ size_t timewheel<T>::getTimeout(std::vector<klinknode<T>*>& vec) {
 			if (tindex_ == wheels_)
 				tindex_ = 0;
 
-			while ((node = time_wheel_[tindex_].next())) {
+			while ((node = time_wheels_[tindex_].next())) {
 				node->remove();//这里可以优化
 				--count_;
 

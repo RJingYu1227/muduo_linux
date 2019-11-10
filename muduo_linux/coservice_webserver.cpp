@@ -85,17 +85,19 @@ void sendBuff(buffer* buff) {
 }
 
 void connect_handler(ksocket* sock) {
+	coservice_item* cst = coservice_item::self();
+	if (cst->getRevents() == 0) {
+		LOG << "客户端超时";
+		done_ksockets.push_back(sock);
+		return;
+	}
+
 	ssize_t nread;
 	buffer buff;
 	httprequest request;
-	coservice_item* cst = coservice_item::self();
 	int fd = cst->getFd();
 
 	while (1) {
-		if (cst->getRevents() == 0) {
-			LOG << "客户端超时";
-			break;
-		}
 		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
 			buff.hasUsed(nread);
 			buff.ensureLeftBytes(1024);
@@ -134,18 +136,17 @@ void connect_handler(ksocket* sock) {
 void accept_handler(ksocket* sock) {
 	sockaddr_in cliaddr;
 	int clifd;
-	int count = 6;
 
-	while (count) {
+	while (1) {
 		clifd = sock->accept(&cliaddr);
 		if (clifd > 0) {
-			--count;
 			ksocket* temp_sock = new ksocket(clifd, cliaddr);
 			temp_sock->setTcpNodelay(1);
 
 			coservice_item* temp_cst = coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
 			temp_cst->enableReading();
 			temp_cst->updateEvents();
+			temp_cst->setTimeout(6666);
 			LOG << "建立一个新连接";
 		}
 
@@ -163,7 +164,7 @@ void thread_func() {
 }
 
 int main(int argc, char* argv[]) {
-	//logger::createAsyncLogger();
+	logger::createAsyncLogger();
 	int thread_num = 4;
 	if (argc == 2) {
 		thread_num = atoi(argv[1]);

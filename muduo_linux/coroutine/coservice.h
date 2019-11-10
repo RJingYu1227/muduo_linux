@@ -3,6 +3,7 @@
 #include"blockqueue.h"
 #include"coroutine.h"
 #include"coevent.h"
+#include"timewheel.h"
 
 #include<atomic>
 
@@ -22,16 +23,22 @@ private:
 	void add(coservice_item* cst);
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
+	void getRevents();
+	void getTimeout();
 
 	std::atomic_int32_t item_count_;
 
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
-	blockqueue<coservice_item*> queue_;
+	blockqueue<coservice_item*> cst_queue_;
 
-	kmutex mutex_;
+	kmutex done_items_mutex_;
 	std::vector<coservice_item*> done_items_;
+
+	kmutex time_mutex_;
+	std::vector<klinknode<coservice_item*>*> timenodes_;
+	timewheel<coservice_item*> timewheel_;
 };
 
 class coservice_item :
@@ -46,6 +53,7 @@ public:
 	inline static coservice_item* self();
 
 	inline void updateEvents();
+	void setTimeout(unsigned int ms);
 
 protected:
 
@@ -59,6 +67,7 @@ private:
 
 	coservice* service_;
 	std::atomic_bool handling_;
+	klinknode<coservice_item*> timenode_;
 
 };
 
