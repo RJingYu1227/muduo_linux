@@ -4,7 +4,6 @@
 #include<unistd.h>
 
 thread_local coservice_item* coservice_item::running_cst_ = nullptr;
-thread_local std::vector<coservice_item*> coservice::done_items_;
 
 coservice_item::coservice_item(int fd, const functor& func, coservice* service) :
 	coroutine_item(func),
@@ -28,13 +27,6 @@ coservice_item::~coservice_item() {
 	assert(getState() == DONE);
 }
 
-void coservice::freeDoneitems() {
-	for (auto ptr : done_items_)
-		delete ptr;
-
-	done_items_.clear();
-}
-
 coservice::coservice() :
 	item_count_(0),
 	epfd_(epoll_create1(EPOLL_CLOEXEC)),
@@ -46,6 +38,8 @@ coservice::coservice() :
 
 coservice::~coservice() {
 	close(epfd_);
+	for (auto ptr : done_items_)
+		delete ptr;
 }
 
 void coservice::add(coservice_item* cst) {
@@ -75,6 +69,7 @@ void coservice::remove(coservice_item* cst) {
 }
 
 size_t coservice::run() {
+	thread_local std::vector<coservice_item*> local_done_items;
 	size_t count = 0;
 	coservice_item* cst;
 	int numevents, timeout;
@@ -104,8 +99,11 @@ size_t coservice::run() {
 					revents_.resize(revents_.size() * 2);
 			}
 
+			for (auto ptr : local_done_items)
+				delete ptr;
+			local_done_items.clear();
+
 			queue_.put_back(nullptr);
-			freeDoneitems();
 		}
 		else {
 			coservice_item::running_cst_ = cst;
@@ -114,14 +112,20 @@ size_t coservice::run() {
 
 			if (cst->getState() == coservice_item::DONE) {
 				remove(cst);
-				done_items_.push_back(cst);//这里与coloop的处理方式不同
+				local_done_items.push_back(cst);//这里与coloop的处理方式不同
 			}
 			else
 				cst->handling_ = 0;
 		}
 		++count;
 	}
-	freeDoneitems();//这里仍然有线程安全的问题，请看94行
+
+	{
+		klock<kmutex> x(&mutex_);
+		for (auto ptr : local_done_items)
+			done_items_.push_back(ptr);
+	}
+	local_done_items.clear();
 
 	return count;
 }

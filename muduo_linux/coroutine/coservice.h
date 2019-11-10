@@ -13,14 +13,11 @@ class coservice :uncopyable {
 public:
 
 	coservice();
-	~coservice();
+	~coservice();//请确保析构函数在最后调用
 
 	size_t run();
 
 private:
-
-	static void freeDoneitems();
-	thread_local static std::vector<coservice_item*> done_items_;
 
 	void add(coservice_item* cst);
 	void modify(coservice_item* cst);
@@ -33,6 +30,8 @@ private:
 
 	blockqueue<coservice_item*> queue_;
 
+	kmutex mutex_;
+	std::vector<coservice_item*> done_items_;
 };
 
 class coservice_item :
