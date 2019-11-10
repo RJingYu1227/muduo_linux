@@ -23,8 +23,8 @@ private:
 	void add(coservice_item* cst);
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
-	void getRevents();
-	void getTimeout();
+	void doItem(coservice_item* cst);
+	void getItems();
 
 	std::atomic_int32_t item_count_;
 

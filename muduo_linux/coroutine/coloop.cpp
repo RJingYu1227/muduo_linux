@@ -29,6 +29,8 @@ coloop_item::~coloop_item() {
 
 void coloop_item::setTimeout(unsigned int ms) {
 	klock<kmutex> x(&loop_->time_mutex_);
+	if (timenode_.isInlink())
+		loop_->timewheel_.cancelTimeout(&timenode_);
 	loop_->timewheel_.setTimeout(ms, &timenode_);
 }
 
@@ -75,6 +77,11 @@ void coloop::doItem(coloop_item* cpt) {
 	cpt->resume();
 	coloop_item::running_cpt_ = nullptr;
 	if (cpt->getState() == coloop_item::DONE) {
+		{
+			klock<kmutex> x(&time_mutex_);
+			if (cpt->timenode_.isInlink())
+				timewheel_.cancelTimeout(&cpt->timenode_);
+		}
 		remove(cpt);
 		delete cpt;
 	}
@@ -90,35 +97,36 @@ void coloop::loop() {
 
 	while (!quit_) {
 		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
-		if (numevents > 0) {
-			for (int i = 0; i < numevents; ++i) {
-				cpt = (coloop_item*)revents_[i].data.ptr;
-
-				{
-					klock<kmutex> x(&time_mutex_);
-					if (cpt->timenode_.isInlink())
-						timewheel_.cancelTimeout(&cpt->timenode_);
-				}
-
-				cpt->setRevents(revents_[i].events);
-				doItem(cpt);
-			}
-
-			if (static_cast<size_t>(numevents) == revents_.size())
-				revents_.resize(revents_.size() * 2);
-		}
 
 		{
 			klock<kmutex> x(&time_mutex_);
+			if (numevents > 0) {
+				for (int i = 0; i < numevents; ++i) {
+					cpt = (coloop_item*)revents_[i].data.ptr;
+					if (cpt->timenode_.isInlink())
+						timewheel_.cancelTimeout(&cpt->timenode_);
+				}
+			}
 			timewheel_.getTimeout(timenodes_);
 		}
+
+		for (int i = 0; i < numevents; ++i) {
+			cpt = (coloop_item*)revents_[i].data.ptr;
+			cpt->setRevents(revents_[i].events);
+			
+			doItem(cpt);
+		}
+
 		for (auto node : timenodes_) {
 			cpt = node->getValue();
-
 			cpt->setRevents(0);
+
 			doItem(cpt);
 		}
 		timenodes_.clear();
+
+		if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
+			revents_.resize(revents_.size() * 2);
 	}
 
 	looping_ = 0;

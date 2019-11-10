@@ -31,6 +31,8 @@ coservice_item::~coservice_item() {
 
 void coservice_item::setTimeout(unsigned int ms) {
 	klock<kmutex> x(&service_->time_mutex_);
+	if (timenode_.isInlink())
+		service_->timewheel_.cancelTimeout(&timenode_);
 	service_->timewheel_.setTimeout(ms, &timenode_);
 }
 
@@ -77,55 +79,63 @@ void coservice::remove(coservice_item* cst) {
 	--item_count_;
 }
 
-void coservice::getRevents() {
-	coservice_item* cst;
-	int numevents;
+void coservice::doItem(coservice_item* cst) {
+	coservice_item::running_cst_ = cst;
+	cst->resume();
+	coservice_item::running_cst_ = nullptr;
 
-	if (cst_queue_.empty())
-		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+	if (cst->getState() == coservice_item::DONE) {
+		klock<kmutex> x(&time_mutex_);
+		if (cst->timenode_.isInlink())
+			timewheel_.cancelTimeout(&cst->timenode_);
+		remove(cst);
+	}
 	else
-		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 0);
-	
-	if (numevents > 0) {
-		for (int i = 0; i < numevents; ++i) {
-			cst = (coservice_item*)revents_[i].data.ptr;
+		cst->handling_ = 0;
+}
 
-			if (cst->handling_)
-				continue;
-			{
-				klock<kmutex> x(&time_mutex_);
+void coservice::getItems() {
+	coservice_item* cst;
+	//此时cst_queue_必定是空的
+	int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+	
+	{
+		klock<kmutex> x(&time_mutex_);
+		if (numevents > 0) {
+			for (int i = 0; i < numevents; ++i) {
+				cst = (coservice_item*)revents_[i].data.ptr;
 				if (cst->timenode_.isInlink())
 					timewheel_.cancelTimeout(&cst->timenode_);
 			}
-			cst->handling_ = 1;
-			cst->setRevents(revents_[i].events);
-
-			cst_queue_.put_back(cst);
 		}
-
-		if (static_cast<size_t>(numevents) == revents_.size())
-			revents_.resize(revents_.size() * 2);
-	}
-}
-
-void coservice::getTimeout() {
-	{
-		klock<kmutex> x(&time_mutex_);
 		timewheel_.getTimeout(timenodes_);
 	}
 
-	coservice_item* cst;
-	for (auto node : timenodes_) {
-		cst = node->getValue();
-
+	for (int i = 0; i < numevents; ++i) {
+		cst = (coservice_item*)revents_[i].data.ptr;
+		//不能对一个正在执行的协程调用resume
 		if (cst->handling_)
 			continue;
+
+		cst->handling_ = 1;
+		cst->setRevents(revents_[i].events);
+		cst_queue_.put_back(cst);
+	}
+
+	for (auto node : timenodes_) {
+		cst = node->getValue();
+		//超时时间过短，协程还未yield
+		if (cst->handling_)
+			continue;
+
 		cst->handling_ = 1;
 		cst->setRevents(0);
-
 		cst_queue_.put_back(cst);
 	}
 	timenodes_.clear();
+
+	if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
+		revents_.resize(revents_.size() * 2);
 }
 
 size_t coservice::run() {
@@ -137,8 +147,7 @@ size_t coservice::run() {
 		cst = cst_queue_.take_front();
 		if (cst == nullptr) {
 			//只要handling_ = 1，cst就不会再次进入队列
-			getRevents();
-			getTimeout();
+			getItems();
 
 			for (auto ptr : local_done_items)
 				delete ptr;
@@ -153,16 +162,9 @@ size_t coservice::run() {
 			cst_queue_.put_back(nullptr);
 		}
 		else {
-			coservice_item::running_cst_ = cst;
-			cst->resume();
-			coservice_item::running_cst_ = nullptr;
-
-			if (cst->getState() == coservice_item::DONE) {
-				remove(cst);
+			doItem(cst);
+			if (cst->handling_)
 				local_done_items.push_back(cst);
-			}
-			else
-				cst->handling_ = 0;
 		}
 		++count;
 	}
