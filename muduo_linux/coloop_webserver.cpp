@@ -9,20 +9,8 @@
 #include<unistd.h>
 #include<fcntl.h>
 
-struct connection {
-
-	~connection() {
-		delete sock_;
-		delete cst_;
-	}
-
-	ksocket* sock_;
-	coloop::coloop_item* cst_;
-	
-};
-
-kmutex con_mutex;
-std::vector<connection*> done_connections;
+kmutex sock_mutex;
+std::vector<ksocket*> done_ksockets;
 kmutex loop_mutex;
 std::vector<coloop*> ioloops;
 int thread_num = 4;
@@ -32,9 +20,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 	if (request.getPath() == "/") {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
-		response.addHeader("Content-Type", "text/plain");
-		response.getBody() = "hello, world!\n";
-		return;
+		response.addHeader("Content-Type", "text/html");
 
 		int fd = open("./html/index.html", O_RDONLY);
 		char buf[1024];
@@ -70,9 +56,10 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 	}
 }
 
-void sendBuff(connection* con, buffer* buff) {
+void sendBuff(buffer* buff) {
 	ssize_t nwrote;
-	int fd = con->cst_->getFd();
+	coloop_item* cpt = coloop_item::self();
+	int fd = cpt->getFd();
 	while (1) {
 		nwrote = write(fd, buff->beginPtr(), buff->usedBytes());
 		if (nwrote < 0) {
@@ -82,31 +69,36 @@ void sendBuff(connection* con, buffer* buff) {
 		buff->retrieve(nwrote);
 
 		if (buff->usedBytes()) {
-			if (con->cst_->isWriting())
+			if (cpt->isWriting())
 				coroutine::yield();
 			else {
-				con->cst_->disableReading();
-				con->cst_->enableWriting();
-				con->cst_->updateEvents();
+				cpt->disableReading();
+				cpt->enableWriting();
+				cpt->updateEvents();
 			}
 		}
 		else
 			break;
 	}
-	if (con->cst_->isWriting()) {
-		con->cst_->disableWrting();
-		con->cst_->enableReading();
-		con->cst_->updateEvents();
+	if (cpt->isWriting()) {
+		cpt->disableWrting();
+		cpt->enableReading();
+		cpt->updateEvents();
 	}
 }
 
-void connect_handler(connection* con) {
+void connect_handler(ksocket* sock) {
 	ssize_t nread;
 	buffer buff;
 	httprequest request;
-	int fd = con->cst_->getFd();
+	coloop_item* cpt = coloop_item::self();
+	int fd = cpt->getFd();
 
 	while (1) {
+		if (cpt->getRevents() == 0) {
+			LOG << "客户端超时";
+			break;
+		}
 		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
 			buff.hasUsed(nread);
 			buff.ensureLeftBytes(1024);
@@ -128,51 +120,48 @@ void connect_handler(connection* con) {
 
 			buffer buff2;
 			response.appendToBuffer(&buff2);
-			sendBuff(con, &buff2);
+			sendBuff(&buff2);
 			LOG << "成功发送一次httpresponse";
 
 			if (!response.keepAlive()) {
-				con->sock_->shutdownWrite();
+				sock->shutdownWrite();
 				break;
 			}
 		}
 		coroutine::yield();
 	}
 	LOG << "连接处理完毕";
-	klock<kmutex> x(&con_mutex);
-	done_connections.push_back(con);
+	klock<kmutex> x(&sock_mutex);
+	done_ksockets.push_back(sock);
 }
 
-void accept_handler(connection* con) {
+void accept_handler(ksocket* sock) {
 	sockaddr_in cliaddr;
+	int clifd;
 	coloop* ioloop;
 	int index = 0;
-	int clifd;
 
 	while (1) {
-		clifd = con->sock_->accept(&cliaddr);
+		clifd = sock->accept(&cliaddr);
 		if (clifd > 0) {
-			connection* temp = new connection();
-
-			temp->sock_ = new ksocket(clifd, cliaddr);
-			temp->sock_->setTcpNodelay(1);
+			ksocket* temp_sock = new ksocket(clifd, cliaddr);
+			temp_sock->setTcpNodelay(1);
 
 			ioloop = ioloops[index];
 			index = (index + 1) % thread_num;
 
-			temp->cst_ = new coloop::coloop_item(clifd, std::bind(connect_handler, temp), ioloop);
-			temp->cst_->enableReading();
-			temp->cst_->updateEvents();
+			coloop_item* temp_cpt = coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
+			temp_cpt->enableReading();
+			temp_cpt->updateEvents();
 			LOG << "建立一个新连接";
 		}
 
 		{
-			klock<kmutex> x(&con_mutex);
-			for (auto ptr : done_connections)
+			klock<kmutex> x(&sock_mutex);
+			for (auto ptr : done_ksockets)
 				delete ptr;
-			done_connections.clear();
+			done_ksockets.clear();
 		}
-
 		LOG << "清理connections";
 
 		coroutine::yield();
@@ -206,17 +195,14 @@ int main(int argc, char* argv[]) {
 	}
 
 	coloop loop;
-	connection con;
-
 	ksocket sock("127.0.0.1", 7777);
 	sock.bind();
 	sock.listen();
 
-	coloop::coloop_item cst(sock.getFd(), std::bind(accept_handler, &con), &loop);
-	cst.enableReading();
-	cst.updateEvents();
-
-	con = { &sock,&cst };
+	coloop_item* cpt = coloop_item::create(sock.getFd(), std::bind(accept_handler, &sock), &loop);
+	cpt->enableReading();
+	cpt->updateEvents();
+	
 	loop.loop();
 
 	for (auto& x : thread_vec)

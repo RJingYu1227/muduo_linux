@@ -81,12 +81,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
+    <ClCompile Include="coloop_webserver.cpp" />
     <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="coroutine\coroutine.cpp" />
     <ClCompile Include="coroutine\coloop.cpp" />
-    <ClCompile Include="co_webserver.cpp" />
+    <ClCompile Include="coservice_webserver.cpp" />
     <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />

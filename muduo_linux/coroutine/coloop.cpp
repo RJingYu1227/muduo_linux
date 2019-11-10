@@ -3,14 +3,10 @@
 #include<assert.h>
 #include<unistd.h>
 
-void coloop::coloop_item::coroutineFunc(coloop_item* cpt) {
-	cpt->Func();
+thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 
-	cpt->loop_->remove(cpt);
-}
-
-coloop::coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
-	coroutine_item(std::bind(coroutineFunc, this)),
+coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
+	coroutine_item(func),
 	coevent(fd),
 	loop_(loop),
 	Func(func) {
@@ -19,8 +15,8 @@ coloop::coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 	loop_->add(this);
 }
 
-coloop::coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
-	coroutine_item(std::bind(coroutineFunc, this)),
+coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
+	coroutine_item(std::move(func)),
 	coevent(fd),
 	loop_(loop),
 	Func(std::move(func)) {
@@ -29,16 +25,16 @@ coloop::coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
 	loop_->add(this);
 }
 
-coloop::coloop_item::~coloop_item() {
-	if (getState() == coroutine_item::FREE)
-		loop_->remove(this);
+coloop_item::~coloop_item() {
+	assert(getState() == DONE);
 }
 
-void coloop::coloop_item::setTimeout(unsigned int ms) {
-	assert(getState() == coroutine_item::RUNNING);
-	loop_->time_wheel_.setTimeout(ms, &timenode_);
+void coloop::epollTimeout(unsigned int ms) {
+	coloop_item* cpt = coloop_item::running_cpt_;
+	assert(cpt != nullptr);
+	cpt->loop_->time_wheel_.setTimeout(ms, &cpt->timenode_);
 
-	coroutine::yield();//注意这里
+	coroutine::yield();
 }
 
 coloop::coloop() :
@@ -79,35 +75,49 @@ void coloop::remove(coloop_item* cpt) {
 	epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, NULL);
 }
 
+void coloop::doItem(coloop_item* cpt) {
+	coloop_item::running_cpt_ = cpt;
+	cpt->resume();
+	coloop_item::running_cpt_ = nullptr;
+	if (cpt->getState() == coloop_item::DONE) {
+		remove(cpt);
+		delete cpt;
+	}
+}
+
 void coloop::loop() {
 	assert(!looping_);
 	looping_ = 1;
 	quit_ = 0;
 
-	std::vector<klinknode<coloop_item*>*> timenodes;
+	coloop_item* cpt;
+	int numevents;
+
 	while (!quit_) {
-		int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
-				coloop_item* cpt = (coloop_item*)revents_[i].data.ptr;
+				cpt = (coloop_item*)revents_[i].data.ptr;
 				if (cpt->timenode_.isInlink())
 					cpt->loop_->time_wheel_.cancelTimeout(&cpt->timenode_);
 
 				cpt->setRevents(revents_[i].events);
-				cpt->resume();
+				doItem(cpt);
 			}
 
 			if (static_cast<size_t>(numevents) == revents_.size())
 				revents_.resize(revents_.size() * 2);
 		}
 
-		if (time_wheel_.getTimeout(timenodes)) {
-			for (auto node : timenodes) {
-				node->getValue()->setRevents(0);
-				node->getValue()->resume();
+		if (time_wheel_.getTimeout(timenodes_)) {
+			for (auto node : timenodes_) {
+				cpt = node->getValue();
+
+				cpt->setRevents(0);
+				doItem(cpt);
 			}
 
-			timenodes.clear();
+			timenodes_.clear();
 		}
 	}
 

@@ -114,7 +114,7 @@ timewheel<T>::timewheel(size_t wheels) :
 template<typename T>
 void timewheel<T>::setTimeout(uint64_t ms, klinknode<T>* timenode) {
 	uint64_t expire = getMilliSeconds();
-	if (count_ == 0)
+	if (count_ == 0)//注意这里，既保证了准确性又使getTimeout可以提前返回
 		last_time_ = expire;
 	if (ms == 0)
 		ms = 1;

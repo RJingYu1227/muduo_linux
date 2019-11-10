@@ -6,61 +6,21 @@
 
 #include<atomic>
 
+class coservice_item;
+
 class coservice :uncopyable {
-private:
-
-	struct impl {
-		impl() {}
-
-		impl(void* ptr) :
-			inqueue_(0),
-			done_(0),
-			ptr_(ptr) {
-
-		}
-
-		bool inqueue_;
-		bool done_;
-		void* ptr_;
-	};
-
+	friend class coservice_item;
 public:
-	typedef std::function<void()> functor;
 
 	coservice();
 	~coservice();
 
 	size_t run();
 
-	class coservice_item :
-		coroutine::coroutine_item,
-		public coevent {
-		friend class coservice;
-	public:
-
-		coservice_item(int fd, const functor& func, coservice* service);
-		coservice_item(int fd, functor&& func, coservice* service);
-		~coservice_item();
-
-		inline void updateEvents();
-		//暂时不适合使用边沿触发模式，请参考coservice::run
-		//使用ET模式时，如果其它线程执行epoll_wait得到对应fd的返回事件
-		//但是，此时对应协程已经被添加进queue_（由其它类型的事件触发）或者正在执行且后续并没有处理该事件
-		//会使该事件很难得到处理，可以参考boost::asio的 事件任务队列 进行更改
-
-	private:
-
-	
-
-		static void coroutineFunc(coservice_item* cst);
-
-		coservice* service_;
-		impl* tie_;
-		functor Func;
-
-	};
-
 private:
+
+	static void freeDoneitems();
+	thread_local static std::vector<coservice_item*> done_items_;
 
 	void add(coservice_item* cst);
 	void modify(coservice_item* cst);
@@ -71,10 +31,55 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
-	blockqueue<impl*> queue_;
+	blockqueue<coservice_item*> queue_;
 
 };
 
-void coservice::coservice_item::updateEvents() {
+class coservice_item :
+	coroutine::coroutine_item,
+	public coevent {
+	friend class coservice;
+public:
+	typedef std::function<void()> functor;
+
+	inline static coservice_item* create(int fd, const functor& func, coservice* service);
+	inline static coservice_item* create(int fd, functor&& func, coservice* service);
+	inline static coservice_item* self();
+
+	inline void updateEvents();
+
+protected:
+
+	coservice_item(int fd, const functor& func, coservice* service);
+	coservice_item(int fd, functor&& func, coservice* service);
+	~coservice_item();
+
+private:
+
+	thread_local static coservice_item* running_cst_;
+
+	coservice* service_;
+	std::atomic_bool handling_;
+
+};
+
+coservice_item* coservice_item::create(int fd, const functor& func, coservice* service) {
+	return new coservice_item(fd, func, service);
+}
+
+coservice_item* coservice_item::create(int fd, functor&& func, coservice* service) {
+	return new coservice_item(fd, std::move(func), service);
+}
+
+coservice_item* coservice_item::self() {
+	return running_cst_;
+}
+
+void coservice_item::updateEvents() {
 	service_->modify(this);
 }
+
+//暂时不适合使用边沿触发模式，请参考coservice::run
+//使用ET模式时，如果其它线程执行epoll_wait得到对应fd的返回事件
+//但是，此时对应协程handing_ = 1且此次执行过程中并没有处理该事件
+//会使该事件很难得到处理，可以参考boost::asio的 事件任务队列 进行更改

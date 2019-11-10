@@ -7,9 +7,13 @@
 #include<vector>
 
 //one loop per thread
+class coloop_item;
+
 class coloop :uncopyable {
+	friend class coloop_item;
 public:
-	typedef std::function<void()> functor;
+
+	static void epollTimeout(unsigned int ms);
 
 	coloop();
 	~coloop();
@@ -17,34 +21,12 @@ public:
 	void loop();
 	void quit() { quit_ = 1; }
 
-	class coloop_item :
-		coroutine::coroutine_item, 
-		public coevent {
-		friend class coloop;
-	public:
-
-		coloop_item(int fd, const functor& func, coloop* loop);
-		coloop_item(int fd, functor&& func, coloop* loop);
-		~coloop_item();
-
-		void setTimeout(unsigned int ms);//仅限在协程执行过程中调用
-		inline void updateEvents();
-
-	private:
-
-		static void coroutineFunc(coloop_item* cpt);
-
-		coloop* loop_;
-		klinknode<coloop_item*> timenode_;
-		functor Func;
-
-	};
-
 private:
 
 	void add(coloop_item* cpt);
 	void modify(coloop_item* cpt);
 	void remove(coloop_item* cpt);
+	void doItem(coloop_item* cpt);
 
 	bool looping_;
 	bool quit_;
@@ -52,10 +34,52 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
+	std::vector<klinknode<coloop_item*>*> timenodes_;
 	timewheel<coloop_item*> time_wheel_;
 
 };
 
-void coloop::coloop_item::updateEvents() {
+class coloop_item :
+	coroutine::coroutine_item,
+	public coevent {
+	friend class coloop;
+public:
+	typedef std::function<void()> functor;
+
+	inline static coloop_item* create(int fd, const functor& func, coloop* loop);
+	inline static coloop_item* create(int fd, functor&& func, coloop* loop);
+	inline static coloop_item* self();
+
+	inline void updateEvents();
+
+protected:
+
+	coloop_item(int fd, const functor& func, coloop* loop);
+	coloop_item(int fd, functor&& func, coloop* loop);
+	~coloop_item();
+
+private:
+
+	thread_local static coloop_item* running_cpt_;
+
+	coloop* loop_;
+	klinknode<coloop_item*> timenode_;
+	functor Func;
+
+};
+
+coloop_item* coloop_item::create(int fd, const functor& func, coloop* loop) {
+	return new coloop_item(fd, func, loop);
+}
+
+coloop_item* coloop_item::create(int fd, functor&& func, coloop* loop) {
+	return new coloop_item(fd, std::move(func), loop);
+}
+
+coloop_item* coloop_item::self() {
+	return running_cpt_;
+}
+
+void coloop_item::updateEvents() {
 	loop_->modify(this);
 }

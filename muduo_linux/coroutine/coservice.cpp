@@ -3,36 +3,36 @@
 #include<assert.h>
 #include<unistd.h>
 
-void coservice::coservice_item::coroutineFunc(coservice_item* cst) {
-	cst->Func();
+thread_local coservice_item* coservice_item::running_cst_ = nullptr;
+thread_local std::vector<coservice_item*> coservice::done_items_;
 
-	cst->tie_->done_ = 1;//注意这里
-	cst->service_->remove(cst);
-}
-
-coservice::coservice_item::coservice_item(int fd, const functor& func, coservice* service) :
-	coroutine_item(std::bind(coroutineFunc, this)),
+coservice_item::coservice_item(int fd, const functor& func, coservice* service) :
+	coroutine_item(func),
 	coevent(fd),
 	service_(service),
-	tie_(new impl(this)),
-	Func(func) {
+	handling_(0) {
 
 	service_->add(this);
 }
 
-coservice::coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
-	coroutine_item(std::bind(coroutineFunc, this)),
+coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
+	coroutine_item(std::move(func)),
 	coevent(fd),
 	service_(service),
-	tie_(new impl(this)),
-	Func(std::move(func)) {
+	handling_(0) {
 
 	service_->add(this);
 }
 
-coservice::coservice_item::~coservice_item() {
-	if (getState() != coroutine_item::DONE)
-		service_->remove(this);
+coservice_item::~coservice_item() {
+	assert(getState() == DONE);
+}
+
+void coservice::freeDoneitems() {
+	for (auto ptr : done_items_)
+		delete ptr;
+
+	done_items_.clear();
 }
 
 coservice::coservice() :
@@ -51,7 +51,7 @@ coservice::~coservice() {
 void coservice::add(coservice_item* cst) {
 	epoll_event ev;
 	ev.events = cst->getEvents();
-	ev.data.ptr = cst->tie_;
+	ev.data.ptr = cst;
 	int fd = cst->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
@@ -61,7 +61,7 @@ void coservice::add(coservice_item* cst) {
 void coservice::modify(coservice_item* cst) {
 	epoll_event ev;
 	ev.events = cst->getEvents();
-	ev.data.ptr = cst->tie_;
+	ev.data.ptr = cst;
 	int fd = cst->getFd();
 
 	epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
@@ -75,16 +75,13 @@ void coservice::remove(coservice_item* cst) {
 }
 
 size_t coservice::run() {
-	thread_local std::vector<impl*> done_ties;
-
 	size_t count = 0;
-	impl* tie;
 	coservice_item* cst;
 	int numevents, timeout;
 	
 	while (item_count_) {
-		tie = queue_.take_front();
-		if (tie == nullptr) {
+		cst = queue_.take_front();
+		if (cst == nullptr) {
 			if (queue_.empty())
 				timeout = 100;
 			else
@@ -93,37 +90,38 @@ size_t coservice::run() {
 
 			if (numevents > 0) {
 				for (int i = 0; i < numevents; ++i) {
-					tie = (impl*)revents_[i].data.ptr;
-					if (tie->inqueue_)
+					cst = (coservice_item*)revents_[i].data.ptr;
+					if (cst->handling_)
 						continue;
 
-					tie->inqueue_ = 1;
-					cst = (coservice_item*)tie->ptr_;
+					cst->handling_ = 1;
 					cst->setRevents(revents_[i].events);
 
-					queue_.put_back(tie);
+					queue_.put_back(cst);
 				}
 
 				if (static_cast<size_t>(numevents) == revents_.size())
 					revents_.resize(revents_.size() * 2);
 			}
-			queue_.put_back(nullptr);
 
-			for (auto ptr : done_ties)
-				delete ptr;
-			done_ties.clear();
+			queue_.put_back(nullptr);
+			freeDoneitems();
 		}
 		else {
-			cst = (coservice_item*)tie->ptr_;
+			coservice_item::running_cst_ = cst;
 			cst->resume();
+			coservice_item::running_cst_ = nullptr;
 
-			if (tie->done_)
-				done_ties.push_back(tie);
+			if (cst->getState() == coservice_item::DONE) {
+				remove(cst);
+				done_items_.push_back(cst);//这里与coloop的处理方式不同
+			}
 			else
-				tie->inqueue_ = 0;
+				cst->handling_ = 0;
 		}
 		++count;
 	}
+	freeDoneitems();//这里仍然有线程安全的问题，请看94行
 
 	return count;
 }
