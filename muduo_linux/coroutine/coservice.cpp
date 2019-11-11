@@ -12,6 +12,7 @@ coservice_item::coservice_item(int fd, const functor& func, coservice* service) 
 	handling_(1) {
 
 	timenode_.setValue(this);
+	setRevents(0);
 	service_->add(this);
 	service_->cst_queue_.put_back(this);
 }
@@ -23,6 +24,7 @@ coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
 	handling_(1) {
 
 	timenode_.setValue(this);
+	setRevents(0);
 	service_->add(this);
 	service_->cst_queue_.put_back(this);
 }
@@ -94,23 +96,40 @@ void coservice::doItem(coservice_item* cst) {
 }
 
 void coservice::getItems() {
+	int numevents;
 	coservice_item* cst;
-	//此时cst_queue_必定是空的
-	int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
-	
+
 	{
 		klock<kmutex> x(&time_mutex_);
+
+		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+		//此时cst_queue_必定是空的，最多只有和线程数相当的任务在执行，如果妹有立即返回，说明其实并不忙
+		//这么做是为了正确处理拿到锁之前设置好的超时事件
+		//这一次处理完毕之后的超时事件也是可以正确处理的
 		if (numevents > 0) {
 			for (int i = 0; i < numevents; ++i) {
 				cst = (coservice_item*)revents_[i].data.ptr;
-				if (cst->timenode_.isInlink())//这一步必做
+				if (cst->timenode_.isInlink())
 					timewheel_.cancelTimeout(&cst->timenode_);
 
-				if (cst->handling_)//这一步很重要，考虑setTimeout在这之后才拿到锁
+				if (cst->handling_)
 					revents_[i].data.ptr = nullptr;
+				//不能使会导致重复resume的事情发生
+				//且考虑到setTimeout在这之后才拿到锁，会导致超时并未正确处理，所以这一步不可以在外面操作
 			}
 		}
+
 		timewheel_.getTimeout(timenodes_);
+		for (size_t i = 0; i < timenodes_.size(); ++i) {
+			cst = timenodes_[i]->getValue();
+			if (cst->handling_) {
+				timewheel_.setTimeout(1, &cst->timenode_);
+				timenodes_[i] = nullptr;
+			}
+		}
+		//协程在设置了超时后，并没有及时的将handling_置为0，这是有可能的，其实发生重复resume的几率也很小
+		//妹办法，为了线程安全
+		//这一步其实可以在外面操作，为了易于理解和代码结构的优雅，我把它放在了这里
 	}
 
 	for (int i = 0; i < numevents; ++i) {
@@ -125,24 +144,25 @@ void coservice::getItems() {
 
 	for (auto node : timenodes_) {
 		cst = node->getValue();
-		//超时时间过短，协程还未yield，需要修改
-		if (cst->handling_)
+		if (cst == nullptr)
 			continue;
 
 		cst->handling_ = 1;
 		cst->setRevents(0);
 		cst_queue_.put_back(cst);
 	}
-	timenodes_.clear();
+
+	//从这里来看，可以优化一下blockqueue
 
 	if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
 		revents_.resize(revents_.size() * 2);
+	timenodes_.clear();
 }
 
 void coservice::setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode) {
 	klock<kmutex> x(&time_mutex_);
-	if (timenode->isInlink())
-		timewheel_.cancelTimeout(timenode);
+	//if (timenode->isInlink())
+	//	timewheel_.cancelTimeout(timenode);
 	timewheel_.setTimeout(ms, timenode);
 }
 
@@ -154,8 +174,11 @@ size_t coservice::run() {
 	while (item_count_) {
 		cst = cst_queue_.take_front();
 		if (cst == nullptr) {
-			//只要handling_ = 1，cst就不会再次进入队列
 			getItems();
+			//只要handling_ = 1，cst就不会再次进入队列
+			//且此时的事件绝大多数情况下是妹有处理过的
+			//极少数情况下，在epoll_wait返回和判断handing_之间给处理了，超时除外
+			//要优化的代价很大
 
 			for (auto ptr : local_done_items)
 				delete ptr;

@@ -88,8 +88,8 @@ void coloop::doItem(coloop_item* cpt) {
 
 void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode) {
 	klock<kmutex> x(&time_mutex_);
-	if (timenode->isInlink())
-		timewheel_.cancelTimeout(timenode);
+	//if (timenode->isInlink())
+	//	timewheel_.cancelTimeout(timenode);
 	timewheel_.setTimeout(ms, timenode);
 }
 
