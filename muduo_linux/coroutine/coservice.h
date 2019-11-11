@@ -13,6 +13,8 @@ class coservice :uncopyable {
 	friend class coservice_item;
 public:
 
+	static void yield(unsigned int ms);
+
 	coservice();
 	~coservice();
 
@@ -25,6 +27,7 @@ private:
 	void remove(coservice_item* cst);
 	void doItem(coservice_item* cst);
 	void getItems();
+	void setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode);
 
 	std::atomic_int32_t item_count_;
 
@@ -48,12 +51,11 @@ class coservice_item :
 public:
 	typedef std::function<void()> functor;
 
-	inline static coservice_item* create(int fd, const functor& func, coservice* service);
-	inline static coservice_item* create(int fd, functor&& func, coservice* service);
+	inline static bool create(int fd, const functor& func, coservice* service);
+	inline static bool create(int fd, functor&& func, coservice* service);
 	inline static coservice_item* self();
 
 	inline void updateEvents();
-	void setTimeout(unsigned int ms);
 
 protected:
 
@@ -71,12 +73,12 @@ private:
 
 };
 
-coservice_item* coservice_item::create(int fd, const functor& func, coservice* service) {
-	return new coservice_item(fd, func, service);
+bool coservice_item::create(int fd, const functor& func, coservice* service) {
+	return new(std::nothrow) coservice_item(fd, func, service);
 }
 
-coservice_item* coservice_item::create(int fd, functor&& func, coservice* service) {
-	return new coservice_item(fd, std::move(func), service);
+bool coservice_item::create(int fd, functor&& func, coservice* service) {
+	return new(std::nothrow) coservice_item(fd, std::move(func), service);
 }
 
 coservice_item* coservice_item::self() {

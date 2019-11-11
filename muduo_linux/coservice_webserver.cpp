@@ -86,6 +86,9 @@ void sendBuff(buffer* buff) {
 
 void connect_handler(ksocket* sock) {
 	coservice_item* cst = coservice_item::self();
+	cst->enableReading();
+	cst->updateEvents();
+	coservice::yield(6666);
 	if (cst->getRevents() == 0) {
 		LOG << "客户端超时";
 		done_ksockets.push_back(sock);
@@ -134,6 +137,10 @@ void connect_handler(ksocket* sock) {
 }
 
 void accept_handler(ksocket* sock) {
+	coservice_item* cst = coservice_item::self();
+	cst->enableReading();
+	cst->updateEvents();
+
 	sockaddr_in cliaddr;
 	int clifd;
 
@@ -143,10 +150,7 @@ void accept_handler(ksocket* sock) {
 			ksocket* temp_sock = new ksocket(clifd, cliaddr);
 			temp_sock->setTcpNodelay(1);
 
-			coservice_item* temp_cst = coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
-			temp_cst->enableReading();
-			temp_cst->setTimeout(6666);
-			temp_cst->updateEvents();
+			coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
 			LOG << "建立一个新连接";
 		}
 
@@ -178,9 +182,7 @@ int main(int argc, char* argv[]) {
 	sock.bind();
 	sock.listen();
 
-	coservice_item* cst = coservice_item::create(sock.getFd(), std::bind(accept_handler, &sock), &service);
-	cst->enableReading();
-	cst->updateEvents();
+	coservice_item::create(sock.getFd(), std::bind(accept_handler, &sock), &service);
 
 	std::vector<kthread*> thread_vec(thread_num);
 	for (auto& x : thread_vec) {

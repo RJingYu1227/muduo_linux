@@ -8,30 +8,33 @@ thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 	coroutine_item(func),
 	coevent(fd),
+	started_(0),
 	loop_(loop) {
 
 	timenode_.setValue(this);
-	loop_->add(this);
+	loop_->setTimeout(1, &timenode_);
 }
 
 coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
 	coroutine_item(std::move(func)),
 	coevent(fd),
+	started_(0),
 	loop_(loop) {
 
 	timenode_.setValue(this);
-	loop_->add(this);
+	loop_->setTimeout(1, &timenode_);
 }
 
 coloop_item::~coloop_item() {
 	assert(getState() == DONE);
 }
 
-void coloop_item::setTimeout(unsigned int ms) {
-	klock<kmutex> x(&loop_->time_mutex_);
-	if (timenode_.isInlink())
-		loop_->timewheel_.cancelTimeout(&timenode_);
-	loop_->timewheel_.setTimeout(ms, &timenode_);
+void coloop::yield(unsigned int ms) {
+	coloop_item* cpt = coloop_item::running_cpt_;
+	assert(cpt != nullptr);
+	cpt->loop_->setTimeout(ms, &cpt->timenode_);
+
+	coroutine::yield();
 }
 
 coloop::coloop() :
@@ -76,15 +79,18 @@ void coloop::doItem(coloop_item* cpt) {
 	coloop_item::running_cpt_ = cpt;
 	cpt->resume();
 	coloop_item::running_cpt_ = nullptr;
+
 	if (cpt->getState() == coloop_item::DONE) {
-		{
-			klock<kmutex> x(&time_mutex_);
-			if (cpt->timenode_.isInlink())
-				timewheel_.cancelTimeout(&cpt->timenode_);
-		}
 		remove(cpt);
 		delete cpt;
 	}
+}
+
+void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode) {
+	klock<kmutex> x(&time_mutex_);
+	if (timenode->isInlink())
+		timewheel_.cancelTimeout(timenode);
+	timewheel_.setTimeout(ms, timenode);
 }
 
 void coloop::loop() {
@@ -119,6 +125,10 @@ void coloop::loop() {
 
 		for (auto node : timenodes_) {
 			cpt = node->getValue();
+			if (cpt->started_ == 0) {
+				cpt->started_ = 1;
+				add(cpt);
+			}
 			cpt->setRevents(0);
 
 			doItem(cpt);

@@ -9,31 +9,34 @@ coservice_item::coservice_item(int fd, const functor& func, coservice* service) 
 	coroutine_item(func),
 	coevent(fd),
 	service_(service),
-	handling_(0) {
+	handling_(1) {
 
 	timenode_.setValue(this);
 	service_->add(this);
+	service_->cst_queue_.put_back(this);
 }
 
 coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
 	coroutine_item(std::move(func)),
 	coevent(fd),
 	service_(service),
-	handling_(0) {
+	handling_(1) {
 
 	timenode_.setValue(this);
 	service_->add(this);
+	service_->cst_queue_.put_back(this);
 }
 
 coservice_item::~coservice_item() {
 	assert(getState() == DONE);
 }
 
-void coservice_item::setTimeout(unsigned int ms) {
-	klock<kmutex> x(&service_->time_mutex_);
-	if (timenode_.isInlink())
-		service_->timewheel_.cancelTimeout(&timenode_);
-	service_->timewheel_.setTimeout(ms, &timenode_);
+void coservice::yield(unsigned int ms) {
+	coservice_item* cst = coservice_item::running_cst_;
+	assert(cst != nullptr);
+	cst->service_->setTimeout(ms, &cst->timenode_);
+
+	coroutine::yield();
 }
 
 coservice::coservice() :
@@ -84,14 +87,8 @@ void coservice::doItem(coservice_item* cst) {
 	cst->resume();
 	coservice_item::running_cst_ = nullptr;
 
-	if (cst->getState() == coservice_item::DONE) {
-		{
-			klock<kmutex> x(&time_mutex_);
-			if (cst->timenode_.isInlink())
-				timewheel_.cancelTimeout(&cst->timenode_);
-		}
+	if (cst->getState() == coservice_item::DONE)
 		remove(cst);
-	}
 	else
 		cst->handling_ = 0;
 }
@@ -128,7 +125,7 @@ void coservice::getItems() {
 
 	for (auto node : timenodes_) {
 		cst = node->getValue();
-		//超时时间过短，协程还未yield
+		//超时时间过短，协程还未yield，需要修改
 		if (cst->handling_)
 			continue;
 
@@ -140,6 +137,13 @@ void coservice::getItems() {
 
 	if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
 		revents_.resize(revents_.size() * 2);
+}
+
+void coservice::setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode) {
+	klock<kmutex> x(&time_mutex_);
+	if (timenode->isInlink())
+		timewheel_.cancelTimeout(timenode);
+	timewheel_.setTimeout(ms, timenode);
 }
 
 size_t coservice::run() {

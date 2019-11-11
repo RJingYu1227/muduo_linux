@@ -89,6 +89,9 @@ void sendBuff(buffer* buff) {
 
 void connect_handler(ksocket* sock) {
 	coloop_item* cpt = coloop_item::self();
+	cpt->enableReading();
+	cpt->updateEvents();
+	coloop::yield(6666);
 	if (cpt->getRevents() == 0) {
 		LOG << "客户端超时";
 		klock<kmutex> x(&sock_mutex);
@@ -96,6 +99,7 @@ void connect_handler(ksocket* sock) {
 
 		return;
 	}
+
 	ssize_t nread;
 	buffer buff;
 	httprequest request;
@@ -139,6 +143,11 @@ void connect_handler(ksocket* sock) {
 }
 
 void accept_handler(ksocket* sock) {
+	coloop_item* cpt = coloop_item::self();
+	cpt->enableReading();
+	cpt->updateEvents();
+	coloop::yield(6666);
+
 	sockaddr_in cliaddr;
 	int clifd;
 	coloop* ioloop;
@@ -153,10 +162,7 @@ void accept_handler(ksocket* sock) {
 			ioloop = ioloops[index];
 			index = (index + 1) % thread_num;
 
-			coloop_item* temp_cpt = coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
-			temp_cpt->enableReading();
-			temp_cpt->setTimeout(6666);
-			temp_cpt->updateEvents();
+			coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
 			LOG << "建立一个新连接";
 		}
 
@@ -166,7 +172,6 @@ void accept_handler(ksocket* sock) {
 				delete ptr;
 			done_ksockets.clear();
 		}
-		LOG << "清理connections";
 
 		coroutine::yield();
 	}
@@ -203,10 +208,7 @@ int main(int argc, char* argv[]) {
 	sock.bind();
 	sock.listen();
 
-	coloop_item* cpt = coloop_item::create(sock.getFd(), std::bind(accept_handler, &sock), &loop);
-	cpt->enableReading();
-	cpt->updateEvents();
-	
+	coloop_item::create(sock.getFd(), std::bind(accept_handler, &sock), &loop);
 	loop.loop();
 
 	for (auto& x : thread_vec)

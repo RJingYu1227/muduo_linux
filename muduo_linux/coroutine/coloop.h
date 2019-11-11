@@ -13,6 +13,8 @@ class coloop :uncopyable {
 	friend class coloop_item;
 public:
 
+	static void yield(unsigned int ms);
+
 	coloop();
 	~coloop();
 
@@ -25,6 +27,7 @@ private:
 	void modify(coloop_item* cpt);
 	void remove(coloop_item* cpt);
 	void doItem(coloop_item* cpt);
+	void setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode);
 
 	bool looping_;
 	bool quit_;
@@ -45,12 +48,11 @@ class coloop_item :
 public:
 	typedef std::function<void()> functor;
 
-	inline static coloop_item* create(int fd, const functor& func, coloop* loop);
-	inline static coloop_item* create(int fd, functor&& func, coloop* loop);
+	inline static bool create(int fd, const functor& func, coloop* loop);
+	inline static bool create(int fd, functor&& func, coloop* loop);
 	inline static coloop_item* self();
 
 	inline void updateEvents();
-	void setTimeout(unsigned int ms);
 
 protected:
 
@@ -62,17 +64,18 @@ private:
 
 	thread_local static coloop_item* running_cpt_;
 
+	bool started_;
 	coloop* loop_;
 	klinknode<coloop_item*> timenode_;
 
 };
 
-coloop_item* coloop_item::create(int fd, const functor& func, coloop* loop) {
-	return new coloop_item(fd, func, loop);
+bool coloop_item::create(int fd, const functor& func, coloop* loop) {
+	return new(std::nothrow) coloop_item(fd, func, loop);
 }
 
-coloop_item* coloop_item::create(int fd, functor&& func, coloop* loop) {
-	return new coloop_item(fd, std::move(func), loop);
+bool coloop_item::create(int fd, functor&& func, coloop* loop) {
+	return new(std::nothrow) coloop_item(fd, std::move(func), loop);
 }
 
 coloop_item* coloop_item::self() {
