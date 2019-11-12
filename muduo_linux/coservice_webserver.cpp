@@ -14,12 +14,14 @@ thread_local std::vector<ksocket*> done_ksockets;
 
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
+	if (request.getHeader("Cookie") == "\0")
+		response.addHeader("Set-Cookie", "user_id=yujing;path=/;domain=localhost");
 	if (request.getPath() == "/") {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
 		response.addHeader("Content-Type", "text/html");
 
-		int fd = open("./html/index.html", O_RDONLY);
+		int fd = open("/home/rjingyu/html/index.html", O_RDONLY);
 		char buf[1024];
 		ssize_t nread = 0;
 		while ((nread = read(fd, buf, 1024)) > 0)
@@ -109,7 +111,7 @@ void connect_handler(ksocket* sock) {
 		if (nread == 0 || !request.praseRequest(&buff))
 			break;
 		else if (request.praseDone()) {
-			LOG << "成功解析一次httprequest";
+			LOG << request.getHeader("Cookie");
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
@@ -123,7 +125,6 @@ void connect_handler(ksocket* sock) {
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(&buff2);
-			LOG << "成功发送一次httpresponse";
 
 			if (!response.keepAlive()) {
 				sock->shutdownWrite();
@@ -132,7 +133,7 @@ void connect_handler(ksocket* sock) {
 		}
 		coroutine::yield();
 	}
-	LOG << "连接处理完毕";
+	//LOG << "连接处理完毕";
 	done_ksockets.push_back(sock);
 }
 
@@ -151,7 +152,7 @@ void accept_handler(ksocket* sock) {
 			temp_sock->setTcpNodelay(1);
 
 			coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
-			LOG << "建立一个新连接";
+			//LOG << "建立一个新连接";
 		}
 
 		for (auto temp : done_ksockets) {
@@ -168,7 +169,7 @@ void thread_func() {
 }
 
 int main(int argc, char* argv[]) {
-	logger::createAsyncLogger();
+	//logger::createAsyncLogger();
 	int thread_num = 4;
 	if (argc == 2) {
 		thread_num = atoi(argv[1]);

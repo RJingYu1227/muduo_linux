@@ -106,17 +106,15 @@ void coservice::getItems() {
 		//此时cst_queue_必定是空的，最多只有和线程数相当的任务在执行，如果妹有立即返回，说明其实并不忙
 		//这么做是为了正确处理拿到锁之前设置好的超时事件
 		//这一次处理完毕之后的超时事件也是可以正确处理的
-		if (numevents > 0) {
-			for (int i = 0; i < numevents; ++i) {
-				cst = (coservice_item*)revents_[i].data.ptr;
-				if (cst->timenode_.isInlink())
-					timewheel_.cancelTimeout(&cst->timenode_);
+		for (int i = 0; i < numevents; ++i) {
+			cst = (coservice_item*)revents_[i].data.ptr;
+			if (cst->timenode_.isInlink())
+				timewheel_.cancelTimeout(&cst->timenode_);
 
-				if (cst->handling_)
-					revents_[i].data.ptr = nullptr;
-				//不能使会导致重复resume的事情发生
-				//且考虑到setTimeout在这之后才拿到锁，会导致超时并未正确处理，所以这一步不可以在外面操作
-			}
+			if (cst->handling_)
+				revents_[i].data.ptr = nullptr;
+			//不能使会导致重复resume的事情发生
+			//且考虑到setTimeout在这之后才拿到锁，会导致超时并未正确处理，所以这一步不可以在外面操作
 		}
 
 		timewheel_.getTimeout(timenodes_);

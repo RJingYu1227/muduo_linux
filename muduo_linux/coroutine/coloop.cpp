@@ -48,6 +48,7 @@ coloop::coloop() :
 }
 
 coloop::~coloop() {
+	assert(!looping_);
 	close(epfd_);
 }
 
@@ -106,13 +107,13 @@ void coloop::loop() {
 
 		{
 			klock<kmutex> x(&time_mutex_);
-			if (numevents > 0) {
-				for (int i = 0; i < numevents; ++i) {
-					cpt = (coloop_item*)revents_[i].data.ptr;
-					if (cpt->timenode_.isInlink())
-						timewheel_.cancelTimeout(&cpt->timenode_);
-				}
+
+			for (int i = 0; i < numevents; ++i) {
+				cpt = (coloop_item*)revents_[i].data.ptr;
+				if (cpt->timenode_.isInlink())
+					timewheel_.cancelTimeout(&cpt->timenode_);
 			}
+
 			timewheel_.getTimeout(timenodes_);
 		}
 
@@ -133,10 +134,10 @@ void coloop::loop() {
 
 			doItem(cpt);
 		}
-		timenodes_.clear();
 
 		if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
 			revents_.resize(revents_.size() * 2);
+		timenodes_.clear();
 	}
 
 	looping_ = 0;
