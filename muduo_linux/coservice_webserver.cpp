@@ -7,53 +7,12 @@
 #include"logging.h"
 
 #include<unistd.h>
-#include<fcntl.h>
+#include<signal.h>
+
+void httpCallback(const httprequest& request, httpresponse& response);
 
 coservice service;
 thread_local std::vector<ksocket*> done_ksockets;
-
-void httpCallback(const httprequest& request, httpresponse& response) {
-	response.addHeader("Server", "RJingYu");
-	if (request.getHeader("Cookie") == "\0")
-		response.addHeader("Set-Cookie", "user_id=yujing;path=/;domain=localhost");
-	if (request.getPath() == "/") {
-		response.setStatu1(httpresponse::k200OK);
-		response.setStatu2("OK");
-		response.addHeader("Content-Type", "text/html");
-
-		int fd = open("/home/rjingyu/html/index.html", O_RDONLY);
-		char buf[1024];
-		ssize_t nread = 0;
-		while ((nread = read(fd, buf, 1024)) > 0)
-			response.getBody().append(buf, nread);
-		close(fd);
-	}
-	else {
-		string path = "/home/rjingyu/html" + request.getPath();
-		int fd = open(path.c_str(), O_RDONLY);
-		if (fd < 0) {
-			response.setStatu1(httpresponse::k404NotFound);
-			response.setStatu2("Not Found");
-			response.setKeepAlive(0);
-		}
-		else {
-			response.setStatu1(httpresponse::k200OK);
-			response.setStatu2("OK");
-
-			size_t i = 0;
-			string head = request.getHeader("Accept");
-			while (i != head.size() && head[i] != ',')
-				++i;
-			response.addHeader("Content-Type", string(head.begin(), head.begin() + i));
-
-			char buf[1024];
-			ssize_t nread = 0;
-			while ((nread = read(fd, buf, 1024)) > 0)
-				response.getBody().append(buf, nread);
-			close(fd);
-		}
-	}
-}
 
 void sendBuff(buffer* buff) {
 	ssize_t nwrote;
@@ -73,6 +32,7 @@ void sendBuff(buffer* buff) {
 			else {
 				cst->disableReading();
 				cst->enableWriting();
+
 				cst->updateEvents();
 			}
 		}
@@ -82,6 +42,7 @@ void sendBuff(buffer* buff) {
 	if (cst->isWriting()) {
 		cst->disableWrting();
 		cst->enableReading();
+
 		cst->updateEvents();
 	}
 }
@@ -92,7 +53,7 @@ void connect_handler(ksocket* sock) {
 	cst->updateEvents();
 	coservice::yield(6666);
 	if (cst->getRevents() == 0) {
-		LOG << "客户端超时";
+		LOG << "连接超时 " << sock->getAddr2() << ':' << sock->getPort();
 		done_ksockets.push_back(sock);
 		return;
 	}
@@ -111,7 +72,8 @@ void connect_handler(ksocket* sock) {
 		if (nread == 0 || !request.praseRequest(&buff))
 			break;
 		else if (request.praseDone()) {
-			LOG << request.getHeader("Cookie");
+			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
+
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
@@ -119,21 +81,24 @@ void connect_handler(ksocket* sock) {
 			httpresponse response(alive);
 			httpCallback(request, response);
 
-			buff.retrieve(request.getLength());
-			request.reset();
-
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(&buff2);
+			LOG << "完整发送httpresponse " << sock->getAddr2() << ':' << sock->getPort();
 
 			if (!response.keepAlive()) {
 				sock->shutdownWrite();
 				break;
 			}
+			else {
+				buff.retrieve(request.getLength());
+				request.reset();
+			}
 		}
 		coroutine::yield();
 	}
-	//LOG << "连接处理完毕";
+
+	LOG << "连接处理完毕 " << sock->getAddr2() << ':' << sock->getPort();
 	done_ksockets.push_back(sock);
 }
 
@@ -145,6 +110,8 @@ void accept_handler(ksocket* sock) {
 	sockaddr_in cliaddr;
 	int clifd;
 
+	LOG << "TcpServer开始监听 " << sock->getAddr2() << ':' << sock->getPort();
+
 	while (1) {
 		clifd = sock->accept(&cliaddr);
 		if (clifd > 0) {
@@ -152,7 +119,7 @@ void accept_handler(ksocket* sock) {
 			temp_sock->setTcpNodelay(1);
 
 			coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
-			//LOG << "建立一个新连接";
+			LOG << "建立一个新连接 " << temp_sock->getAddr2() << ':' << temp_sock->getPort();
 		}
 
 		for (auto temp : done_ksockets) {
@@ -161,7 +128,8 @@ void accept_handler(ksocket* sock) {
 		done_ksockets.clear();
 		coroutine::yield();
 	}
-	LOG << "server停止监听";
+
+	LOG << "TcpServer停止监听 " << sock->getAddr2() << ':' << sock->getPort();
 }
 
 void thread_func() {
@@ -169,7 +137,10 @@ void thread_func() {
 }
 
 int main(int argc, char* argv[]) {
-	//logger::createAsyncLogger();
+	logger::setFilename("./han.");
+	logger::createAsyncLogger();
+	signal(SIGPIPE, SIG_IGN);
+
 	int thread_num = 4;
 	if (argc == 2) {
 		thread_num = atoi(argv[1]);
@@ -179,7 +150,7 @@ int main(int argc, char* argv[]) {
 			thread_num = 8;
 	}
 
-	ksocket sock("127.0.0.1", 7777);
+	ksocket sock("0.0.0.0", 7777);
 	sock.bind();
 	sock.listen();
 

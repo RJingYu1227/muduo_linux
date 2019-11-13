@@ -31,7 +31,10 @@ void httprequest::addHeader(const char* start, const char* colon, const char* en
 	while (end > colon && *(end - 1) == ' ')
 		--end;
 	string value(colon, end);
-	//value大小写转换
+	for (auto& ch : value) {
+		if ('A' <= ch && ch <= 'Z')
+			ch = static_cast<char>(ch - 'A' + 'a');
+	}
 
 	headers_[key] = value;
 }
@@ -41,7 +44,7 @@ string httprequest::getHeader(const string& key)const {
 	if (iter != headers_.end())
 		return iter->second;
 	else
-		return "\0";
+		return "";
 }
 
 void httprequest::reset() {

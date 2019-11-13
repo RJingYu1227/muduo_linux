@@ -61,6 +61,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <ConfigurationType>Application</ConfigurationType>
+    <UseOfStl>libstdc++_shared</UseOfStl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -81,14 +82,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
-    <ClCompile Include="coloop_webserver.cpp" />
     <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="coroutine\coroutine.cpp" />
     <ClCompile Include="coroutine\coloop.cpp" />
     <ClCompile Include="coservice_webserver.cpp" />
-    <ClCompile Include="net\kmysql.cpp" />
+    <ClCompile Include="httpfunction.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
@@ -145,7 +145,7 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>pthread;protobuf;mysqlclient</LibraryDependencies>
+      <LibraryDependencies>pthread;</LibraryDependencies>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>%(ClCompile.AdditionalIncludeDirectories);/usr/include/mysql</AdditionalIncludeDirectories>

@@ -20,13 +20,6 @@ asynclogger::~asynclogger() {
 }
 
 void asynclogger::append(const s_logbuffer& sbuff) {
-	/*
-	这两种实现方式的转变对qps的影响不大
-	thread_local buffer_queue thread_buffers;
-	thread_local logfile output((basename_ + std::to_string(pthread_self()) + '.').c_str(), rollsize_);
-	thread_local impl tie_(nullptr, &thread_buffers_, &output_);
-	*/
-
 	impl* pimpl = thread_pimpl_.get();
 	if (pimpl == nullptr) {
 		pimpl = new impl(
@@ -38,9 +31,9 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 		pimpl->buffer_->append(sbuff.getData(), sbuff.length());
 		pimpl->queue_->put_front(pimpl->buffer_);
 
-		pimpl->buffer_ = new l_logbuffer();
 		klock<kmutex> x(&lock_);
-		empty_impls_.push_back(*pimpl);
+		empty_impls_.push_back(impl(new l_logbuffer(), pimpl->queue_, pimpl->output_));
+		//这里new出来的buffer是为了下面的操作，请看92行
 
 		return;
 	}
@@ -56,20 +49,19 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 		if (pbuf->leftBytes() >= sbuff.length()) {
 			pbuf->append(sbuff.getData(), sbuff.length());
 			pimpl->queue_->put_front(pbuf);
-
-			return;
 		}
-		else
-			full_impls_.put_back(impl(pbuf, pimpl->queue_, pimpl->output_));//注意这里
+		else {
+			full_impls_.put_back(impl(pbuf, pimpl->queue_, pimpl->output_));
 
-		if (size == 1)
-			pbuf = new l_logbuffer();
-		else
-			pbuf = pimpl->queue_->take_front();
+			if (size == 1)
+				pbuf = new l_logbuffer();
+			else
+				pbuf = pimpl->queue_->take_front();
+
+			pbuf->append(sbuff.getData(), sbuff.length());
+			pimpl->queue_->put_front(pbuf);
+		}
 	}
-
-	pbuf->append(sbuff.getData(), sbuff.length());
-	pimpl->queue_->put_front(pbuf);
 }
 
 void asynclogger::threadFunc() {

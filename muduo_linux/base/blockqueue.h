@@ -35,7 +35,7 @@ private:
 template<typename T>
 size_t blockqueue<T>::timedwait(int seconds) {
 	klock<kmutex> x(&lock_);
-	if (queue_.empty())
+	if (queue_.empty())//这里不用while
 		cond_.timedwait(&lock_, seconds);
 	return queue_.size();
 }
