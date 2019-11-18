@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include"kthread.h"
 
@@ -33,7 +33,7 @@ private:
 template<typename T>
 size_t blockqueue<T>::timedwait(int seconds) {
 	klock<kmutex> x(&lock_);
-	if (queue_.empty())//���ﲻ��while
+	if (queue_.empty())//这里不用while
 		cond_.timedwait(&lock_, seconds);
 	return queue_.size();
 }
@@ -78,7 +78,7 @@ bool blockqueue<T>::tryput_front(const T& val) {
 template<typename T>
 T blockqueue<T>::take_front() {
 	klock<kmutex> x(&lock_);
-	while (queue_.empty())
+	while (queue_.empty())//虚假唤醒
 		cond_.wait(&lock_);
 	T front(std::move(queue_.front()));
 	queue_.pop_front();
@@ -113,7 +113,7 @@ bool blockqueue<T>::tryput_back(const T& val) {
 template<typename T>
 T blockqueue<T>::take_back() {
 	klock<kmutex> x(&lock_);
-	while (queue_.empty())
+	while (queue_.empty())//虚假唤醒
 		cond_.wait(&lock_);
 	T back(std::move(queue_.back()));
 	queue_.pop_back();
