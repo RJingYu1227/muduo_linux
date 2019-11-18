@@ -9,7 +9,7 @@ INC_DIR = -I${BASE_DIR} \
 	  -I${HTTP_DIR} 
 
 SRC = $(wildcard ${BASE_DIR}/*.cpp) \
-      $(wildcard &{COROUTINE_DIR}/*.cpp) \
+      $(wildcard ${COROUTINE_DIR}/*.cpp) \
       $(wildcard ${NET_DIR}/*.cpp) \
       $(wildcard ${HTTP_DIR}/*.cpp)
 
@@ -17,7 +17,7 @@ OBJ = $(patsubst %.cpp, %.o, ${SRC})
 
 LIB = -lpthread
 
-TARGET = test0
+TARGET = test
 CC = g++
 FLAG = -Wall -std=c++11 ${INC_DIR} ${LIB}
 

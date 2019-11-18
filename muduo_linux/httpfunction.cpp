@@ -30,10 +30,10 @@ bool insertRedis(const string& path) {
 void httpCallback(const httprequest& request, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
 	bool ok = 0;
-	string path;
+	string path = "./html";
 
 	if (request.getPath() == "/") {
-		path = "./html/index.html";
+		path += "/index.html";
 
 		if (redis.find(path) != redis.end() || insertRedis(path)) {
 			response.addHeader("Content-Type", "text/html");
@@ -41,7 +41,7 @@ void httpCallback(const httprequest& request, httpresponse& response) {
 		}
 	}
 	else {
-		path = "./" + request.getPath();
+		path += request.getPath();
 
 		if (redis.find(path) != redis.end() || insertRedis(path)) {
 			size_t i = 0;

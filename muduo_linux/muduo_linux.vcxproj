@@ -89,6 +89,7 @@
     <ClCompile Include="coroutine\coloop.cpp" />
     <ClCompile Include="coservice_webserver.cpp" />
     <ClCompile Include="httpfunction.cpp" />
+    <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\channel.cpp" />
     <ClCompile Include="net\elthreadpool.cpp" />
@@ -118,7 +119,6 @@
     <ClInclude Include="coroutine\coloop.h" />
     <ClInclude Include="coroutine\coservice.h" />
     <ClInclude Include="net\kpoll.h" />
-    <ClInclude Include="net\ktype.h" />
     <ClInclude Include="net\kmysql.h" />
     <ClInclude Include="base\buffer.h" />
     <ClInclude Include="net\channel.h" />
@@ -145,7 +145,7 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>pthread;</LibraryDependencies>
+      <LibraryDependencies>pthread;mysqlclient</LibraryDependencies>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>%(ClCompile.AdditionalIncludeDirectories);/usr/include/mysql</AdditionalIncludeDirectories>

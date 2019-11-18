@@ -15,13 +15,11 @@ public:
 	void put_front(const T& val);
 	void put_front(T&& val);
 	bool tryput_front(const T& val);
-	bool tryput_front(T&& val);
 	T take_front();
 
 	void put_back(const T& val);
 	void put_back(T&& val);
 	bool tryput_back(const T& val);
-	bool tryput_back(T&& val);
 	T take_back();
 
 private:
@@ -78,17 +76,6 @@ bool blockqueue<T>::tryput_front(const T& val) {
 }
 
 template<typename T>
-bool blockqueue<T>::tryput_front(T&& val) {
-	if (lock_.trylock()) {
-		queue_.push_front(std::move(val));
-		cond_.notify();
-		lock_.unlock();
-		return 1;
-	}
-	return 0;
-}
-
-template<typename T>
 T blockqueue<T>::take_front() {
 	klock<kmutex> x(&lock_);
 	while (queue_.empty())
@@ -116,17 +103,6 @@ template<typename T>
 bool blockqueue<T>::tryput_back(const T& val) {
 	if (lock_.trylock()) {
 		queue_.push_back(val);
-		cond_.notify();
-		lock_.unlock();
-		return 1;
-	}
-	return 0;
-}
-
-template<typename T>
-bool blockqueue<T>::tryput_back(T&& val) {
-	if (lock_.trylock()) {
-		queue_.push_back(std::move(val));
 		cond_.notify();
 		lock_.unlock();
 		return 1;
