@@ -6,7 +6,8 @@ HTTP_DIR = ./http
 INC_DIR = -I${BASE_DIR} \
       -I${COROUTINE_DIR} \
 	  -I${NET_DIR} \
-	  -I${HTTP_DIR} 
+	  -I${HTTP_DIR} \
+	  -I"/usr/include/mysql"
 
 SRC = $(wildcard ${BASE_DIR}/*.cpp) \
       $(wildcard ${COROUTINE_DIR}/*.cpp) \
@@ -15,9 +16,9 @@ SRC = $(wildcard ${BASE_DIR}/*.cpp) \
 
 OBJ = $(patsubst %.cpp, %.o, ${SRC})
 
-LIB = -lpthread
+LIB = -lpthread -lmysqlclient
 
-TARGET = test
+TARGET = webserver
 CC = g++
 FLAG = -Wall -std=c++11 ${INC_DIR} ${LIB}
 

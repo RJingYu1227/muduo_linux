@@ -2,12 +2,11 @@
 #include"ksocket.h"
 #include"httprequest.h"
 #include"httpresponse.h"
-#include"ktimer.h"
 #include"buffer.h"
 #include"logging.h"
 
 #include<unistd.h>
-#include<fcntl.h>
+#include<signal.h>
 
 kmutex sock_mutex;
 std::vector<ksocket*> done_ksockets;
@@ -15,7 +14,7 @@ kmutex loop_mutex;
 std::vector<coloop*> ioloops;
 int thread_num = 4;
 
-void httpCallback(const httprequest& request, httpresponse& response);
+void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
 void sendBuff(buffer* buff) {
 	ssize_t nwrote;
@@ -30,13 +29,13 @@ void sendBuff(buffer* buff) {
 		buff->retrieve(nwrote);
 
 		if (buff->usedBytes()) {
-			if (cpt->isWriting())
-				coroutine::yield();
-			else {
+			if (cpt->isWriting() == false) {
 				cpt->disableReading();
 				cpt->enableWriting();
 				cpt->updateEvents();
 			}
+
+			coroutine::yield();
 		}
 		else
 			break;
@@ -54,7 +53,7 @@ void connect_handler(ksocket* sock) {
 	cpt->updateEvents();
 	coloop::yield(6666);
 	if (cpt->getRevents() == 0) {
-		LOG << "客户端超时";
+		LOG << "连接超时 " << sock->getAddr2() << ':' << sock->getPort();
 		klock<kmutex> x(&sock_mutex);
 		done_ksockets.push_back(sock);
 
@@ -72,33 +71,36 @@ void connect_handler(ksocket* sock) {
 			buff.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || !request.praseRequest(&buff))
+		if (nread == 0 || request.praseRequest(&buff) == false)
 			break;
 		else if (request.praseDone()) {
-			LOG << "成功解析一次httprequest";
+			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
+
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
 
 			httpresponse response(alive);
-			httpCallback(request, response);
-
-			buff.retrieve(request.getLength());
-			request.reset();
+			httpCallback(request, buff.toString(), response);
 
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(&buff2);
-			LOG << "成功发送一次httpresponse";
+			LOG << "完整发送httpresponse " << sock->getAddr2() << ':' << sock->getPort();
 
 			if (!response.keepAlive()) {
 				sock->shutdownWrite();
 				break;
 			}
+			else {
+				buff.retrieve(request.getLength());
+				request.reset();
+			}
 		}
 		coroutine::yield();
 	}
-	LOG << "连接处理完毕";
+
+	LOG << "连接处理完毕 " << sock->getAddr2() << ':' << sock->getPort();
 	klock<kmutex> x(&sock_mutex);
 	done_ksockets.push_back(sock);
 }
@@ -114,6 +116,8 @@ void accept_handler(ksocket* sock) {
 	coloop* ioloop;
 	int index = 0;
 
+	LOG << "TcpServer开始监听 " << sock->getAddr2() << ':' << sock->getPort();
+
 	while (1) {
 		clifd = sock->accept(&cliaddr);
 		if (clifd > 0) {
@@ -124,7 +128,7 @@ void accept_handler(ksocket* sock) {
 			index = (index + 1) % thread_num;
 
 			coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
-			LOG << "建立一个新连接";
+			LOG << "建立一个新连接 " << temp_sock->getAddr2() << ':' << temp_sock->getPort();
 		}
 
 		{
@@ -136,6 +140,8 @@ void accept_handler(ksocket* sock) {
 
 		coroutine::yield();
 	}
+
+	LOG << "TcpServer停止监听 " << sock->getAddr2() << ':' << sock->getPort();
 }
 
 void thread_func() {
@@ -150,6 +156,8 @@ void thread_func() {
 
 int main(int argc, char* argv[]) {
 	logger::createAsyncLogger();
+	signal(SIGPIPE, SIG_IGN);
+
 	if (argc == 2) {
 		thread_num = atoi(argv[1]);
 		if (thread_num < 4)

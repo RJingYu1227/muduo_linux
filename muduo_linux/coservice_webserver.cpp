@@ -2,14 +2,13 @@
 #include"ksocket.h"
 #include"httprequest.h"
 #include"httpresponse.h"
-#include"ktimer.h"
 #include"buffer.h"
 #include"logging.h"
 
 #include<unistd.h>
 #include<signal.h>
 
-void httpCallback(const httprequest& request, httpresponse& response);
+void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
 coservice service;
 thread_local std::vector<ksocket*> done_ksockets;
@@ -27,14 +26,14 @@ void sendBuff(buffer* buff) {
 		buff->retrieve(nwrote);
 
 		if (buff->usedBytes()) {
-			if (cst->isWriting())
-				coroutine::yield();
-			else {
+			if (cst->isWriting() == false) {
 				cst->disableReading();
 				cst->enableWriting();
 
 				cst->updateEvents();
 			}
+
+			coroutine::yield();
 		}
 		else
 			break;
@@ -69,7 +68,7 @@ void connect_handler(ksocket* sock) {
 			buff.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || !request.praseRequest(&buff))
+		if (nread == 0 || request.praseRequest(&buff) == false)
 			break;
 		else if (request.praseDone()) {
 			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
@@ -79,7 +78,7 @@ void connect_handler(ksocket* sock) {
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
 
 			httpresponse response(alive);
-			httpCallback(request, response);
+			httpCallback(request, buff.toString(), response);
 
 			buffer buff2;
 			response.appendToBuffer(&buff2);
