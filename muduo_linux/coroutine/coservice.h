@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include"blockqueue.h"
+#include"disruptor.h"
 #include"coroutine.h"
 #include"coevent.h"
 #include"timewheel.h"
@@ -34,7 +34,7 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
-	blockqueue<coservice_item*> cst_queue_;
+	disruptor<coservice_item*> cst_queue_;
 
 	kmutex done_items_mutex_;
 	std::vector<coservice_item*> done_items_;

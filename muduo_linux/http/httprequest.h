@@ -13,7 +13,7 @@ public:
 		kExpectRequestLine,
 		kExpectHeaders,
 		kExpectBody,
-		kPraseDone
+		kParseDone
 	};
 
 	enum method {
@@ -33,9 +33,9 @@ public:
 		length_(0)
 	{}
 	
-	bool praseRequest(buffer* buffer1);
-	bool praseDone()const 
-	{ return state_ == kPraseDone; }
+	bool parseRequest(buffer* buffer1);
+	bool parseDone()const 
+	{ return state_ == kParseDone; }
 
 	version getVersion()const 
 	{ return version_; }

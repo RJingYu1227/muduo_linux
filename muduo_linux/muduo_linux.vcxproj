@@ -114,6 +114,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
+    <ClInclude Include="base\disruptor.h" />
     <ClInclude Include="coroutine\coevent.h" />
     <ClInclude Include="base\kthread.h" />
     <ClInclude Include="base\blockqueue.h" />

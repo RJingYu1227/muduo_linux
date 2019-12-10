@@ -71,9 +71,9 @@ void connect_handler(ksocket* sock) {
 			buff.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || request.praseRequest(&buff) == false)
+		if (nread == 0 || request.parseRequest(&buff) == false)
 			break;
-		else if (request.praseDone()) {
+		else if (request.parseDone()) {
 			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
 
 			string temp = request.getHeader("Connection");

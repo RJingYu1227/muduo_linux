@@ -12,6 +12,8 @@ public:
 	inline bool empty()const;
 	inline size_t size()const;
 
+	//可以考虑使用initializer_list实现一次put多个
+
 	void put_front(const T& val);
 	void put_front(T&& val);
 	bool tryput_front(const T& val);

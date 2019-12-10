@@ -32,11 +32,11 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 	httprequest* request = (httprequest*)conn->getPtr();
 	buffer* buffer1 = conn->getRecvBuffer();
 
-	if (!request->praseRequest(buffer1)) {
+	if (!request->parseRequest(buffer1)) {
 		conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
 		conn->shutDown();
 	}
-	else if (request->praseDone()) {
+	else if (request->parseDone()) {
 		string temp = request->getHeader("Connection");
 		bool alive = (temp == "keep-alive") ||
 			(request->getVersion() == httprequest::kHTTP11 && temp != "close");

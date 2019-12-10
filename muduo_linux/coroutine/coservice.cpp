@@ -14,7 +14,7 @@ coservice_item::coservice_item(int fd, const functor& func, coservice* service) 
 	timenode_.setValue(this);
 	setRevents(0);
 	service_->add(this);
-	service_->cst_queue_.put_back(this);
+	service_->cst_queue_.put(this);
 }
 
 coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
@@ -26,7 +26,7 @@ coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
 	timenode_.setValue(this);
 	setRevents(0);
 	service_->add(this);
-	service_->cst_queue_.put_back(this);
+	service_->cst_queue_.put(this);
 }
 
 coservice_item::~coservice_item() {
@@ -45,9 +45,10 @@ coservice::coservice() :
 	item_count_(0),
 	epfd_(epoll_create1(EPOLL_CLOEXEC)),
 	revents_(128),
+	cst_queue_(2048),
 	timewheel_(60 * 1000) {
 
-	cst_queue_.put_back(nullptr);//注意这里
+	cst_queue_.put(nullptr);//注意这里
 	assert(epfd_ > 0);
 }
 
@@ -137,7 +138,7 @@ void coservice::getItems() {
 
 		cst->handling_ = 1;
 		cst->setRevents(revents_[i].events);
-		cst_queue_.put_back(cst);
+		cst_queue_.put(cst);
 	}
 
 	for (auto node : timenodes_) {
@@ -147,7 +148,7 @@ void coservice::getItems() {
 
 		cst->handling_ = 1;
 		cst->setRevents(0);
-		cst_queue_.put_back(cst);
+		cst_queue_.put(cst);
 	}
 
 	//从这里来看，可以优化一下blockqueue
@@ -170,7 +171,7 @@ size_t coservice::run() {
 	coservice_item* cst;
 	
 	while (item_count_) {
-		cst = cst_queue_.take_front();
+		cst_queue_.take(cst);
 		if (cst == nullptr) {
 			getItems();
 			//只要handling_ = 1，cst就不会再次进入队列
@@ -188,7 +189,7 @@ size_t coservice::run() {
 				done_items_.clear();
 			}
 
-			cst_queue_.put_back(nullptr);
+			cst_queue_.put(nullptr);
 		}
 		else {
 			doItem(cst);

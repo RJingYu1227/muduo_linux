@@ -96,11 +96,11 @@ bool httprequest::processRequestLine(const char* start, const char* end) {
 	return 1;
 }
 
-bool httprequest::praseRequest(buffer* buffer1) {
+bool httprequest::parseRequest(buffer* buffer1) {
 	while (1) {
 		if (state_ == kExpectBody) {
 			if (buffer1->usedBytes() >= length_)
-				state_ = kPraseDone;
+				state_ = kParseDone;
 			break;
 		}
 
@@ -121,13 +121,13 @@ bool httprequest::praseRequest(buffer* buffer1) {
 			if (colon != crlf)
 				addHeader(start, colon, crlf);
 			else if (headers_.find("Content-Length") == headers_.end()) {
-				state_ = kPraseDone;
+				state_ = kParseDone;
 				break;
 			}
 			else {
 				length_ = atoi(headers_["Content-Length"].c_str());
 				if (length_ == 0) {
-					state_ = kPraseDone;
+					state_ = kParseDone;
 					break;
 				}
 				state_ = kExpectBody;
