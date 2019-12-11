@@ -51,14 +51,7 @@ void connect_handler(ksocket* sock) {
 	coloop_item* cpt = coloop_item::self();
 	cpt->enableReading();
 	cpt->updateEvents();
-	coloop::yield(6666);
-	if (cpt->getRevents() == 0) {
-		LOG << "连接超时 " << sock->getAddr2() << ':' << sock->getPort();
-		klock<kmutex> x(&sock_mutex);
-		done_ksockets.push_back(sock);
-
-		return;
-	}
+	coroutine::yield();
 
 	ssize_t nread;
 	buffer buff;
@@ -109,7 +102,6 @@ void accept_handler(ksocket* sock) {
 	coloop_item* cpt = coloop_item::self();
 	cpt->enableReading();
 	cpt->updateEvents();
-	coloop::yield(6666);
 
 	sockaddr_in cliaddr;
 	int clifd;

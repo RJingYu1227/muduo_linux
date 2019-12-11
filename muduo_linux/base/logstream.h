@@ -17,6 +17,14 @@ public:
 		}
 	}
 
+	logbuffer& operator=(const logbuffer& rhs) {
+		size_t len = rhs.current_ - rhs.data_;
+		memcpy(data_, rhs.data_, len);
+		current_ = data_ + len;
+
+		return *this;
+	}
+
 	const char* getData()const { return data_; }
 	size_t length()const { return static_cast<size_t>(current_ - data_); }
 

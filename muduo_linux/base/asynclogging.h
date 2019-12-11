@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
 #include"logstream.h"
-#include"blockqueue.h"
+#include"disruptor.h"
 
 #include<vector>
 
@@ -32,35 +31,26 @@ protected:
 	~asynclogger();
 
 private:
-	typedef blockqueue<l_logbuffer*> buffer_queue;
-
-	//static void implDestory(void* ptr);
 	static asynclogger* instance_;
 
 	void threadFunc();
-	
-	struct impl {
-		impl(l_logbuffer* l_logbuffer, buffer_queue* queue, logfile* output) :
-			buffer_(l_logbuffer),
-			queue_(queue),
-			output_(output)
-		{}
 
-		impl() {}
+	typedef std::pair<logfile*, std::string> item;
 
-		l_logbuffer* buffer_ = nullptr;
-		buffer_queue* queue_ = nullptr;
-		logfile* output_ = nullptr;
-	};
+	sequence readdone_;//已读末尾下标
+	sequence read_;//可读起始下标
+	sequence writedone_;//已写末尾下标
+	sequence write_;//可写起始下标
 
-	kthreadlocal<impl> thread_pimpl_;
-	blockqueue<impl> full_impls_;
-
-	kmutex lock_;
-	std::vector<impl> empty_impls_;
+	std::vector<item> ringbuffer_;
+	size_t end_index_;
+	kthreadlocal<logfile> thread_logfile_;
 
 	std::string basename_;
 	off_t rollsize_;
+
+	kmutex mutex_;
+	kcond cond_;
 	kthread thread_;
 
 	volatile bool running_;
