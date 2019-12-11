@@ -50,12 +50,7 @@ void connect_handler(ksocket* sock) {
 	coservice_item* cst = coservice_item::self();
 	cst->enableReading();
 	cst->updateEvents();
-	coservice::yield(6666);
-	if (cst->getRevents() == 0) {
-		LOG << "连接超时 " << sock->getAddr2() << ':' << sock->getPort();
-		done_ksockets.push_back(sock);
-		return;
-	}
+	coroutine::yield();
 
 	ssize_t nread;
 	buffer buff;

@@ -64,7 +64,6 @@ private:
 
 	thread_local static coloop_item* running_cpt_;
 
-	bool started_;
 	coloop* loop_;
 	klinknode<coloop_item*> timenode_;
 

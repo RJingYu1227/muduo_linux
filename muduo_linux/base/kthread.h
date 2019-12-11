@@ -9,6 +9,8 @@ template<typename T>
 class kthreadlocal {
 public:
 
+	static void freeFunc(void* ptr);
+
 	explicit kthreadlocal(void(*func)(void*)) {
 		pthread_key_create(&key_, func);
 	}
@@ -25,6 +27,12 @@ private:
 	pthread_key_t key_;
 
 };
+
+template<typename T>
+void kthreadlocal<T>::freeFunc(void* ptr) {
+	T* val = (T*)ptr;
+	delete val;
+}
 
 template<typename T>
 class klock {

@@ -47,8 +47,6 @@ protected:
 private:
 
 	static coroutine* threadCoenv();
-	static void freeCoenv(void* ptr);
-
 	static kthreadlocal<coroutine> thread_coenv_;
 
 	void resumeFunc(coroutine_item* co);

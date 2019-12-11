@@ -3,7 +3,7 @@
 #include<malloc.h>
 #include<assert.h>
 
-kthreadlocal<coroutine> coroutine::thread_coenv_(coroutine::freeCoenv);
+kthreadlocal<coroutine> coroutine::thread_coenv_(kthreadlocal<coroutine>::freeFunc);
 
 coroutine::coroutine()
 	:sindex_(-1) {
@@ -23,11 +23,6 @@ coroutine* coroutine::threadCoenv() {
 	}
 
 	return env;
-}
-
-void coroutine::freeCoenv(void* ptr) {
-	coroutine* env = (coroutine*)ptr;
-	delete env;
 }
 
 void coroutine::coroutine_item::coroutineFunc(coroutine_item* co) {

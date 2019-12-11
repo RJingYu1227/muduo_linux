@@ -9,7 +9,7 @@ class buffer;
 
 class httprequest {
 public:
-	enum prasestate {
+	enum parsestate {
 		kExpectRequestLine,
 		kExpectHeaders,
 		kExpectBody,
@@ -65,7 +65,7 @@ private:
 	bool setMethod(const char* start, const char* end);
 	void addHeader(const char* start, const char* colon, const char* end);
 
-	prasestate state_;
+	parsestate state_;
 	method method_;
 	version version_;
 	string path_;

@@ -13,6 +13,7 @@ coservice_item::coservice_item(int fd, const functor& func, coservice* service) 
 
 	timenode_.setValue(this);
 	setRevents(0);
+	//另外一种启动方式
 	service_->add(this);
 	service_->cst_queue_.put(this);
 }
@@ -25,6 +26,7 @@ coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
 
 	timenode_.setValue(this);
 	setRevents(0);
+
 	service_->add(this);
 	service_->cst_queue_.put(this);
 }
@@ -90,8 +92,12 @@ void coservice::doItem(coservice_item* cst) {
 	cst->resume();
 	coservice_item::running_cst_ = nullptr;
 
-	if (cst->getState() == coservice_item::DONE)
+	if (cst->getState() == coservice_item::DONE) {
 		remove(cst);
+
+		klock<kmutex> lock(&done_items_mutex_);
+		done_items_.push_back(cst);
+	}
 	else
 		cst->handling_ = 0;
 }
@@ -151,8 +157,6 @@ void coservice::getItems() {
 		cst_queue_.put(cst);
 	}
 
-	//从这里来看，可以优化一下blockqueue
-
 	if (numevents > 0 && static_cast<size_t>(numevents) == revents_.size())
 		revents_.resize(revents_.size() * 2);
 	timenodes_.clear();
@@ -166,7 +170,9 @@ void coservice::setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode
 }
 
 size_t coservice::run() {
-	std::vector<coservice_item*> local_done_items;
+	//可以为每一个执行run的线程提供一个私有的vector
+	//因为只有一个值为nullptr的cst
+	//std::vector<coservice_item*> local_done_items;
 	size_t count = 0;
 	coservice_item* cst;
 	
@@ -179,11 +185,8 @@ size_t coservice::run() {
 			//极少数情况下，在epoll_wait返回和判断handing_之间给处理了，超时除外
 			//要优化的代价很大
 
-			for (auto ptr : local_done_items)
-				delete ptr;
-			local_done_items.clear();
 			{
-				klock<kmutex> x(&done_items_mutex_);
+				klock<kmutex> lock(&done_items_mutex_);
 				for (auto ptr : done_items_)
 					delete ptr;
 				done_items_.clear();
@@ -191,19 +194,10 @@ size_t coservice::run() {
 
 			cst_queue_.put(nullptr);
 		}
-		else {
+		else
 			doItem(cst);
-			if (cst->handling_)
-				local_done_items.push_back(cst);
-		}
-		++count;
-	}
 
-	//在这里直接delete掉local_done_items里的实例，不是线程安全的
-	{
-		klock<kmutex> x(&done_items_mutex_);
-		for (auto ptr : local_done_items)
-			done_items_.push_back(ptr);
+		++count;
 	}
 
 	return count;

@@ -8,7 +8,6 @@ thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 	coroutine_item(func),
 	coevent(fd),
-	started_(0),
 	loop_(loop) {
 
 	timenode_.setValue(this);
@@ -18,7 +17,6 @@ coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
 coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
 	coroutine_item(std::move(func)),
 	coevent(fd),
-	started_(0),
 	loop_(loop) {
 
 	timenode_.setValue(this);
@@ -77,6 +75,9 @@ void coloop::remove(coloop_item* cpt) {
 }
 
 void coloop::doItem(coloop_item* cpt) {
+	if (cpt->getState() == coloop_item::FREE)
+		add(cpt);
+
 	coloop_item::running_cpt_ = cpt;
 	cpt->resume();
 	coloop_item::running_cpt_ = nullptr;
@@ -126,10 +127,6 @@ void coloop::loop() {
 
 		for (auto node : timenodes_) {
 			cpt = node->getValue();
-			if (cpt->started_ == 0) {
-				cpt->started_ = 1;
-				add(cpt);
-			}
 			cpt->setRevents(0);
 
 			doItem(cpt);
