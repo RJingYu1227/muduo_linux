@@ -52,16 +52,24 @@ class coservice_item :
 public:
 	typedef std::function<void()> functor;
 
-	inline static bool create(int fd, const functor& func, coservice* service);
-	inline static bool create(int fd, functor&& func, coservice* service);
+	inline static bool create(const functor& func, int fd, sockaddr_in& addr, coservice* service);
+	inline static bool create(const functor& func, const char* ip, int port, coservice* service);
+
+	inline static bool create(functor&& func, int fd, sockaddr_in& addr, coservice* service);
+	inline static bool create(functor&& func, const char* ip, int port, coservice* service);
+
 	inline static coservice_item* self();
 
 	inline void updateEvents();
 
 protected:
 
-	coservice_item(int fd, const functor& func, coservice* service);
-	coservice_item(int fd, functor&& func, coservice* service);
+	coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service);
+	coservice_item(const functor& func, const char* ip, int port, coservice* service);
+
+	coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service);
+	coservice_item(functor&& func, const char* ip, int port, coservice* service);
+
 	~coservice_item();
 
 private:
@@ -74,12 +82,20 @@ private:
 
 };
 
-bool coservice_item::create(int fd, const functor& func, coservice* service) {
-	return new(std::nothrow) coservice_item(fd, func, service);
+bool coservice_item::create(const functor& func, int fd, sockaddr_in& addr, coservice* service) {
+	return new(std::nothrow) coservice_item(func, fd, addr, service);
 }
 
-bool coservice_item::create(int fd, functor&& func, coservice* service) {
-	return new(std::nothrow) coservice_item(fd, std::move(func), service);
+bool coservice_item::create(const functor& func, const char* ip, int port, coservice* service) {
+	return new(std::nothrow) coservice_item(func, ip, port, service);
+}
+
+bool coservice_item::create(functor&& func, int fd, sockaddr_in& addr, coservice* service) {
+	return new(std::nothrow) coservice_item(std::move(func), fd, addr, service);
+}
+
+bool coservice_item::create(functor&& func, const char* ip, int port, coservice* service) {
+	return new(std::nothrow) coservice_item(std::move(func), ip, port, service);
 }
 
 coservice_item* coservice_item::self() {

@@ -11,7 +11,6 @@
 void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
 coservice service;
-thread_local std::vector<ksocket*> done_ksockets;
 
 void sendBuff(buffer* buff) {
 	ssize_t nwrote;
@@ -46,10 +45,12 @@ void sendBuff(buffer* buff) {
 	}
 }
 
-void connect_handler(ksocket* sock) {
+void connect_handler() {
 	coservice_item* cst = coservice_item::self();
 	cst->enableReading();
 	cst->updateEvents();
+
+	LOG << "处理新连接 " << cst->getAddr2() << ':' << cst->getPort();
 	coroutine::yield();
 
 	ssize_t nread;
@@ -66,7 +67,7 @@ void connect_handler(ksocket* sock) {
 		if (nread == 0 || request.parseRequest(&buff) == false)
 			break;
 		else if (request.parseDone()) {
-			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
+			LOG << "完整解析httprequest " << cst->getAddr2() << ':' << cst->getPort();
 
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
@@ -78,10 +79,10 @@ void connect_handler(ksocket* sock) {
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(&buff2);
-			LOG << "完整发送httpresponse " << sock->getAddr2() << ':' << sock->getPort();
+			LOG << "完整发送httpresponse " << cst->getAddr2() << ':' << cst->getPort();
 
 			if (!response.keepAlive()) {
-				sock->shutdownWrite();
+				cst->shutdownWrite();
 				break;
 			}
 			else {
@@ -92,38 +93,31 @@ void connect_handler(ksocket* sock) {
 		coroutine::yield();
 	}
 
-	LOG << "连接处理完毕 " << sock->getAddr2() << ':' << sock->getPort();
-	done_ksockets.push_back(sock);
+	LOG << "连接处理完毕 " << cst->getAddr2() << ':' << cst->getPort();
 }
 
-void accept_handler(ksocket* sock) {
+void accept_handler() {
 	coservice_item* cst = coservice_item::self();
+	cst->bind();
+	cst->listen();
 	cst->enableReading();
 	cst->updateEvents();
 
+	LOG << "TcpServer开始监听 " << cst->getAddr2() << ':' << cst->getPort();
+	coroutine::yield();
+	
 	sockaddr_in cliaddr;
 	int clifd;
 
-	LOG << "TcpServer开始监听 " << sock->getAddr2() << ':' << sock->getPort();
-
 	while (1) {
-		clifd = sock->accept(&cliaddr);
-		if (clifd > 0) {
-			ksocket* temp_sock = new ksocket(clifd, cliaddr);
-			temp_sock->setTcpNodelay(1);
+		clifd = cst->accept(&cliaddr);
+		if (clifd > 0)
+			coservice_item::create(connect_handler, clifd, cliaddr, &service);
 
-			coservice_item::create(clifd, std::bind(connect_handler, temp_sock), &service);
-			LOG << "建立一个新连接 " << temp_sock->getAddr2() << ':' << temp_sock->getPort();
-		}
-
-		for (auto temp : done_ksockets) {
-			delete temp;
-		}
-		done_ksockets.clear();
 		coroutine::yield();
 	}
 
-	LOG << "TcpServer停止监听 " << sock->getAddr2() << ':' << sock->getPort();
+	LOG << "TcpServer停止监听 " << cst->getAddr2() << ':' << cst->getPort();
 }
 
 void thread_func() {
@@ -144,11 +138,7 @@ int main(int argc, char* argv[]) {
 			thread_num = 8;
 	}
 
-	ksocket sock("0.0.0.0", 7777);
-	sock.bind();
-	sock.listen();
-
-	coservice_item::create(sock.getFd(), std::bind(accept_handler, &sock), &service);
+	coservice_item::create(accept_handler, "0.0.0.0", 7777, &service);
 
 	std::vector<kthread*> thread_vec(thread_num);
 	for (auto& x : thread_vec) {

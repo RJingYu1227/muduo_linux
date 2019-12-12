@@ -5,9 +5,9 @@
 
 thread_local coservice_item* coservice_item::running_cst_ = nullptr;
 
-coservice_item::coservice_item(int fd, const functor& func, coservice* service) :
+coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service) :
 	coroutine_item(func),
-	coevent(fd),
+	coevent(fd, addr),
 	service_(service),
 	handling_(1) {
 
@@ -17,9 +17,9 @@ coservice_item::coservice_item(int fd, const functor& func, coservice* service) 
 	service_->add(this);
 }
 
-coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
-	coroutine_item(std::move(func)),
-	coevent(fd),
+coservice_item::coservice_item(const functor& func, const char* ip, int port, coservice* service) :
+	coroutine_item(func),
+	coevent(ip, port),
 	service_(service),
 	handling_(1) {
 
@@ -28,6 +28,31 @@ coservice_item::coservice_item(int fd, functor&& func, coservice* service) :
 
 	service_->add(this);
 }
+
+coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service) :
+	coroutine_item(std::move(func)),
+	coevent(fd, addr),
+	service_(service),
+	handling_(1) {
+
+	timenode_.setValue(this);
+	setRevents(0);
+	//另外一种启动方式
+	service_->add(this);
+}
+
+coservice_item::coservice_item(functor&& func, const char* ip, int port, coservice* service) :
+	coroutine_item(std::move(func)),
+	coevent(ip, port),
+	service_(service),
+	handling_(1) {
+
+	timenode_.setValue(this);
+	setRevents(0);
+
+	service_->add(this);
+}
+
 
 coservice_item::~coservice_item() {
 	assert(getState() == DONE);

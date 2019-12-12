@@ -8,8 +8,6 @@
 #include<unistd.h>
 #include<signal.h>
 
-kmutex sock_mutex;
-std::vector<ksocket*> done_ksockets;
 kmutex loop_mutex;
 std::vector<coloop*> ioloops;
 int thread_num = 4;
@@ -47,10 +45,12 @@ void sendBuff(buffer* buff) {
 	}
 }
 
-void connect_handler(ksocket* sock) {
+void connect_handler() {
 	coloop_item* cpt = coloop_item::self();
 	cpt->enableReading();
 	cpt->updateEvents();
+
+	LOG << "处理新连接 " << cpt->getAddr2() << ':' << cpt->getPort();
 	coroutine::yield();
 
 	ssize_t nread;
@@ -67,7 +67,7 @@ void connect_handler(ksocket* sock) {
 		if (nread == 0 || request.parseRequest(&buff) == false)
 			break;
 		else if (request.parseDone()) {
-			LOG << "完整解析httprequest " << sock->getAddr2() << ':' << sock->getPort();
+			LOG << "完整解析httprequest " << cpt->getAddr2() << ':' << cpt->getPort();
 
 			string temp = request.getHeader("Connection");
 			bool alive = (temp == "keep-alive") ||
@@ -79,10 +79,10 @@ void connect_handler(ksocket* sock) {
 			buffer buff2;
 			response.appendToBuffer(&buff2);
 			sendBuff(&buff2);
-			LOG << "完整发送httpresponse " << sock->getAddr2() << ':' << sock->getPort();
+			LOG << "完整发送httpresponse " << cpt->getAddr2() << ':' << cpt->getPort();
 
 			if (!response.keepAlive()) {
-				sock->shutdownWrite();
+				cpt->shutdownWrite();
 				break;
 			}
 			else {
@@ -93,47 +93,37 @@ void connect_handler(ksocket* sock) {
 		coroutine::yield();
 	}
 
-	LOG << "连接处理完毕 " << sock->getAddr2() << ':' << sock->getPort();
-	klock<kmutex> x(&sock_mutex);
-	done_ksockets.push_back(sock);
+	LOG << "连接处理完毕 " << cpt->getAddr2() << ':' << cpt->getPort();
 }
 
-void accept_handler(ksocket* sock) {
+void accept_handler() {
 	coloop_item* cpt = coloop_item::self();
+	cpt->bind();
+	cpt->listen();
 	cpt->enableReading();
 	cpt->updateEvents();
+
+	LOG << "TcpServer开始监听 " << cpt->getAddr2() << ':' << cpt->getPort();
+	coroutine::yield();
 
 	sockaddr_in cliaddr;
 	int clifd;
 	coloop* ioloop;
 	int index = 0;
 
-	LOG << "TcpServer开始监听 " << sock->getAddr2() << ':' << sock->getPort();
-
 	while (1) {
-		clifd = sock->accept(&cliaddr);
+		clifd = cpt->accept(&cliaddr);
 		if (clifd > 0) {
-			ksocket* temp_sock = new ksocket(clifd, cliaddr);
-			temp_sock->setTcpNodelay(1);
-
 			ioloop = ioloops[index];
 			index = (index + 1) % thread_num;
 
-			coloop_item::create(clifd, std::bind(connect_handler, temp_sock), ioloop);
-			LOG << "建立一个新连接 " << temp_sock->getAddr2() << ':' << temp_sock->getPort();
-		}
-
-		{
-			klock<kmutex> x(&sock_mutex);
-			for (auto ptr : done_ksockets)
-				delete ptr;
-			done_ksockets.clear();
+			coloop_item::create(connect_handler, clifd, cliaddr, ioloop);
 		}
 
 		coroutine::yield();
 	}
 
-	LOG << "TcpServer停止监听 " << sock->getAddr2() << ':' << sock->getPort();
+	LOG << "TcpServer停止监听 " << cpt->getAddr2() << ':' << cpt->getPort();
 }
 
 void thread_func() {
@@ -165,11 +155,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	coloop loop;
-	ksocket sock("127.0.0.1", 7777);
-	sock.bind();
-	sock.listen();
-
-	coloop_item::create(sock.getFd(), std::bind(accept_handler, &sock), &loop);
+	coloop_item::create(accept_handler, "0.0.0.0", 7777, &loop);
 	loop.loop();
 
 	for (auto& x : thread_vec)

@@ -5,18 +5,36 @@
 
 thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 
-coloop_item::coloop_item(int fd, const functor& func, coloop* loop) :
+coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop* loop) :
 	coroutine_item(func),
-	coevent(fd),
+	coevent(fd, addr),
 	loop_(loop) {
 
 	timenode_.setValue(this);
 	loop_->setTimeout(1, &timenode_);
 }
 
-coloop_item::coloop_item(int fd, functor&& func, coloop* loop) :
+coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* loop) :
+	coroutine_item(func),
+	coevent(ip, port),
+	loop_(loop) {
+
+	timenode_.setValue(this);
+	loop_->setTimeout(1, &timenode_);
+}
+
+coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop) :
 	coroutine_item(std::move(func)),
-	coevent(fd),
+	coevent(fd, addr),
+	loop_(loop) {
+
+	timenode_.setValue(this);
+	loop_->setTimeout(1, &timenode_);
+}
+
+coloop_item::coloop_item(functor&& func, const char* ip, int port, coloop* loop) :
+	coroutine_item(std::move(func)),
+	coevent(ip, port),
 	loop_(loop) {
 
 	timenode_.setValue(this);
@@ -89,7 +107,7 @@ void coloop::doItem(coloop_item* cpt) {
 }
 
 void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode) {
-	klock<kmutex> x(&time_mutex_);
+	klock<kmutex> lock(&time_mutex_);
 	timewheel_.setTimeout(ms, timenode);
 }
 

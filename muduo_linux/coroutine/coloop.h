@@ -48,16 +48,24 @@ class coloop_item :
 public:
 	typedef std::function<void()> functor;
 
-	inline static bool create(int fd, const functor& func, coloop* loop);
-	inline static bool create(int fd, functor&& func, coloop* loop);
+	inline static bool create(const functor& func, int fd, sockaddr_in& addr, coloop* loop);
+	inline static bool create(const functor& func, const char* ip, int port, coloop* loop);
+
+	inline static bool create(functor&& func, int fd, sockaddr_in& addr, coloop* loop);
+	inline static bool create(functor&& func, const char* ip, int port, coloop* loop);
+
 	inline static coloop_item* self();
 
 	inline void updateEvents();
 
 protected:
 
-	coloop_item(int fd, const functor& func, coloop* loop);
-	coloop_item(int fd, functor&& func, coloop* loop);
+	coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop* loop);
+	coloop_item(const functor& func, const char* ip, int port, coloop* loop);
+
+	coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop);
+	coloop_item(functor&& func, const char* ip, int port, coloop* loop);
+
 	~coloop_item();
 
 private:
@@ -69,12 +77,20 @@ private:
 
 };
 
-bool coloop_item::create(int fd, const functor& func, coloop* loop) {
-	return new(std::nothrow) coloop_item(fd, func, loop);
+bool coloop_item::create(const functor& func, int fd, sockaddr_in& addr, coloop* loop) {
+	return new(std::nothrow) coloop_item(func, fd, addr, loop);
 }
 
-bool coloop_item::create(int fd, functor&& func, coloop* loop) {
-	return new(std::nothrow) coloop_item(fd, std::move(func), loop);
+bool coloop_item::create(const functor& func, const char* ip, int port, coloop* loop) {
+	return new(std::nothrow) coloop_item(func, ip, port, loop);
+}
+
+bool coloop_item::create(functor&& func, int fd, sockaddr_in& addr, coloop* loop) {
+	return new(std::nothrow) coloop_item(std::move(func), fd, addr, loop);
+}
+
+bool coloop_item::create(functor&& func, const char* ip, int port, coloop* loop) {
+	return new(std::nothrow) coloop_item(std::move(func), ip, port, loop);
 }
 
 coloop_item* coloop_item::self() {

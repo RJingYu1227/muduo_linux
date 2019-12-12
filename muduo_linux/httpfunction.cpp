@@ -173,7 +173,7 @@ bool insertRedis(const string& path) {
 void httpCallback(const httprequest& request, const string& content, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
 	bool ok = 0;
-	string path = "./html";
+	string path = "/home/rjingyu/source/html";
 
 	switch (request.getMethod()) {
 	case(httprequest::kGET):

@@ -1,20 +1,24 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"ksocket.h"
 
 #include<sys/epoll.h>
 
-class coevent {
+class coevent :public ksocket {
 public:
 
-	explicit coevent(int fd) :
-		fd_(fd),
+	coevent(int fd, sockaddr_in& addr) :
+		ksocket(fd, addr),
 		events_(0),
 		revents_(0) {
 
 	}
+	coevent(const char* ip, int port) :
+		ksocket(ip, port),
+		events_(0),
+		revents_(0) {
 
-	int getFd()const { return fd_; }
+	}
 
 	void enableReading() { events_ |= READ; }
 	void disableReading() { events_ &= ~READ; }
@@ -47,7 +51,6 @@ private:
 		ET = EPOLLET,
 	};
 
-	int fd_;
 	uint32_t events_;
 	uint32_t revents_;
 
