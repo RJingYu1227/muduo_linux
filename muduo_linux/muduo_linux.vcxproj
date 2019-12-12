@@ -82,7 +82,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
-    <ClCompile Include="coloop_webserver.cpp" />
     <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />
@@ -110,7 +109,6 @@
     <ClCompile Include="net\tcpserver.cpp" />
     <ClCompile Include="net\ktimer.cpp" />
     <ClCompile Include="net\timerqueue.cpp" />
-    <ClCompile Include="webserver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />

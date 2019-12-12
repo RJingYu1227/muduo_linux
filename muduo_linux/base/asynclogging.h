@@ -5,8 +5,6 @@
 
 #include<vector>
 
-class logfile;
-
 class asynclogger :uncopyable {
 public:
 
@@ -35,16 +33,13 @@ private:
 
 	void threadFunc();
 
-	typedef std::pair<logfile*, std::string> item;
-
 	sequence readdone_;//已读末尾下标
 	sequence read_;//可读起始下标
 	sequence writedone_;//已写末尾下标
 	sequence write_;//可写起始下标
 
-	std::vector<item> ringbuffer_;
+	std::vector<char> ringbuffer_;
 	size_t end_index_;
-	kthreadlocal<logfile> thread_logfile_;
 
 	std::string basename_;
 	off_t rollsize_;

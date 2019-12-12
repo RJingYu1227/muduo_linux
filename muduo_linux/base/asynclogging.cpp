@@ -4,9 +4,8 @@
 asynclogger* asynclogger::instance_ = nullptr;
 
 asynclogger::asynclogger(const char* basename, off_t rollsize) :
-	ringbuffer_(1024 * 1024),
+	ringbuffer_(kLargeBuffer * 32),
 	end_index_(ringbuffer_.size() - 1),
-	thread_logfile_(kthreadlocal<logfile>::freeFunc),
 	basename_(basename),
 	rollsize_(rollsize),
 	thread_(std::bind(&asynclogger::threadFunc, this)),
@@ -26,36 +25,42 @@ asynclogger::~asynclogger() {
 }
 
 void asynclogger::append(const s_logbuffer& sbuff) {
-	logfile* log = thread_logfile_.get();
-	if (log == nullptr) {
-		log = new logfile((basename_ + std::to_string(pthread_self()) + '.').c_str(), rollsize_);
-		thread_logfile_.set(log);
-	}
+	size_t size = sbuff.length();
+	const char* src = sbuff.getData();
 
-	uint64_t wseq = write_.seq_++;
-	uint64_t widx = wseq & end_index_;
+	uint64_t wseq = (write_.seq_ += size) - 1;
+	uint64_t begin = end_index_ & (wseq - size + 1);
+	uint64_t end = end_index_ & wseq;
+	bool notify;
 
 	while (wseq > readdone_.seq_ + end_index_ + 1) {
 		pthread_yield();
 	}
-	ringbuffer_[widx].first = log;
-	ringbuffer_[widx].second.assign(sbuff.getData(), sbuff.length());
+	if (end < begin) {
+		uint64_t temp = end_index_ - begin + 1;
+		memcpy(&ringbuffer_[begin], src, temp);
+		memcpy(&ringbuffer_[0], src + temp, end + 1);
+	}
+	else
+		memcpy(&ringbuffer_[begin], src, size);
 
-	while (wseq - 1 != writedone_.seq_) {
+	while (wseq - size != writedone_.seq_) {
 		pthread_yield();
 	}
+	notify = wseq < read_.seq_;
 	writedone_.seq_ = wseq;
 
-	if (wseq < read_.seq_) {
+	if (notify) {
 		klock<kmutex> lock(&mutex_);
 		cond_.notify();
 	}
 }
 
 void asynclogger::threadFunc() {
-	uint64_t rseq = read_.seq_++;
-	uint64_t ridx = rseq & end_index_;
-	logfile* log;
+	uint64_t rseq = (read_.seq_ += kLargeBuffer) - 1;
+	uint64_t begin = end_index_ & (rseq - kLargeBuffer + 1);
+	uint64_t end = end_index_ & rseq;
+	logfile log(basename_.c_str(), rollsize_);
 
 	while (running_) {
 		if (rseq > writedone_.seq_) {
@@ -64,17 +69,38 @@ void asynclogger::threadFunc() {
 				cond_.timedwait(&mutex_, 10);
 		}
 
-		if (rseq > writedone_.seq_)
-			continue;
+		uint64_t wdseq = writedone_.seq_;
+		if (rseq > wdseq) {
+			uint64_t wdidx = end_index_ & wdseq;
+			if (wdseq > readdone_.seq_) {
+				if (wdidx < begin) {
+					log.append(&ringbuffer_[begin], end_index_ - begin + 1);
+					log.append(&ringbuffer_[0], wdidx + 1);
+				}
+				else
+					log.append(&ringbuffer_[begin], wdidx - begin + 1);
 
-		log = ringbuffer_[ridx].first;
-		log->append(ringbuffer_[ridx].second.c_str(), ringbuffer_[ridx].second.size());
+				readdone_.seq_ = wdseq;
+				begin = end_index_ & (wdidx + 1);
+
+				log.flush();
+			}
+
+			continue;
+		}
+
+		if (end < begin) {
+			log.append(&ringbuffer_[begin], end_index_ - begin + 1);
+			log.append(&ringbuffer_[0], end + 1);
+		}
+		else
+			log.append(&ringbuffer_[begin], end - begin + 1);
 
 		readdone_.seq_ = rseq;
+		rseq = (read_.seq_ += kLargeBuffer) - 1;
+		begin = end_index_ & (rseq - kLargeBuffer + 1);
+		end = end_index_ & rseq;
 
-		log->flush();
-
-		rseq = read_.seq_++;
-		ridx = rseq & end_index_;
+		log.flush();
 	}
 }
