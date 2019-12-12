@@ -3,7 +3,7 @@
 #include<malloc.h>
 #include<assert.h>
 
-kthreadlocal<coroutine> coroutine::thread_coenv_(nullptr);
+kthreadlocal<coroutine> coroutine::thread_coenv_(kthreadlocal<coroutine>::freeFunc);
 
 coroutine::coroutine()
 	:sindex_(-1) {

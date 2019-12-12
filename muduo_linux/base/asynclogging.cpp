@@ -31,7 +31,6 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	uint64_t wseq = (write_.seq_ += size) - 1;
 	uint64_t begin = end_index_ & (wseq - size + 1);
 	uint64_t end = end_index_ & wseq;
-	bool notify;
 
 	while (wseq > readdone_.seq_ + end_index_ + 1) {
 		pthread_yield();
@@ -47,10 +46,10 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	while (wseq - size != writedone_.seq_) {
 		pthread_yield();
 	}
-	notify = wseq < read_.seq_;
 	writedone_.seq_ = wseq;
 
-	if (notify) {
+	uint64_t rseq = read_.seq_;
+	if (rseq <= wseq && wseq <= (rseq + size)) {
 		klock<kmutex> lock(&mutex_);
 		cond_.notify();
 	}

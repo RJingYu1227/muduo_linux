@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include"disruptor.h"
 #include"coroutine.h"
 #include"coevent.h"
 #include"timewheel.h"
 
 #include<atomic>
+#include<queue>
 
 class coservice_item;
 
@@ -25,22 +25,23 @@ private:
 	void add(coservice_item* cst);
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
-	void doItem(coservice_item* cst);
-	void getItems();
+	void doReactor();
 	void setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode);
 
 	std::atomic_int32_t item_count_;
 
 	int epfd_;
 	std::vector<epoll_event> revents_;
+	std::vector<klinknode<coservice_item*>*> timenodes_;
 
-	disruptor<coservice_item*> cst_queue_;
+	kmutex task_mutex_;
+	kcond task_cond_;
+	std::queue<coservice_item*> task_queue_;
 
-	kmutex done_items_mutex_;
+	kmutex done_mutex_;
 	std::vector<coservice_item*> done_items_;
 
 	kmutex time_mutex_;
-	std::vector<klinknode<coservice_item*>*> timenodes_;
 	timewheel<coservice_item*> timewheel_;
 };
 

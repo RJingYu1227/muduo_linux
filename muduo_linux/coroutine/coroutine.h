@@ -40,6 +40,7 @@ public:
 	};
 
 protected:
+	friend class kthreadlocal<coroutine>;
 
 	coroutine();
 	~coroutine();
