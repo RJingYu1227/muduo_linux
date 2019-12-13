@@ -13,8 +13,6 @@ class coservice :uncopyable {
 	friend class coservice_item;
 public:
 
-	static void yield(unsigned int ms);
-
 	coservice();
 	~coservice();
 
@@ -60,7 +58,8 @@ public:
 
 	inline static coservice_item* self();
 
-	inline void updateEvents();
+	void yield(int ms);
+	void updateEvents();
 
 protected:
 
@@ -70,7 +69,7 @@ protected:
 	coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service);
 	coservice_item(functor&& func, const char* ip, int port, coservice* service);
 
-	~coservice_item();
+	virtual ~coservice_item();
 
 private:
 
@@ -100,10 +99,6 @@ bool coservice_item::create(functor&& func, const char* ip, int port, coservice*
 
 coservice_item* coservice_item::self() {
 	return running_cst_;
-}
-
-void coservice_item::updateEvents() {
-	service_->modify(this);
 }
 
 //暂时不适合使用边沿触发模式，请参考coservice::run

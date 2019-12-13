@@ -13,8 +13,6 @@ class coloop :uncopyable {
 	friend class coloop_item;
 public:
 
-	static void yield(unsigned int ms);
-
 	coloop();
 	~coloop();
 
@@ -56,7 +54,8 @@ public:
 
 	inline static coloop_item* self();
 
-	inline void updateEvents();
+	void yield(int ms);
+	void updateEvents();
 
 protected:
 
@@ -95,8 +94,4 @@ bool coloop_item::create(functor&& func, const char* ip, int port, coloop* loop)
 
 coloop_item* coloop_item::self() {
 	return running_cpt_;
-}
-
-void coloop_item::updateEvents() {
-	loop_->modify(this);
 }

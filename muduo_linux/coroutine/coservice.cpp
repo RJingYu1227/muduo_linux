@@ -53,17 +53,20 @@ coservice_item::coservice_item(functor&& func, const char* ip, int port, coservi
 	service_->add(this);
 }
 
-
 coservice_item::~coservice_item() {
 	assert(getState() == DONE);
 }
 
-void coservice::yield(unsigned int ms) {
-	coservice_item* cst = coservice_item::running_cst_;
-	assert(cst != nullptr);
-	cst->service_->setTimeout(ms, &cst->timenode_);
+void coservice_item::yield(int ms) {
+	assert(this == running_cst_);
+	if (ms >= 0)
+		service_->setTimeout(ms, &timenode_);
 
 	coroutine::yield();
+}
+
+void coservice_item::updateEvents() {
+	service_->modify(this);
 }
 
 coservice::coservice() :

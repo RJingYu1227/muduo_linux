@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include<stdexcept>
 #include<string>
 #include<map>
 
@@ -49,7 +50,7 @@ public:
 	const string& getQuery()const 
 	{ return query_; }
 
-	string getHeader(const string& key)const;
+	string getHeader(const string& key)const noexcept(false);//std::runtime_error
 	const std::map<string, string>& getHeaders()const 
 	{ return headers_; }
 

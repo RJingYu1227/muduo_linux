@@ -37,7 +37,13 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 		conn->shutDown();
 	}
 	else if (request->parseDone()) {
-		string temp = request->getHeader("Connection");
+		string temp;
+		try {
+			temp = request->getHeader("Connection");
+		}
+		catch (std::runtime_error er) {
+			temp.clear();
+		}
 		bool alive = (temp == "keep-alive") ||
 			(request->getVersion() == httprequest::kHTTP11 && temp != "close");
 		//1.0协议中默认close，keep-alive要指明

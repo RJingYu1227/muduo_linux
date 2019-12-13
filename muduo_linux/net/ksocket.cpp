@@ -5,28 +5,26 @@
 #include<strings.h>
 #include<assert.h>
 
-ksocket::ksocket(const char* ip, int port)
-	:fd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP)),
-	len_(sizeof(sockaddr_in)) {
+ksocket::ksocket(const char* ip, int port) :
+	fd_(socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP)) {
 
 	assert(fd_ > 0);
-	bzero(&addr_, len_);
+	bzero(&addr_, sizeof(sockaddr_in));
 
 	addr_.sin_family = AF_INET;
 
 	inet_pton(AF_INET, ip, &addr_.sin_addr);
-	strncpy(buf, ip, 16);
+	strncpy(ip_, ip, 16);
 
 	addr_.sin_port = htons(static_cast<uint16_t>(port));
 }
 
-ksocket::ksocket(int fd, sockaddr_in& addr)
-	:fd_(fd),
-	addr_(addr),
-	len_(sizeof(sockaddr_in)) {
+ksocket::ksocket(int fd, sockaddr_in& addr) :
+	fd_(fd),
+	addr_(addr) {
 
 	assert(fd_ > 0);
-	inet_ntop(AF_INET, &addr_.sin_addr, buf, 16);
+	inet_ntop(AF_INET, &addr_.sin_addr, ip_, 16);
 }
 
 ksocket::~ksocket() {
@@ -39,23 +37,28 @@ bool ksocket::getTcpInfo(tcp_info* info)const {
 	return getsockopt(fd_, SOL_TCP, TCP_INFO, info, &len) == 0;
 }
 
-void ksocket::bind() {
+bool ksocket::bind() {
 	if (::bind(fd_, (sockaddr*)&addr_, sizeof addr_) == -1) {
-		perror("绑定监听端口失败：");
-		exit(1);
+		LOG << "bind失败，errno = " << errno;
+		return 0;
 	}
+
+	return 1;
 }
 
-void ksocket::listen() {
+bool ksocket::listen() {
 	if (::listen(fd_, SOMAXCONN) == -1) {
-		perror("监听端口失败：");
-		exit(1);
+		LOG << "listen失败，errno = " << errno;
+		return 0;
 	}
+
+	return 1;
 }
 
 int ksocket::accept(sockaddr_in* peeraddr) {
 	bzero(peeraddr, sizeof(sockaddr_in));
-	int clifd_ = ::accept4(fd_, (sockaddr*)peeraddr, &len_,
+	socklen_t len;
+	int clifd_ = ::accept4(fd_, (sockaddr*)peeraddr, &len,
 		SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 	if (clifd_ == -1 && errno != EAGAIN)

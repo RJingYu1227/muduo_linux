@@ -54,31 +54,35 @@ void connect_handler() {
 	coroutine::yield();
 
 	ssize_t nread;
-	buffer buff;
+	buffer buff1, buff2;
 	httprequest request;
-	int fd = cpt->getFd();
 
 	while (1) {
-		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
-			buff.hasUsed(nread);
-			buff.ensureLeftBytes(1024);
+		if ((nread = cpt->read(buff1.endPtr(), 1024)) > 0) {
+			buff1.hasUsed(nread);
+			buff1.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || request.parseRequest(&buff) == false)
+		if (nread == 0 || request.parseRequest(&buff1) == false)
 			break;
 		else if (request.parseDone()) {
 			LOG << "完整解析httprequest " << cpt->getAddr2() << ':' << cpt->getPort();
 
-			string temp = request.getHeader("Connection");
+			string temp;
+			try {
+				temp = request.getHeader("Connection");
+			}
+			catch (std::runtime_error er) {
+				temp.clear();
+			}
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
 
 			httpresponse response(alive);
-			httpCallback(request, buff.toString(), response);
+			httpCallback(request, buff1.toString(), response);
 
-			buffer buff2;
 			response.appendToBuffer(&buff2);
-			sendBuff(&buff2);
+			cpt->write(buff2.beginPtr(), buff2.usedBytes(), -1);
 			LOG << "完整发送httpresponse " << cpt->getAddr2() << ':' << cpt->getPort();
 
 			if (!response.keepAlive()) {
@@ -86,7 +90,8 @@ void connect_handler() {
 				break;
 			}
 			else {
-				buff.retrieve(request.getLength());
+				buff1.retrieve(request.getLength());
+				buff2.retrieveAll();
 				request.reset();
 			}
 		}

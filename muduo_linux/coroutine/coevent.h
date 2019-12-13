@@ -20,6 +20,13 @@ public:
 
 	}
 
+	virtual ~coevent() {}
+
+	//返回值与普通的系统调用read一致，不保证读满缓冲区
+	ssize_t read(void* buf, size_t nbytes, int ms = 0);
+	//返回非正值代表出错，返回值的绝对值代表已写入的字节数；如果ms不等于0，除非出错，否则会写完或者超时返回
+	ssize_t write(const void* buf, size_t nbytes, int ms = 0);
+
 	void enableReading() { events_ |= READ; }
 	void disableReading() { events_ &= ~READ; }
 	bool isReading()const { return events_ & READ; }
@@ -35,6 +42,8 @@ public:
 	void disableALL() { events_ = NONE; }
 	bool isNoneEvent()const { return events_ == NONE; }
 
+	virtual void yield(int ms) = 0;
+	virtual void updateEvents() = 0;
 	uint32_t getRevents()const { return revents_; }
 
 protected:
@@ -51,7 +60,7 @@ private:
 		ET = EPOLLET,
 	};
 
-	uint32_t events_;
-	uint32_t revents_;
+	volatile uint32_t events_;
+	volatile uint32_t revents_;
 
 };

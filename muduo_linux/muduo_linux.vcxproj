@@ -82,6 +82,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="base\asynclogging.cpp" />
+    <ClCompile Include="coloop_webserver.cpp" />
+    <ClCompile Include="coroutine\coevent.cpp" />
     <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
     <ClCompile Include="base\buffer.cpp" />

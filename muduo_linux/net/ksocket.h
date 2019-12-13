@@ -15,11 +15,11 @@ public:
 	int getFd()const { return fd_; }
 	uint16_t getPort()const { return htons(addr_.sin_port); }
 	uint32_t getAddr1()const { return addr_.sin_addr.s_addr; }
-	const char* getAddr2()const { return buf; }
+	const char* getAddr2()const { return ip_; }
 	bool getTcpInfo(tcp_info* info)const;
 
-	void bind();
-	void listen();
+	bool bind();
+	bool listen();
 	int accept(sockaddr_in* peeraddr);
 
 	void shutdownWrite();
@@ -35,8 +35,7 @@ private:
 
 	int fd_;
 	sockaddr_in addr_;
-	socklen_t len_;
-	char buf[16];
+	char ip_[16];
 
 };
 

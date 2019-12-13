@@ -59,7 +59,7 @@ void asynclogger::threadFunc() {
 	uint64_t rseq = (read_.seq_ += kLargeBuffer) - 1;
 	uint64_t begin = end_index_ & (rseq - kLargeBuffer + 1);
 	uint64_t end = end_index_ & rseq;
-	logfile log(basename_.c_str(), rollsize_);
+	logfile log(basename_.c_str(), rollsize_ - 1);
 
 	while (running_) {
 		if (rseq > writedone_.seq_) {

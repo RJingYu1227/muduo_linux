@@ -5,45 +5,13 @@
 #include"buffer.h"
 #include"logging.h"
 
+#include<stdexcept>
 #include<unistd.h>
 #include<signal.h>
 
 void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
 coservice service;
-
-void sendBuff(buffer* buff) {
-	ssize_t nwrote;
-	coservice_item* cst = coservice_item::self();
-	int fd = cst->getFd();
-	while (1) {
-		nwrote = write(fd, buff->beginPtr(), buff->usedBytes());
-		if (nwrote < 0) {
-			coroutine::yield();
-			continue;
-		}
-		buff->retrieve(nwrote);
-
-		if (buff->usedBytes()) {
-			if (cst->isWriting() == false) {
-				cst->disableReading();
-				cst->enableWriting();
-
-				cst->updateEvents();
-			}
-
-			coroutine::yield();
-		}
-		else
-			break;
-	}
-	if (cst->isWriting()) {
-		cst->disableWrting();
-		cst->enableReading();
-
-		cst->updateEvents();
-	}
-}
 
 void connect_handler() {
 	coservice_item* cst = coservice_item::self();
@@ -54,31 +22,35 @@ void connect_handler() {
 	coroutine::yield();
 
 	ssize_t nread;
-	buffer buff;
+	buffer buff1, buff2;
 	httprequest request;
-	int fd = cst->getFd();
 
 	while (1) {
-		if ((nread = read(fd, buff.endPtr(), 1024)) > 0) {
-			buff.hasUsed(nread);
-			buff.ensureLeftBytes(1024);
+		if ((nread = cst->read(buff1.endPtr(), 1024)) > 0) {
+			buff1.hasUsed(nread);
+			buff1.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || request.parseRequest(&buff) == false)
+		if (nread == 0 || request.parseRequest(&buff1) == false)
 			break;
 		else if (request.parseDone()) {
 			LOG << "完整解析httprequest " << cst->getAddr2() << ':' << cst->getPort();
-
-			string temp = request.getHeader("Connection");
+			
+			string temp;
+			try {
+				temp = request.getHeader("Connection");
+			}
+			catch (std::runtime_error er) {
+				temp.clear();
+			}
 			bool alive = (temp == "keep-alive") ||
 				(request.getVersion() == httprequest::kHTTP11 && temp != "close");
 
 			httpresponse response(alive);
-			httpCallback(request, buff.toString(), response);
+			httpCallback(request, buff1.toString(), response);
 
-			buffer buff2;
 			response.appendToBuffer(&buff2);
-			sendBuff(&buff2);
+			cst->write(buff2.beginPtr(), buff2.usedBytes(), -1);
 			LOG << "完整发送httpresponse " << cst->getAddr2() << ':' << cst->getPort();
 
 			if (!response.keepAlive()) {
@@ -86,7 +58,8 @@ void connect_handler() {
 				break;
 			}
 			else {
-				buff.retrieve(request.getLength());
+				buff1.retrieve(request.getLength());
+				buff2.retrieveAll();
 				request.reset();
 			}
 		}

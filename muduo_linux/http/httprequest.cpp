@@ -44,7 +44,7 @@ string httprequest::getHeader(const string& key)const {
 	if (iter != headers_.end())
 		return iter->second;
 	else
-		return "";
+		throw std::runtime_error("请求头不存在");
 }
 
 void httprequest::reset() {

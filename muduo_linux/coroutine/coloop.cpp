@@ -45,12 +45,16 @@ coloop_item::~coloop_item() {
 	assert(getState() == DONE);
 }
 
-void coloop::yield(unsigned int ms) {
-	coloop_item* cpt = coloop_item::running_cpt_;
-	assert(cpt != nullptr);
-	cpt->loop_->setTimeout(ms, &cpt->timenode_);
+void coloop_item::yield(int ms) {
+	assert(this == running_cpt_);
+	if (ms > 0)
+		loop_->setTimeout(ms, &timenode_);
 
 	coroutine::yield();
+}
+
+void coloop_item::updateEvents() {
+	loop_->modify(this);
 }
 
 coloop::coloop() :
