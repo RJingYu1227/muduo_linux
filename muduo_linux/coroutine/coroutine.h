@@ -60,8 +60,10 @@ private:
 	};
 
 	static void coroutineFunc(coroutine_item* co);
-	static void makeContext(coroutine_item* co)noexcept(false);//std::bad_alloc
-	static void swapContext(coroutine_item* curr, coroutine_item* pend)noexcept(false);//std::bad_alloc
+
+	//std::bad_alloc, std::logic_error
+	static void makeContext(coroutine_item* co)noexcept(false);
+	static void swapContext(coroutine_item* curr, coroutine_item* pend)noexcept(false);
 
 	static kthreadlocal<char> shared_stack_;
 	thread_local static coroutine_item* running_crt_;

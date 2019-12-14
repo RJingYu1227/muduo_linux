@@ -49,6 +49,9 @@ void coroutine_item::makeContext(coroutine_item* co) {
 
 	void* sp;
 	if (co->shared_) {
+		if (running_crt_ && running_crt_->shared_)
+			throw std::logic_error("共享栈协程执行过程中不能创建共享栈协程");
+
 		sp = shared_stack_.get();
 		if (sp == nullptr) {
 			sp = ::malloc(kSharedStackSize);
@@ -93,7 +96,10 @@ void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 		memcpy(curr->stack_buff_, curr->stack_sp_, curr->buff_len_);
 	}
 
+	if (pend->shared_ && pend->ctx_.uc_stack.ss_sp != shared_stack_.get())
+		throw std::logic_error("共享栈协程不能跨线程调用");
 	running_crt_ = pend;
+
 	::swapcontext(&curr->ctx_, &pend->ctx_);
 
 	coroutine_item*  co = running_crt_;
