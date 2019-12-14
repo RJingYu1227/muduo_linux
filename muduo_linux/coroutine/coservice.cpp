@@ -6,7 +6,7 @@
 thread_local coservice_item* coservice_item::running_cst_ = nullptr;
 
 coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service) :
-	coroutine_item(func),
+	coroutine_item(func, 0),
 	coevent(fd, addr),
 	service_(service),
 	handling_(1) {
@@ -18,7 +18,7 @@ coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, c
 }
 
 coservice_item::coservice_item(const functor& func, const char* ip, int port, coservice* service) :
-	coroutine_item(func),
+	coroutine_item(func, 0),
 	coevent(ip, port),
 	service_(service),
 	handling_(1) {
@@ -30,7 +30,7 @@ coservice_item::coservice_item(const functor& func, const char* ip, int port, co
 }
 
 coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service) :
-	coroutine_item(std::move(func)),
+	coroutine_item(std::move(func), 0),
 	coevent(fd, addr),
 	service_(service),
 	handling_(1) {
@@ -42,7 +42,7 @@ coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coserv
 }
 
 coservice_item::coservice_item(functor&& func, const char* ip, int port, coservice* service) :
-	coroutine_item(std::move(func)),
+	coroutine_item(std::move(func), 0),
 	coevent(ip, port),
 	service_(service),
 	handling_(1) {

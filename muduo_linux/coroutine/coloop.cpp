@@ -6,7 +6,7 @@
 thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 
 coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop* loop) :
-	coroutine_item(func),
+	coroutine_item(func, 0),
 	coevent(fd, addr),
 	loop_(loop) {
 
@@ -15,7 +15,7 @@ coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop*
 }
 
 coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* loop) :
-	coroutine_item(func),
+	coroutine_item(func, 0),
 	coevent(ip, port),
 	loop_(loop) {
 
@@ -24,7 +24,7 @@ coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* 
 }
 
 coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop) :
-	coroutine_item(std::move(func)),
+	coroutine_item(std::move(func), 0),
 	coevent(fd, addr),
 	loop_(loop) {
 
@@ -33,7 +33,7 @@ coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop
 }
 
 coloop_item::coloop_item(functor&& func, const char* ip, int port, coloop* loop) :
-	coroutine_item(std::move(func)),
+	coroutine_item(std::move(func), 0),
 	coevent(ip, port),
 	loop_(loop) {
 

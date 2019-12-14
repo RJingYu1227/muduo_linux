@@ -40,7 +40,7 @@ private:
 };
 
 class coloop_item :
-	coroutine::coroutine_item,
+	coroutine_item,
 	public coevent {
 	friend class coloop;
 public:

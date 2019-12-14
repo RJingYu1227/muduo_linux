@@ -4,43 +4,16 @@
 
 #include<ucontext.h>
 
+class coroutine_item;
+
 class coroutine :uncopyable {
+	friend class coroutine_item;
+	friend class kthreadlocal<coroutine>;
 public:
-	typedef std::function<void()> functor;
 
 	inline static void yield();
 
-	class coroutine_item :uncopyable {
-		friend class coroutine;
-	public:
-
-		enum costate {
-			FREE,
-			RUNNING,
-			SUSPEND,
-			DONE,
-		};
-
-		coroutine_item(const functor& func);
-		coroutine_item(functor&& func);
-		~coroutine_item();//暂时不需要virtual
-
-		costate getState()const { return state_; }
-		inline void resume();
-
-	private:
-
-		static void coroutineFunc(coroutine_item* co);
-		static void makeContext(coroutine_item* co);
-
-		costate state_;
-		functor coFunc;
-		ucontext_t ctx_;
-
-	};
-
 protected:
-	friend class kthreadlocal<coroutine>;
 
 	coroutine();
 	~coroutine();
@@ -53,10 +26,56 @@ private:
 	void resumeFunc(coroutine_item* co);
 	void yieldFunc();
 
-	ucontext_t env_ctx_;
+	coroutine_item* env_co_;
 
-	coroutine_item* costack_[128];
-	int sindex_;
+	coroutine_item* call_stack_[128];
+	int index_;
+
+};
+
+//目前实现的共享栈使用条件比较苛刻，不能跨线程，不能在一个共享栈的协程执行过程当中创建一个新的共享栈协程
+class coroutine_item :uncopyable {
+	friend class coroutine;
+public:
+	typedef std::function<void()> functor;
+
+	enum costate {
+		FREE,
+		RUNNING,
+		SUSPEND,
+		DONE,
+	};
+
+	coroutine_item(const functor& func, bool shared = false);
+	coroutine_item(functor&& func, bool shared = false);
+	~coroutine_item();//可以考虑换成virtual
+
+	costate getState()const { return state_; }
+	inline void resume();
+
+private:
+	enum stacksize {
+		kStackSize = 64 * 1024,
+		kSharedStackSize = 1024 * 1024
+	};
+
+	static void coroutineFunc(coroutine_item* co);
+	static void makeContext(coroutine_item* co)noexcept(false);//std::bad_alloc
+	static void swapContext(coroutine_item* curr, coroutine_item* pend)noexcept(false);//std::bad_alloc
+
+	static kthreadlocal<char> shared_stack_;
+	thread_local static coroutine_item* running_crt_;
+
+	costate state_;
+	functor coFunc;
+
+	ucontext_t ctx_;
+
+	bool shared_;
+	char* stack_bp_;
+	char* stack_sp_;
+	char* stack_buff_;
+	size_t buff_len_;
 
 };
 
@@ -64,6 +83,6 @@ void coroutine::yield() {
 	threadCoenv()->yieldFunc();
 }
 
-void coroutine::coroutine_item::resume() {
-	threadCoenv()->resumeFunc(this);
+void coroutine_item::resume() {
+	coroutine::threadCoenv()->resumeFunc(this);
 }

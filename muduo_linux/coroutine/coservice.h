@@ -44,7 +44,7 @@ private:
 };
 
 class coservice_item :
-	coroutine::coroutine_item,
+	coroutine_item,
 	public coevent {
 	friend class coservice;
 public:
