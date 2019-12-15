@@ -1,4 +1,4 @@
-﻿#include "coroutine.h"
+﻿#include"coroutine.h"
 
 #include<malloc.h>
 #include<assert.h>
@@ -10,15 +10,19 @@ thread_local coroutine_item* coroutine_item::running_crt_ = nullptr;
 
 coroutine::coroutine() :
 	env_co_((coroutine_item*)::malloc(sizeof(coroutine_item))),
-	index_(-1) {
+	index_(0) {
 
 	assert(env_co_);
+
 	env_co_->shared_ = false;
+	call_stack_[index_] = env_co_;
+	env_co_->state_ = coroutine_item::RUNNING;
+	coroutine_item::running_crt_ = env_co_;
 	//::getcontext(&env_co_->ctx_);
 }
 
 coroutine::~coroutine() {
-	assert(index_ == -1);
+	assert(index_ == 0);
 
 	::free(env_co_);
 }
@@ -39,19 +43,17 @@ void coroutine_item::coroutineFunc(coroutine_item* co) {
 	co->coFunc();
 	co->state_ = DONE;
 
-	coroutine::yield();
+	coroutine::yield();//这里不会throw
 }
 
 void coroutine_item::makeContext(coroutine_item* co) {
 	::getcontext(&co->ctx_);
 
 	co->ctx_.uc_link = 0;
+	co->ctx_.uc_stack.ss_flags = 0;
 
 	void* sp;
 	if (co->shared_) {
-		if (running_crt_ && running_crt_->shared_)
-			throw std::logic_error("共享栈协程执行过程中不能创建共享栈协程");
-
 		sp = shared_stack_.get();
 		if (sp == nullptr) {
 			sp = ::malloc(kSharedStackSize);
@@ -62,6 +64,7 @@ void coroutine_item::makeContext(coroutine_item* co) {
 		}
 		co->stack_bp_ = (char*)sp + kSharedStackSize;
 		co->ctx_.uc_stack.ss_size = kSharedStackSize;
+		co->ctx_.uc_stack.ss_sp = sp;
 	}
 	else {
 		sp = ::malloc(kStackSize);
@@ -70,41 +73,51 @@ void coroutine_item::makeContext(coroutine_item* co) {
 
 		co->stack_bp_ = (char*)sp + kStackSize;
 		co->ctx_.uc_stack.ss_size = kStackSize;
-	}
-	co->ctx_.uc_stack.ss_sp = sp;
-	co->ctx_.uc_stack.ss_flags = 0;
+		co->ctx_.uc_stack.ss_sp = sp;
 
-	::makecontext(&co->ctx_, (void(*)())coroutineFunc, 1, co);
+		::makecontext(&co->ctx_, (void(*)())coroutineFunc, 1, co);
+	}
+	
 }
 
 void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	char addr;
-	curr->stack_sp_ = &addr;
 
-	if (curr->shared_) {
+	if (curr->shared_ && curr->state_ == SUSPEND) {
+		curr->stack_sp_ = &addr;
 		size_t len = curr->stack_bp_ - curr->stack_sp_;
-		if (curr->stack_buff_ == nullptr || curr->buff_len_ < len) {
-			if (curr->stack_buff_)
+		if (curr->length_ < len) {
+			if (curr->stack_buff_) {
 				::free(curr->stack_buff_);
+
+				curr->stack_buff_ = nullptr;
+				curr->length_ = 0;
+			}
 
 			curr->stack_buff_ = (char*)::malloc(len);
 			if (curr->stack_buff_ == nullptr)
 				throw std::bad_alloc();
 		}
 
-		curr->buff_len_ = len;
-		memcpy(curr->stack_buff_, curr->stack_sp_, curr->buff_len_);
+		curr->length_ = len;
+		memcpy(curr->stack_buff_, curr->stack_sp_, curr->length_);
 	}
 
-	if (pend->shared_ && pend->ctx_.uc_stack.ss_sp != shared_stack_.get())
-		throw std::logic_error("共享栈协程不能跨线程调用");
+	if (pend->shared_) {
+		if (pend->ctx_.uc_stack.ss_sp != shared_stack_.get())
+			throw std::logic_error("共享栈协程不能跨线程调用");
+			
+		if (pend->state_ == FREE)
+			::makecontext(&pend->ctx_, (void(*)())coroutineFunc, 1, pend);
+	}
+
 	running_crt_ = pend;
 
 	::swapcontext(&curr->ctx_, &pend->ctx_);
 
 	coroutine_item*  co = running_crt_;
 	if (co->shared_)
-		memcpy(co->stack_sp_, co->stack_buff_, co->buff_len_);
+		memcpy(co->stack_sp_, co->stack_buff_, co->length_);
 }
 
 coroutine_item::coroutine_item(const functor& func, bool shared) :
@@ -114,7 +127,7 @@ coroutine_item::coroutine_item(const functor& func, bool shared) :
 	stack_bp_(0),
 	stack_sp_(0),
 	stack_buff_(0),
-	buff_len_(0) {
+	length_(0) {
 
 	makeContext(this);
 }
@@ -126,7 +139,7 @@ coroutine_item::coroutine_item(functor&& func, bool shared) :
 	stack_bp_(0),
 	stack_sp_(0),
 	stack_buff_(0),
-	buff_len_(0) {
+	length_(0) {
 
 	makeContext(this);
 }
@@ -142,40 +155,63 @@ coroutine_item::~coroutine_item() {
 }
 
 void coroutine::resumeFunc(coroutine_item* co) {
-	assert(co->state_ == coroutine_item::FREE || co->state_ == coroutine_item::SUSPEND);
+	if (co->state_ == coroutine_item::RUNNING)
+		throw std::logic_error("协程正在执行当中");
 
+	if (co->state_ == coroutine_item::DONE)
+		throw std::logic_error("协程已经执行完毕");
+
+	if (index_ == 128)
+		throw std::logic_error("协程调用栈溢出，index_ == 128");
+	
+	coroutine_item* curr = call_stack_[index_];
+	curr->state_ = coroutine_item::SUSPEND;
+
+	++index_;
+
+	call_stack_[index_] = co;
 	if (co->state_ == coroutine_item::SUSPEND)
 		co->state_ = coroutine_item::RUNNING;
 
-	if (index_ == -1) {
-		++index_;
-		call_stack_[index_] = co;
-		coroutine_item::swapContext(env_co_, co);
+	try {
+		coroutine_item::swapContext(curr, co);
 	}
-	else {
-		//注意这里
-		assert(index_ < 127);
-		coroutine_item* currco = call_stack_[index_];
-		currco->state_ = coroutine_item::SUSPEND;
-		++index_;
-		call_stack_[index_] = co;
-		coroutine_item::swapContext(currco, co);
+	catch (...) {
+		if (co->state_ == coroutine_item::RUNNING)
+			co->state_ = coroutine_item::SUSPEND;
+
+		--index_;
+
+		curr->state_ = coroutine_item::RUNNING;
+
+		throw;
 	}
 }
 
 void coroutine::yieldFunc() {
-	assert(index_ != -1);
+	if (index_ == 0)
+		throw std::logic_error("协程调用栈溢出，index_ == 0");
 
-	coroutine_item* thisco = call_stack_[index_];
+	coroutine_item* curr = call_stack_[index_];
+	if (curr->state_ == coroutine_item::RUNNING)
+		curr->state_ = coroutine_item::SUSPEND;
+
 	--index_;
-	if (thisco->state_ == coroutine_item::RUNNING)
-		thisco->state_ = coroutine_item::SUSPEND;
 
-	if (index_ == -1)
-		coroutine_item::swapContext(thisco, env_co_);
-	else {
-		coroutine_item* lastco = call_stack_[index_];
-		lastco->state_ = coroutine_item::RUNNING;
-		coroutine_item::swapContext(thisco, lastco);
+	coroutine_item* pend = call_stack_[index_];
+	pend->state_ = coroutine_item::RUNNING;
+
+	try {
+		//如果curr->state_ == coroutine_item::DONE，则不会出错
+		coroutine_item::swapContext(curr, pend);
+	}
+	catch (...) {
+		pend->state_ = coroutine_item::SUSPEND;
+
+		++index_;
+
+		curr->state_ = coroutine_item::RUNNING;
+
+		throw;
 	}
 }

@@ -11,7 +11,7 @@ class coroutine :uncopyable {
 	friend class kthreadlocal<coroutine>;
 public:
 
-	inline static void yield();
+	inline static void yield()noexcept(false);//std::logic_error
 
 protected:
 
@@ -28,12 +28,12 @@ private:
 
 	coroutine_item* env_co_;
 
-	coroutine_item* call_stack_[128];
-	int index_;
+	coroutine_item* call_stack_[129];
+	size_t index_;
 
 };
 
-//目前实现的共享栈使用条件比较苛刻，不能跨线程，不能在一个共享栈的协程执行过程当中创建一个新的共享栈协程
+//目前实现的共享栈协程，不能跨线程调用
 class coroutine_item :uncopyable {
 	friend class coroutine;
 public:
@@ -46,12 +46,12 @@ public:
 		DONE,
 	};
 
-	coroutine_item(const functor& func, bool shared = false);
-	coroutine_item(functor&& func, bool shared = false);
+	coroutine_item(const functor& func, bool shared = false)noexcept(false);//std::bad_alloc
+	coroutine_item(functor&& func, bool shared = false)noexcept(false);//std::bad_alloc
 	~coroutine_item();//可以考虑换成virtual
 
 	costate getState()const { return state_; }
-	inline void resume();
+	inline void resume()noexcept(false);//std::logic_error, std::bad_alloc
 
 private:
 	enum stacksize {
@@ -61,9 +61,8 @@ private:
 
 	static void coroutineFunc(coroutine_item* co);
 
-	//std::bad_alloc, std::logic_error
-	static void makeContext(coroutine_item* co)noexcept(false);
-	static void swapContext(coroutine_item* curr, coroutine_item* pend)noexcept(false);
+	static void makeContext(coroutine_item* co);
+	static void swapContext(coroutine_item* curr, coroutine_item* pend);
 
 	static kthreadlocal<char> shared_stack_;
 	thread_local static coroutine_item* running_crt_;
@@ -77,7 +76,7 @@ private:
 	char* stack_bp_;
 	char* stack_sp_;
 	char* stack_buff_;
-	size_t buff_len_;
+	size_t length_;
 
 };
 
