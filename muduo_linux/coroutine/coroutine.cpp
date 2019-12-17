@@ -40,7 +40,9 @@ coroutine* coroutine::threadCoenv() {
 void coroutine_item::coroutineFunc(coroutine_item* co) {
 	assert(co->state_ == FREE);
 	co->state_ = RUNNING;
+
 	co->coFunc();
+
 	co->state_ = DONE;
 
 	coroutine::yield();//这里不会throw
@@ -83,9 +85,10 @@ void coroutine_item::makeContext(coroutine_item* co) {
 void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	char addr;
 
-	if (curr->shared_ && curr->state_ == SUSPEND) {
+	if (curr->shared_) {
 		curr->stack_sp_ = &addr;
 		size_t len = curr->stack_bp_ - curr->stack_sp_;
+
 		if (curr->length_ < len) {
 			if (curr->stack_buff_) {
 				::free(curr->stack_buff_);
@@ -155,30 +158,44 @@ coroutine_item::~coroutine_item() {
 }
 
 void coroutine::resumeFunc(coroutine_item* co) {
-	if (co->state_ == coroutine_item::RUNNING)
-		throw std::logic_error("协程正在执行当中");
-
-	if (co->state_ == coroutine_item::DONE)
-		throw std::logic_error("协程已经执行完毕");
-
 	if (index_ == 128)
 		throw std::logic_error("协程调用栈溢出，index_ == 128");
+
+	coroutine_item::costate last_state = co->state_;
+	switch (last_state) {
+	case(coroutine_item::FREE):
+
+		break;
+	case(coroutine_item::RUNNING):
+		throw std::logic_error("协程正在执行当中");
+
+		break;
+	case(coroutine_item::INSTACK):
+		throw std::logic_error("协程正在调用栈中");
+
+		break;
+	case(coroutine_item::SUSPEND):
+		co->state_ = coroutine_item::RUNNING;
+
+		break;
+	case(coroutine_item::DONE):
+		throw std::logic_error("协程已经执行完毕");
+
+		break;
+	}
 	
 	coroutine_item* curr = call_stack_[index_];
-	curr->state_ = coroutine_item::SUSPEND;
+	curr->state_ = coroutine_item::INSTACK;
 
 	++index_;
 
 	call_stack_[index_] = co;
-	if (co->state_ == coroutine_item::SUSPEND)
-		co->state_ = coroutine_item::RUNNING;
 
 	try {
 		coroutine_item::swapContext(curr, co);
 	}
 	catch (...) {
-		if (co->state_ == coroutine_item::RUNNING)
-			co->state_ = coroutine_item::SUSPEND;
+		co->state_ = last_state;
 
 		--index_;
 
@@ -193,25 +210,37 @@ void coroutine::yieldFunc() {
 		throw std::logic_error("协程调用栈溢出，index_ == 0");
 
 	coroutine_item* curr = call_stack_[index_];
-	if (curr->state_ == coroutine_item::RUNNING)
-		curr->state_ = coroutine_item::SUSPEND;
 
 	--index_;
 
 	coroutine_item* pend = call_stack_[index_];
 	pend->state_ = coroutine_item::RUNNING;
 
-	try {
-		//如果curr->state_ == coroutine_item::DONE，则不会出错
+	switch (curr->state_) {
+	case(coroutine_item::RUNNING):
+		curr->state_ = coroutine_item::SUSPEND;
+
+		try {
+			coroutine_item::swapContext(curr, pend);
+		}
+		catch (...) {
+			pend->state_ = coroutine_item::INSTACK;
+
+			++index_;
+
+			curr->state_ = coroutine_item::RUNNING;
+
+			throw;
+		}
+
+		break;
+	case(coroutine_item::DONE):
+		curr->shared_ = false;
 		coroutine_item::swapContext(curr, pend);
-	}
-	catch (...) {
-		pend->state_ = coroutine_item::SUSPEND;
 
-		++index_;
+		break;
+	default:
 
-		curr->state_ = coroutine_item::RUNNING;
-
-		throw;
+		break;
 	}
 }

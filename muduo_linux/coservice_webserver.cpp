@@ -8,6 +8,7 @@
 #include<stdexcept>
 #include<unistd.h>
 #include<signal.h>
+#include<iostream>
 
 void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 

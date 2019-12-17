@@ -3,6 +3,11 @@
 
 #include<unistd.h>
 
+/*
+如果fd被epoll监听，fd只要有事件发生内核就会将其加入epoll内部的就绪队列
+epoll在epoll_wait时再去调用tcp_poll函数获得fd上发生的所有事件
+然后只返回感兴趣的事件，对于水平触发，会再次将其加入就绪队列
+*/
 ssize_t coevent::read(void* buf, size_t nbytes, int ms) {
 	ssize_t nread = 0;
 

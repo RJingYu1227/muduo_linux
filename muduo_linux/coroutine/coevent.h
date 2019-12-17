@@ -60,7 +60,7 @@ private:
 		ET = EPOLLET,
 	};
 
-	volatile uint32_t events_;
-	volatile uint32_t revents_;
+	uint32_t events_;
+	uint32_t revents_;
 
 };

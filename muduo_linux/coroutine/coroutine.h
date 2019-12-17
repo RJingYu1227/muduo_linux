@@ -42,6 +42,7 @@ public:
 	enum costate {
 		FREE,
 		RUNNING,
+		INSTACK,
 		SUSPEND,
 		DONE,
 	};
