@@ -1,6 +1,7 @@
 ﻿#include"eventloop.h"
 #include"logging.h"
 #include"poller.h"
+#include"timestamp.h"
 #include"timerqueue.h"
 #include"eventqueue.h"
 
@@ -112,35 +113,35 @@ void eventloop::queueInLoop(functor&& func) {
 	eventque_->addFunctor(std::move(func));
 }
 
-ktimerid eventloop::runAt(const functor& func, int64_t time) {
+ktimerid eventloop::runAt(const functor& func, uint64_t time) {
 	return timerque_->addTimer(func, time, 0);
 }
 
-ktimerid eventloop::runAt(functor&& func, int64_t time) {
+ktimerid eventloop::runAt(functor&& func, uint64_t time) {
 	return timerque_->addTimer(std::move(func), time, 0);
 }
 
 ktimerid eventloop::runAfter(const functor &func, double seconds) {
-	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += ktimer::getMicroUnixTime();
+	uint64_t time = static_cast<uint64_t>(seconds * 1000000);
+	time += timestamp::getMicroSeconds();
 	return timerque_->addTimer(func, time, 0);
 }
 
 ktimerid eventloop::runAfter(functor&& func, double seconds) {
-	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += ktimer::getMicroUnixTime();
+	uint64_t time = static_cast<uint64_t>(seconds * 1000000);
+	time += timestamp::getMicroSeconds();
 	return timerque_->addTimer(std::move(func), time, 0);
 }
 
 ktimerid eventloop::runEvery(const functor &func, double seconds) {
-	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += ktimer::getMicroUnixTime();
+	uint64_t time = static_cast<uint64_t>(seconds * 1000000);
+	time += timestamp::getMicroSeconds();
 	return timerque_->addTimer(func, time, seconds);
 }
 
 ktimerid eventloop::runEvery(functor&& func, double seconds) {
-	int64_t time = static_cast<int64_t>(seconds * 1000000);
-	time += ktimer::getMicroUnixTime();
+	uint64_t time = static_cast<uint64_t>(seconds * 1000000);
+	time += timestamp::getMicroSeconds();
 	return timerque_->addTimer(std::move(func), time, seconds);
 }
 

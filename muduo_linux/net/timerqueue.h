@@ -17,13 +17,13 @@ public:
 	timerqueue(eventloop* loop);
 	~timerqueue();
 
-	ktimerid addTimer(const functor& func, int64_t time, double seconds);
-	ktimerid addTimer(functor&& func, int64_t time, double seconds);
+	ktimerid addTimer(const functor& func, uint64_t time, double seconds);
+	ktimerid addTimer(functor&& func, uint64_t time, double seconds);
 
 	void cancelTimer(ktimerid timer1);
 
 private:
-	typedef std::pair<int64_t, ktimer*> entry;
+	typedef std::pair<uint64_t, ktimer*> entry;
 	typedef std::set<entry> timer_set;
 
 	//为了尽快处理handleRead
@@ -31,8 +31,8 @@ private:
 	void cancelTimerInLoop(ktimerid timer1);
 
 	void handleRead();
-	void setExpireTimers(int64_t now);
-	void resetTimerfd(int64_t time);
+	void setExpireTimers(uint64_t now);
+	void resetTimerfd(uint64_t time);
 
 	int fd_;
 	eventloop* loop_;

@@ -32,8 +32,8 @@ public:
 	void queueInLoop(const functor& func);
 	void queueInLoop(functor&& func);
 
-	ktimerid runAt(const functor& func, int64_t time);
-	ktimerid runAt(functor&& func, int64_t time);
+	ktimerid runAt(const functor& func, uint64_t time);
+	ktimerid runAt(functor&& func, uint64_t time);
 	ktimerid runAfter(const functor& func, double seconds);
 	ktimerid runAfter(functor&& func, double seconds);
 	ktimerid runEvery(const functor& func, double seconds);

@@ -88,17 +88,28 @@
     <ClCompile Include="base\buffer.cpp" />
     <ClCompile Include="coroutine\coroutine.cpp" />
     <ClCompile Include="coroutine\coloop.cpp" />
-    <ClCompile Include="coservice_webserver.cpp" />
-    <ClCompile Include="httpfunction.cpp" />
+    <ClCompile Include="base\timestamp.cpp" />
+    <ClCompile Include="http\httpserver.cpp" />
+    <ClCompile Include="net\channel.cpp" />
+    <ClCompile Include="net\elthreadpool.cpp" />
+    <ClCompile Include="net\eventloop.cpp" />
+    <ClCompile Include="net\eventqueue.cpp" />
+    <ClCompile Include="net\kepoll.cpp" />
     <ClCompile Include="net\kmysql.cpp" />
     <ClCompile Include="base\fileutil.cpp" />
     <ClCompile Include="http\httprequest.cpp" />
     <ClCompile Include="http\httpresponse.cpp" />
+    <ClCompile Include="net\kpoll.cpp" />
     <ClCompile Include="net\ksocket.cpp" />
     <ClCompile Include="base\logfile.cpp" />
     <ClCompile Include="base\logging.cpp" />
     <ClCompile Include="base\logstream.cpp" />
     <ClCompile Include="net\ktimer.cpp" />
+    <ClCompile Include="net\poller.cpp" />
+    <ClCompile Include="net\tcpconnection.cpp" />
+    <ClCompile Include="net\tcpserver.cpp" />
+    <ClCompile Include="net\timerqueue.cpp" />
+    <ClCompile Include="test\co_test1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\asynclogging.h" />
@@ -109,6 +120,7 @@
     <ClInclude Include="coroutine\coroutine.h" />
     <ClInclude Include="coroutine\coloop.h" />
     <ClInclude Include="coroutine\coservice.h" />
+    <ClInclude Include="base\timestamp.h" />
     <ClInclude Include="net\kpoll.h" />
     <ClInclude Include="net\kmysql.h" />
     <ClInclude Include="base\buffer.h" />

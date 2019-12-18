@@ -13,13 +13,6 @@ void buffer::swap(buffer& rhs) {
 	std::swap(end_index_, rhs.end_index_);
 }
 
-namespace std {
-	template<>
-	void swap<buffer>(buffer& lhs, buffer& rhs) {
-		lhs.swap(rhs);
-	}
-}
-
 void buffer::append(const char* data, size_t len) {
 	ensureLeftBytes(len);
 	std::copy(data, data + len, endPtr());

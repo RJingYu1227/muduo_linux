@@ -58,7 +58,7 @@ void logfile::rollfile() {
 void logfile::setLogFileName(std::string& str) {
 	str = basename_;
 
-	char timebuf[32];
+	char timebuf[32] = { 0 };
 	time_t time_ = time(NULL);
 	tm tm_;
 	localtime_r(&time_, &tm_);

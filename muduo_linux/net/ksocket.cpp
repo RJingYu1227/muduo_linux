@@ -32,7 +32,7 @@ ksocket::~ksocket() {
 }
 
 bool ksocket::getTcpInfo(tcp_info* info)const {
-	socklen_t len = sizeof(*info);
+	socklen_t len = sizeof(tcp_info);
 	bzero(info, len);
 	return getsockopt(fd_, SOL_TCP, TCP_INFO, info, &len) == 0;
 }
@@ -56,8 +56,8 @@ bool ksocket::listen() {
 }
 
 int ksocket::accept(sockaddr_in* peeraddr) {
-	bzero(peeraddr, sizeof(sockaddr_in));
-	socklen_t len;
+	socklen_t len = sizeof(sockaddr_in);
+	bzero(peeraddr, len);
 	int clifd_ = ::accept4(fd_, (sockaddr*)peeraddr, &len,
 		SOCK_NONBLOCK | SOCK_CLOEXEC);
 

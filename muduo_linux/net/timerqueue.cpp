@@ -1,6 +1,7 @@
 ﻿#include"timerqueue.h"
 #include"eventloop.h"
 #include"logging.h"
+#include"timestamp.h"
 
 #include<sys/timerfd.h>
 #include<unistd.h>
@@ -23,14 +24,14 @@ timerqueue::~timerqueue() {
 	close(fd_);
 }
 
-ktimerid timerqueue::addTimer(const functor& func, int64_t time, double seconds) {
+ktimerid timerqueue::addTimer(const functor& func, uint64_t time, double seconds) {
 	ktimer* temp = new ktimer(func, time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
 	return ktimerid(time, temp);
 }
 
-ktimerid timerqueue::addTimer(functor&& func, int64_t time, double seconds) {
+ktimerid timerqueue::addTimer(functor&& func, uint64_t time, double seconds) {
 	ktimer* temp = new ktimer(std::move(func), time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
@@ -58,15 +59,15 @@ void timerqueue::cancelTimerInLoop(ktimerid timerid) {
 }
 
 void timerqueue::handleRead() {
-	int64_t now;
+	uint64_t now;
 	read(fd_, &now, sizeof now);
-	now = ktimer::getMicroUnixTime();
+	now = timestamp::getMicroSeconds();
 	setExpireTimers(now);
 
 	for (auto temp : expire_timers_) {
 		temp->run();
 		if (temp->interval_ > 0) {
-			temp->time_ = ktimer::getMicroUnixTime() + temp->interval_;
+			temp->time_ = timestamp::getMicroSeconds() + temp->interval_;
 			timers_.emplace(temp->time_, temp);
 			continue;
 		}
@@ -79,7 +80,7 @@ void timerqueue::handleRead() {
 	}
 }
 
-void timerqueue::setExpireTimers(int64_t now) {
+void timerqueue::setExpireTimers(uint64_t now) {
 	expire_timers_.clear();
 	entry temp(now, reinterpret_cast<ktimer*>(UINTPTR_MAX));
 	auto iter = timers_.begin();
@@ -96,11 +97,11 @@ void timerqueue::setExpireTimers(int64_t now) {
 	timers_.erase(timers_.begin(), end);
 }
 
-void timerqueue::resetTimerfd(int64_t time) {
+void timerqueue::resetTimerfd(uint64_t time) {
 	itimerspec utmr;
 	bzero(&utmr, sizeof utmr);
 
-	int64_t microseconds_ = time - ktimer::getMicroUnixTime();
+	uint64_t microseconds_ = time - timestamp::getMicroSeconds();
 	if (microseconds_ < 100)
 		microseconds_ = 100;
 	utmr.it_value.tv_sec = microseconds_ / 1000000;

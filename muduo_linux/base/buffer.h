@@ -58,3 +58,9 @@ private:
 
 };
 
+namespace std {
+	template<>
+	inline void swap<buffer>(buffer& lhs, buffer& rhs) {
+		lhs.swap(rhs);
+	}
+}

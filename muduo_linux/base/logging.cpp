@@ -1,8 +1,8 @@
 ﻿#include"logging.h"
 #include"asynclogging.h"
-#include"ktimer.h"
 
 #include<unistd.h>
+#include<time.h>
 
 std::string logger::log_filename_ = "./RJingYu.";
 logger::functor logger::output = logger::defaultOutput;
@@ -39,7 +39,13 @@ logger::impl::impl(const char* basename, int line)
 logger::logger(const char* filename, int line)
 	:impl_(filename, line) {
 
-	impl_.stream_ << ktimer::timeToString(ktimer::getUnixTime()) << '\n';
+	char timebuf[32] = { 0 };
+	tm tm_time;
+	time_t seconds = time(nullptr);
+	localtime_r(&seconds, &tm_time);
+	strftime(timebuf, sizeof timebuf, "%Y %m %d %H:%M:%S", &tm_time);
+
+	impl_.stream_ << timebuf << '\n';
 }
 
 logger::~logger() {
