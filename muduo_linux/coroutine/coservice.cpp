@@ -209,8 +209,10 @@ size_t coservice::run() {
 	while (item_count_) {
 		{
 			klock<kmutex> lock(&task_mutex_);
-			while (task_queue_.empty())
+			if (task_queue_.empty()) {
 				task_cond_.wait(&task_mutex_);
+				continue;
+			}
 
 			cst = task_queue_.front();
 			task_queue_.pop();

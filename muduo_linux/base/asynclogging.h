@@ -39,7 +39,6 @@ private:
 	sequence write_;//可写起始下标
 
 	std::vector<char> ringbuffer_;
-	size_t end_index_;
 
 	std::string basename_;
 	off_t rollsize_;

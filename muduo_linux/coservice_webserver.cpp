@@ -26,7 +26,7 @@ void connect_handler() {
 	buffer buff1, buff2;
 	httprequest request;
 
-	while (1) {
+	for (;;) {
 		if ((nread = cst->read(buff1.endPtr(), 1024)) > 0) {
 			buff1.hasUsed(nread);
 			buff1.ensureLeftBytes(1024);
@@ -83,7 +83,7 @@ void accept_handler() {
 	sockaddr_in cliaddr;
 	int clifd;
 
-	while (1) {
+	for (;;) {
 		clifd = cst->accept(&cliaddr);
 		if (clifd > 0)
 			coservice_item::create(connect_handler, clifd, cliaddr, &service);

@@ -6,6 +6,12 @@
 
 class coevent :public ksocket {
 public:
+	enum event {
+		NONE = 0,
+		READ = EPOLLIN | EPOLLPRI,
+		WRITE = EPOLLOUT,
+		ET = EPOLLET,
+	};
 
 	coevent(int fd, sockaddr_in& addr) :
 		ksocket(fd, addr),
@@ -52,13 +58,6 @@ protected:
 	void setRevents(uint32_t revents) { revents_ = revents; }
 
 private:
-
-	enum event {
-		NONE = 0,
-		READ = EPOLLIN | EPOLLPRI,
-		WRITE = EPOLLOUT,
-		ET = EPOLLET,
-	};
 
 	uint32_t events_;
 	uint32_t revents_;

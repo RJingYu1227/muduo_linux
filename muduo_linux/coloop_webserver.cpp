@@ -57,7 +57,7 @@ void connect_handler() {
 	buffer buff1, buff2;
 	httprequest request;
 
-	while (1) {
+	for (;;) {
 		if ((nread = cpt->read(buff1.endPtr(), 1024)) > 0) {
 			buff1.hasUsed(nread);
 			buff1.ensureLeftBytes(1024);
@@ -116,7 +116,7 @@ void accept_handler() {
 	coloop* ioloop;
 	int index = 0;
 
-	while (1) {
+	for (;;) {
 		clifd = cpt->accept(&cliaddr);
 		if (clifd > 0) {
 			ioloop = ioloops[index];
