@@ -122,9 +122,6 @@
     <ClInclude Include="base\kmysql.h" />
     <ClInclude Include="base\ksocket.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="makefile" />
-  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
       <LibraryDependencies>pthread;mysqlclient</LibraryDependencies>

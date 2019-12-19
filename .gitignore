@@ -20,7 +20,15 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
-[Ll]og/
+
+# 覆盖了log下的代码
+# [Ll]og/
+
+# 2019/12/19 忽略的文件
+/.gitattributes
+/.gitignore
+.sln
+.vcxproj
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -49,6 +57,7 @@ artifacts/
 *_p.c
 *_i.h
 *.ilk
+*.log
 *.meta
 *.obj
 *.pch
@@ -62,7 +71,6 @@ artifacts/
 *.tlh
 *.tmp
 *.tmp_proj
-*.log
 *.vspscc
 *.vssscc
 .builds
