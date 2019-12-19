@@ -1,18 +1,18 @@
 BASE_DIR = ./base
 COROUTINE_DIR = ./coroutine
+LOG_DIR = ./log
 NET_DIR = ./net
-HTTP_DIR = ./http
 
 INC_DIR = -I${BASE_DIR} \
-      -I${COROUTINE_DIR} \
-	  -I${NET_DIR} \
-	  -I${HTTP_DIR} \
-	  -I"/usr/include/mysql"
+          -I${COROUTINE_DIR} \
+	      -I${LOG_DIR} \
+	      -I${NET_DIR} \
+	      -I"/usr/include/mysql"
 
 SRC = $(wildcard ${BASE_DIR}/*.cpp) \
       $(wildcard ${COROUTINE_DIR}/*.cpp) \
-      $(wildcard ${NET_DIR}/*.cpp) \
-      $(wildcard ${HTTP_DIR}/*.cpp)
+	  $(wildcard ${LOG_DIR}/*.cpp) \
+      $(wildcard ${NET_DIR}/*.cpp)
 
 OBJ = $(patsubst %.cpp, %.o, ${SRC})
 

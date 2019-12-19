@@ -14,37 +14,6 @@ int thread_num = 4;
 
 void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
-void sendBuff(buffer* buff) {
-	ssize_t nwrote;
-	coloop_item* cpt = coloop_item::self();
-	int fd = cpt->getFd();
-	while (1) {
-		nwrote = write(fd, buff->beginPtr(), buff->usedBytes());
-		if (nwrote < 0) {
-			coroutine::yield();
-			continue;
-		}
-		buff->retrieve(nwrote);
-
-		if (buff->usedBytes()) {
-			if (cpt->isWriting() == false) {
-				cpt->disableReading();
-				cpt->enableWriting();
-				cpt->updateEvents();
-			}
-
-			coroutine::yield();
-		}
-		else
-			break;
-	}
-	if (cpt->isWriting()) {
-		cpt->disableWrting();
-		cpt->enableReading();
-		cpt->updateEvents();
-	}
-}
-
 void connect_handler() {
 	coloop_item* cpt = coloop_item::self();
 	cpt->enableReading();

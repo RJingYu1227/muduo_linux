@@ -81,7 +81,7 @@
     <IncludePath>D:\编程练习\muduo_linux\muduo_linux\coroutine;D:\编程练习\muduo_linux\muduo_linux\http;D:\编程练习\muduo_linux\muduo_linux\net;D:\编程练习\muduo_linux\muduo_linux\base;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="base\asynclogging.cpp" />
+    <ClCompile Include="log\asynclogging.cpp" />
     <ClCompile Include="coroutine\coevent.cpp" />
     <ClCompile Include="coroutine\coservice.cpp" />
     <ClCompile Include="base\kthread.cpp" />
@@ -89,30 +89,18 @@
     <ClCompile Include="coroutine\coroutine.cpp" />
     <ClCompile Include="coroutine\coloop.cpp" />
     <ClCompile Include="base\timestamp.cpp" />
-    <ClCompile Include="http\httpserver.cpp" />
-    <ClCompile Include="net\channel.cpp" />
-    <ClCompile Include="net\elthreadpool.cpp" />
-    <ClCompile Include="net\eventloop.cpp" />
-    <ClCompile Include="net\eventqueue.cpp" />
-    <ClCompile Include="net\kepoll.cpp" />
-    <ClCompile Include="net\kmysql.cpp" />
-    <ClCompile Include="base\fileutil.cpp" />
-    <ClCompile Include="http\httprequest.cpp" />
-    <ClCompile Include="http\httpresponse.cpp" />
-    <ClCompile Include="net\kpoll.cpp" />
-    <ClCompile Include="net\ksocket.cpp" />
-    <ClCompile Include="base\logfile.cpp" />
-    <ClCompile Include="base\logging.cpp" />
-    <ClCompile Include="base\logstream.cpp" />
-    <ClCompile Include="net\ktimer.cpp" />
-    <ClCompile Include="net\poller.cpp" />
-    <ClCompile Include="net\tcpconnection.cpp" />
-    <ClCompile Include="net\tcpserver.cpp" />
-    <ClCompile Include="net\timerqueue.cpp" />
+    <ClCompile Include="log\fileutil.cpp" />
+    <ClCompile Include="test\httprequest.cpp" />
+    <ClCompile Include="test\httpresponse.cpp" />
+    <ClCompile Include="log\logfile.cpp" />
+    <ClCompile Include="log\logging.cpp" />
+    <ClCompile Include="log\logstream.cpp" />
+    <ClCompile Include="base\kmysql.cpp" />
+    <ClCompile Include="base\ksocket.cpp" />
     <ClCompile Include="test\co_test1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="base\asynclogging.h" />
+    <ClInclude Include="log\asynclogging.h" />
     <ClInclude Include="base\disruptor.h" />
     <ClInclude Include="coroutine\coevent.h" />
     <ClInclude Include="base\kthread.h" />
@@ -121,30 +109,21 @@
     <ClInclude Include="coroutine\coloop.h" />
     <ClInclude Include="coroutine\coservice.h" />
     <ClInclude Include="base\timestamp.h" />
-    <ClInclude Include="net\kpoll.h" />
-    <ClInclude Include="net\kmysql.h" />
     <ClInclude Include="base\buffer.h" />
-    <ClInclude Include="net\channel.h" />
-    <ClInclude Include="net\elthreadpool.h" />
-    <ClInclude Include="net\kepoll.h" />
-    <ClInclude Include="net\eventloop.h" />
-    <ClInclude Include="net\eventqueue.h" />
-    <ClInclude Include="base\fileutil.h" />
-    <ClInclude Include="http\httprequest.h" />
-    <ClInclude Include="http\httpresponse.h" />
-    <ClInclude Include="http\httpserver.h" />
-    <ClInclude Include="net\ksocket.h" />
-    <ClInclude Include="base\logfile.h" />
-    <ClInclude Include="base\logging.h" />
-    <ClInclude Include="base\logstream.h" />
+    <ClInclude Include="log\fileutil.h" />
+    <ClInclude Include="test\httprequest.h" />
+    <ClInclude Include="test\httpresponse.h" />
+    <ClInclude Include="log\logfile.h" />
+    <ClInclude Include="log\logging.h" />
+    <ClInclude Include="log\logstream.h" />
     <ClInclude Include="base\memorypool.h" />
-    <ClInclude Include="net\poller.h" />
     <ClInclude Include="base\uncopyable.h" />
-    <ClInclude Include="net\tcpconnection.h" />
-    <ClInclude Include="net\tcpserver.h" />
-    <ClInclude Include="net\ktimer.h" />
-    <ClInclude Include="net\timerqueue.h" />
     <ClInclude Include="coroutine\timewheel.h" />
+    <ClInclude Include="base\kmysql.h" />
+    <ClInclude Include="base\ksocket.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="makefile" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>

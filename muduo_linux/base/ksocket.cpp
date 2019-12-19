@@ -56,7 +56,7 @@ bool ksocket::listen() {
 }
 
 int ksocket::accept(sockaddr_in* peeraddr) {
-	socklen_t len = sizeof(sockaddr_in);
+	socklen_t len = sizeof(sockaddr_in);//值-结果参数，不初始化时，可能会出错，errno = 22
 	bzero(peeraddr, len);
 	int clifd_ = ::accept4(fd_, (sockaddr*)peeraddr, &len,
 		SOCK_NONBLOCK | SOCK_CLOEXEC);
