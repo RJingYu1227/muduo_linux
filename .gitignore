@@ -26,8 +26,6 @@ bld/
 
 # 2019/12/19 ºöÂÔµÄÎÄ¼ş
 readme/
-.gitattributes
-.gitignore
 *.sln
 *.vcxproj
 
