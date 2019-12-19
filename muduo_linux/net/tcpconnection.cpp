@@ -1,10 +1,13 @@
 ﻿#include"tcpconnection.h"
 #include"eventloop.h"
 #include"channel.h"
-#include"logging.h"
+
+#include"log/logging.h"
 
 #include<unistd.h>
 #include<assert.h>
+
+using namespace pax;
 
 tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 	:loop_(loop),
@@ -80,7 +83,7 @@ void tcpconnection::send(buffer* data) {
 			shared_from_this(), data->toString()));
 }
 
-void tcpconnection::send(const string& data) {
+void tcpconnection::send(const std::string& data) {
 	if (state_ != kConnected)
 		return;
 
@@ -109,7 +112,7 @@ void tcpconnection::shutDownInLoop() {
 	socket_.shutdownWrite();
 }
 
-void tcpconnection::sendInLoop1(const string &data) {
+void tcpconnection::sendInLoop1(const std::string &data) {
 	sendInLoop2(&data[0], data.size());
 }
 

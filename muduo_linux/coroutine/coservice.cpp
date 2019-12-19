@@ -3,6 +3,8 @@
 #include<assert.h>
 #include<unistd.h>
 
+using namespace pax;
+
 thread_local coservice_item* coservice_item::running_cst_ = nullptr;
 
 coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service) :
@@ -95,7 +97,7 @@ void coservice::add(coservice_item* cst) {
 	epoll_ctl(epfd_, EPOLL_CTL_ADD, fd, &ev);
 	++item_count_;
 
-	klock<kmutex> lock(&task_mutex_);
+	lock<mutex> lock(&task_mutex_);
 	task_queue_.push(cst);
 }
 
@@ -126,7 +128,7 @@ void coservice::doReactor() {
 	coservice_item* cst;
 
 	{
-		klock<kmutex> lock(&time_mutex_);
+		lock<mutex> lock(&time_mutex_);
 
 		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
 		//此时cst_queue_必定是空的，最多只有和线程数相当的任务在执行，如果妹有立即返回，说明其实并不忙
@@ -157,7 +159,7 @@ void coservice::doReactor() {
 	}
 
 	{
-		klock<kmutex> lock(&task_mutex_);
+		lock<mutex> lock(&task_mutex_);
 
 		for (int i = 0; i < numevents; ++i) {
 			cst = (coservice_item*)revents_[i].data.ptr;
@@ -183,7 +185,7 @@ void coservice::doReactor() {
 	}
 	
 	{
-		klock<kmutex> lock(&done_mutex_);
+		lock<mutex> lock(&done_mutex_);
 		for (auto ptr : done_items_)
 			delete ptr;
 		done_items_.clear();
@@ -195,7 +197,7 @@ void coservice::doReactor() {
 }
 
 void coservice::setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode) {
-	klock<kmutex> lock(&time_mutex_);
+	lock<mutex> lock(&time_mutex_);
 	timewheel_.setTimeout(ms, timenode);
 }
 
@@ -208,7 +210,7 @@ size_t coservice::run() {
 	
 	while (item_count_) {
 		{
-			klock<kmutex> lock(&task_mutex_);
+			lock<mutex> lock(&task_mutex_);
 			if (task_queue_.empty()) {
 				task_cond_.wait(&task_mutex_);
 				continue;
@@ -221,7 +223,7 @@ size_t coservice::run() {
 		if (cst == nullptr) {
 			doReactor();
 
-			klock<kmutex> lock(&task_mutex_);
+			lock<mutex> lock(&task_mutex_);
 			task_queue_.push(nullptr);
 		}
 		else {
@@ -232,7 +234,7 @@ size_t coservice::run() {
 			if (cst->getState() == coservice_item::DONE) {
 				remove(cst);
 
-				klock<kmutex> lock(&done_mutex_);
+				lock<mutex> lock(&done_mutex_);
 				done_items_.push_back(cst);
 			}
 			else

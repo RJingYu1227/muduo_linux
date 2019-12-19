@@ -1,8 +1,10 @@
-﻿#include"kthread.h"
+﻿#include"thread.h"
 
 #include<assert.h>
 
-bool kmutex::timedlock(int seconds) {
+using namespace::pax;
+
+bool mutex::timedlock(int seconds) {
 	timespec tsc;
 	clock_gettime(CLOCK_REALTIME, &tsc);
 	tsc.tv_sec += seconds;
@@ -10,7 +12,7 @@ bool kmutex::timedlock(int seconds) {
 	return pthread_mutex_timedlock(&lock_, &tsc);
 }
 
-void kcond::timedwait(kmutex* lock, int seconds) {
+void cond::timedwait(mutex* lock, int seconds) {
 	timespec tsc;
 	clock_gettime(CLOCK_REALTIME, &tsc);
 	tsc.tv_sec += seconds;
@@ -18,8 +20,8 @@ void kcond::timedwait(kmutex* lock, int seconds) {
 	pthread_cond_timedwait(&cond_, (pthread_mutex_t*)lock, &tsc);
 }
 
-void* kthread::pthreadFunc(void* arg) {
-	kthread* temp = (kthread*)arg;
+void* thread::pthreadFunc(void* arg) {
+	thread* temp = (thread*)arg;
 	functor func = std::move(temp->threadFunc);
 	temp->started_ = 1;
 
@@ -28,7 +30,7 @@ void* kthread::pthreadFunc(void* arg) {
 	return (void*)0;
 }
 
-void kthread::start() {
+void thread::start() {
 	if (started_)
 		return;
 
@@ -38,7 +40,7 @@ void kthread::start() {
 
 }
 
-void kthread::start(const pthread_attr_t* attr) {
+void thread::start(const pthread_attr_t* attr) {
 	if (started_)
 		return;
 
@@ -48,7 +50,7 @@ void kthread::start(const pthread_attr_t* attr) {
 
 }
 
-int kthread::join() {
+int thread::join() {
 	if (!started_ || !joinable_)
 		return 0;
 
@@ -57,7 +59,7 @@ int kthread::join() {
 	return pthread_join(tid_, NULL);
 }
 
-int kthread::detach() {
+int thread::detach() {
 	if (!started_ || !joinable_)
 		return 0;
 

@@ -7,15 +7,17 @@
 #include<string>
 #include<vector>
 
-class kmysql :uncopyable {
+namespace pax {
+
+class mysql :uncopyable {
 public:
 
-	kmysql() :
+	mysql() :
 		connected_(0) {
 
 	}
 
-	~kmysql() {
+	~mysql() {
 		if (connected_)
 			mysql_close(&sql_);
 	}
@@ -41,12 +43,12 @@ private:
 
 };
 
-class kmysqlres :uncopyable {
+class mysqlres :uncopyable {
 public:
 
-	kmysqlres(MYSQL_RES* res);
+	mysqlres(MYSQL_RES* res);
 
-	~kmysqlres() {
+	~mysqlres() {
 		mysql_free_result(res_);
 	}
 
@@ -65,23 +67,24 @@ private:
 
 };
 
-unsigned int kmysqlres::numOfField()const {
+unsigned int mysqlres::numOfField()const {
 	return res_->data->fields;
 }
 
-MYSQL_FIELD* kmysqlres::getFields() {
+MYSQL_FIELD* mysqlres::getFields() {
 	return res_->fields;
 }
 
-size_t kmysqlres::numOfRow()const {
+size_t mysqlres::numOfRow()const {
 	return res_->data->rows;
 }
 
-MYSQL_ROWS* kmysqlres::operator[](size_t idx) {
+MYSQL_ROWS* mysqlres::operator[](size_t idx) {
 	return rows_[idx];
 }
-
 /*
 MYSQL_ROW以链表形式存储
 MYSQL_FIELD以数组形式存储
 */
+
+}//namespace pax

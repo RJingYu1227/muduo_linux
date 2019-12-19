@@ -7,6 +7,8 @@
 #include<atomic>
 #include<queue>
 
+namespace pax {
+
 class coservice_item;
 
 class coservice :uncopyable {
@@ -32,14 +34,14 @@ private:
 	std::vector<epoll_event> revents_;
 	std::vector<klinknode<coservice_item*>*> timenodes_;
 
-	kmutex task_mutex_;
-	kcond task_cond_;
+	mutex task_mutex_;
+	cond task_cond_;
 	std::queue<coservice_item*> task_queue_;
 
-	kmutex done_mutex_;
+	mutex done_mutex_;
 	std::vector<coservice_item*> done_items_;
 
-	kmutex time_mutex_;
+	mutex time_mutex_;
 	timewheel<coservice_item*> timewheel_;
 };
 
@@ -105,3 +107,5 @@ coservice_item* coservice_item::self() {
 //使用ET模式时，如果其它线程执行epoll_wait得到对应fd的返回事件
 //但是，此时对应协程handing_ = 1且此次执行过程中并没有处理该事件
 //会使该事件很难得到处理，可以参考boost::asio的 事件任务队列 进行更改
+
+}//namespace pax

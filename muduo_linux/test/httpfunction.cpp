@@ -1,7 +1,8 @@
 ﻿#include"httprequest.h"
 #include"httpresponse.h"
-#include"kmysql.h"
-#include"logging.h"
+
+#include"base/mysql.h"
+#include"log/logging.h"
 
 #include<unistd.h>
 #include<fcntl.h>
@@ -10,7 +11,7 @@
 #include<initializer_list>
 
 using namespace::std;
-
+using namespace::pax;
 /*
 简易的线程私有的内存数据库
 用于保存一般性资源文件，以path为key，文件内容为value
@@ -89,7 +90,7 @@ bool checkLoginValues(initializer_list<string*> values) {
 传入参数为username，password或者username，password，repassword，tel
 */
 bool login(initializer_list<string*> values) {
-	thread_local kmysql sql;
+	thread_local mysql sql;
 	//线程私有的数据库连接，保持一个数据库连接，以避免重复的建立关闭socket连接带来的开销
 	bool ok = 0;
 
@@ -109,7 +110,7 @@ bool login(initializer_list<string*> values) {
 
 		if (sql.sendQuery(sql_query)) {
 			//查询成功则执行下面的语句
-			kmysqlres res(sql.getResult());//将查询结果保存到本地缓冲区
+			mysqlres res(sql.getResult());//将查询结果保存到本地缓冲区
 			int i = res.getColumn("user_pswd");//寻找user_pswd所在的列
 
 			switch (values.size()) {

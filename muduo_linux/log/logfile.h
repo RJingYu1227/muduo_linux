@@ -2,6 +2,8 @@
 
 #include<string>
 
+namespace pax {
+
 class appendfile;
 
 class logfile {
@@ -14,7 +16,7 @@ public:
 	void flush();
 
 private:
-	
+
 	void rollfile();
 	void setLogFileName(std::string& str);
 	void append_unlock(const char* data, size_t len);
@@ -30,3 +32,5 @@ private:
 	static const int kPeriod = 60 * 60;
 
 };
+
+}//namespace pax

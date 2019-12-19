@@ -1,13 +1,13 @@
 ﻿#pragma once
 
-#include"tcpserver.h"
-#include"tcpconnection.h"
+#include"net/tcpserver.h"
+#include"net/tcpconnection.h"
+#include"net/eventloop.h"
 
 #include<functional>
 
 class httprequest;
 class httpresponse;
-class eventloop;
 
 class httpserver {
 public:
@@ -16,18 +16,18 @@ public:
 	httpserver(const char* ip, int port, int loopnum = 2);
 
 	void setHttpCallback(const callback& cb) { httpCallback = cb; }
-	eventloop* getLoop();
+	pax::eventloop* getLoop();
 	void start(){ server_.start(); }
 	void stop() { server_.stop(); }
 
 private:
 
 	static void defaultCallback(const httprequest& request, httpresponse& response);
-	static void onConnected(const tcpconn_ptr& conn);
-	static void onClosed(const tcpconn_ptr& conn);
-	void onRecvDone(const tcpconn_ptr& conn);
+	static void onConnected(const pax::tcpconn_ptr& conn);
+	static void onClosed(const pax::tcpconn_ptr& conn);
+	void onRecvDone(const pax::tcpconn_ptr& conn);
 
-	tcpserver server_;
+	pax::tcpserver server_;
 	callback httpCallback;
 
 };

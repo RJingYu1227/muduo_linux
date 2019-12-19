@@ -4,14 +4,16 @@
 
 #include<sys/poll.h>
 
-class kpoll :public poller {
+namespace pax {
+
+class poll :public poller {
 public:
 
-	kpoll(eventloop* loop)
+	poll(eventloop* loop)
 		:poller(loop) {
 
 	}
-	~kpoll() = default;
+	~poll() = default;
 
 	void doPoll(int timeoutms, channellist& active_channels_);
 	void updateChannel(channel* ch);
@@ -25,3 +27,5 @@ private:
 	pollfd_list pollfds_;
 
 };
+
+}//namespace pax

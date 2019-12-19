@@ -1,6 +1,8 @@
-﻿#include "fileutil.h"
+﻿#include"fileutil.h"
 
 #include<assert.h>
+
+using namespace::pax;
 
 appendfile::appendfile(const char* filename)
 	:fp_(fopen(filename, "ae")),

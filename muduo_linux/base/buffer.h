@@ -3,6 +3,8 @@
 #include<vector>
 #include<string>
 
+namespace pax {
+
 class buffer {
 public:
 
@@ -58,9 +60,13 @@ private:
 
 };
 
+}//namespace pax
+
 namespace std {
-	template<>
-	inline void swap<buffer>(buffer& lhs, buffer& rhs) {
-		lhs.swap(rhs);
-	}
+
+template<>
+inline void swap<pax::buffer>(pax::buffer& lhs, pax::buffer& rhs) {
+	lhs.swap(rhs);
 }
+
+}//namespace std

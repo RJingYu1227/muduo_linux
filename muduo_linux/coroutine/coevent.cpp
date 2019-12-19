@@ -3,6 +3,8 @@
 
 #include<unistd.h>
 
+using namespace pax;
+
 /*
 如果fd被epoll监听，fd只要有事件发生内核就会将其加入epoll内部的就绪队列
 epoll在epoll_wait时再去调用tcp_poll函数获得fd上发生的所有事件
@@ -11,7 +13,7 @@ epoll在epoll_wait时再去调用tcp_poll函数获得fd上发生的所有事件
 ssize_t coevent::read(void* buf, size_t nbytes, int ms) {
 	ssize_t nread = 0;
 
-	nread = ::read(ksocket::getFd(), buf, nbytes);
+	nread = ::read(socket::getFd(), buf, nbytes);
 	if (ms == 0)
 		return nread;
 
@@ -27,7 +29,7 @@ ssize_t coevent::read(void* buf, size_t nbytes, int ms) {
 		}
 
 		yield(ms);//超时或者被可读事件唤醒，所以并不需要循环读
-		nread = ::read(ksocket::getFd(), buf, nbytes);
+		nread = ::read(socket::getFd(), buf, nbytes);
 
 		if (changed) {
 			events_ = last_events;
@@ -42,7 +44,7 @@ ssize_t coevent::write(const void* buf, size_t nbytes, int ms) {
 	ssize_t nwrote;
 	const char* src = (const char*)buf;
 
-	nwrote = ::write(ksocket::getFd(), src, nbytes);
+	nwrote = ::write(socket::getFd(), src, nbytes);
 	if (nwrote > 0) {
 		src += nwrote;
 		nbytes -= nwrote;
@@ -69,7 +71,7 @@ ssize_t coevent::write(const void* buf, size_t nbytes, int ms) {
 
 	while (nbytes) {
 		yield(ms);
-		nwrote = ::write(ksocket::getFd(), src, nbytes);
+		nwrote = ::write(socket::getFd(), src, nbytes);
 
 		//此时nworte值不可能为0
 		if (nwrote > 0) {

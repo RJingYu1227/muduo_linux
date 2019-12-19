@@ -3,7 +3,10 @@
 #include<stdio.h>
 #include<assert.h>
 #include<sys/uio.h>
+
 #include<algorithm>
+
+using namespace::pax;
 
 const char buffer::kCRLF[3] = "\r\n";
 
@@ -79,7 +82,7 @@ ssize_t buffer::readFd(int fd) {
 	vec[1].iov_len = sizeof extrabuf;
 	
 	const int iovcnt = (writeable_ < sizeof extrabuf) ? 2 : 1;
-	const ssize_t n = readv(fd, vec, iovcnt);
+	const ssize_t n = ::readv(fd, vec, iovcnt);
 	if (n < 0)
 		return n;
 	else if (static_cast<size_t>(n) <= writeable_)

@@ -1,7 +1,10 @@
-﻿#include"kmysql.h"
-#include"logging.h"
+﻿#include"mysql.h"
 
-bool kmysql::connect(const char *host,
+#include"log/logging.h"
+
+using namespace::pax;
+
+bool mysql::connect(const char *host,
 	const char *user,
 	const char *passwd,
 	const char *db,
@@ -23,14 +26,14 @@ bool kmysql::connect(const char *host,
 	return connected_;
 }
 
-void kmysql::close() {
+void mysql::close() {
 	if (connected_) {
 		mysql_close(&sql_);
 		connected_ = 0;
 	}
 }
 
-bool kmysql::sendQuery(const char* query, size_t length) {
+bool mysql::sendQuery(const char* query, size_t length) {
 	if (connected_) {
 		if (mysql_real_query(&sql_, query, length) == 0)
 			return 1;
@@ -41,7 +44,7 @@ bool kmysql::sendQuery(const char* query, size_t length) {
 	return 0;
 }
 
-bool kmysql::sendQuery(const std::string& query) {
+bool mysql::sendQuery(const std::string& query) {
 	if (connected_) {
 		if (mysql_real_query(&sql_, query.c_str(), query.length()) == 0)
 			return 1;
@@ -52,14 +55,14 @@ bool kmysql::sendQuery(const std::string& query) {
 	return 0;
 }
 
-MYSQL_RES* kmysql::getResult() {
+MYSQL_RES* mysql::getResult() {
 	if (connected_)
 		return mysql_store_result(&sql_);
 	else
 		return nullptr;
 }
 
-kmysqlres::kmysqlres(MYSQL_RES* res) :
+mysqlres::mysqlres(MYSQL_RES* res) :
 	res_(res) {
 
 	rows_.reserve(res_->data->rows);
@@ -70,7 +73,7 @@ kmysqlres::kmysqlres(MYSQL_RES* res) :
 	}
 }
 
-int kmysqlres::getColumn(const std::string& str)const {
+int mysqlres::getColumn(const std::string& str)const {
 	for (unsigned int i = 0; i < res_->data->fields; ++i) {
 		if (res_->fields[i].name == str)
 			return i;//注意这里
@@ -79,7 +82,7 @@ int kmysqlres::getColumn(const std::string& str)const {
 	return -1;
 }
 
-int kmysqlres::getColumn(const char* str)const {
+int mysqlres::getColumn(const char* str)const {
 	for (unsigned int i = 0; i < res_->data->fields; ++i) {
 		if (strcmp(res_->fields[i].name, str) == 0)
 			return i;//注意这里

@@ -3,10 +3,7 @@ COROUTINE_DIR = ./coroutine
 LOG_DIR = ./log
 NET_DIR = ./net
 
-INC_DIR = -I${BASE_DIR} \
-          -I${COROUTINE_DIR} \
-	      -I${LOG_DIR} \
-	      -I${NET_DIR} \
+INC_DIR = -I"./"
 	      -I"/usr/include/mysql"
 
 SRC = $(wildcard ${BASE_DIR}/*.cpp) \

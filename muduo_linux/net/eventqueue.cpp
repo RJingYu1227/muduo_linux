@@ -5,6 +5,8 @@
 #include<unistd.h>
 #include<assert.h>
 
+using namespace pax;
+
 eventqueue::eventqueue(eventloop* loop)
 	:fd_(eventfd(0, EFD_CLOEXEC)),
 	count_(0),
@@ -27,7 +29,7 @@ void eventqueue::wakeup() {
 
 void eventqueue::addFunctor(const functor& func) {
 	{
-		klock<kmutex> x(&lock_);
+		lock<mutex> x(&lock_);
 		functors_.push_back(func);
 	}
 	eventfd_write(fd_, 1);
@@ -35,14 +37,14 @@ void eventqueue::addFunctor(const functor& func) {
 
 void eventqueue::addFunctor(functor&& func) {
 	{
-		klock<kmutex> x(&lock_);
+		lock<mutex> x(&lock_);
 		functors_.push_back(std::move(func));
 	}
 	eventfd_write(fd_, 1);
 }
 
 void eventqueue::getFunctors(std::vector<functor>& vec) {
-	klock<kmutex> x(&lock_);
+	lock<mutex> x(&lock_);
 	vec.swap(functors_);
 }
 

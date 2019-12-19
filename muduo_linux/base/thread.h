@@ -3,19 +3,22 @@
 #include"uncopyable.h"
 
 #include<pthread.h>
+
 #include<functional>
 
+namespace pax {
+
 template<typename T>
-class kthreadlocal {
+class threadlocal {
 public:
 
 	static void freeFunc(void* ptr);
 
-	explicit kthreadlocal(void(*func)(void*)) {
+	explicit threadlocal(void(*func)(void*)) {
 		pthread_key_create(&key_, func);
 	}
 
-	~kthreadlocal() {
+	~threadlocal() {
 		pthread_key_delete(key_);
 	}
 
@@ -29,21 +32,21 @@ private:
 };
 
 template<typename T>
-void kthreadlocal<T>::freeFunc(void* ptr) {
+void threadlocal<T>::freeFunc(void* ptr) {
 	T* val = (T*)ptr;
 	delete val;
 }
 
 template<typename T>
-class klock {
+class lock {
 public:
 
-	klock(T* lock)
+	lock(T* lock)
 		:lock_(lock) {
 		lock_->lock();
 	}
 
-	~klock() {
+	~lock() {
 		lock_->unlock();
 	}
 
@@ -53,14 +56,14 @@ private:
 
 };
 
-class kmutex {
+class mutex {
 public:
 
-	kmutex() 
+	mutex()
 		:lock_(PTHREAD_MUTEX_INITIALIZER) {
 
 	}
-	~kmutex() {}
+	~mutex() {}
 
 	void lock() { pthread_mutex_lock(&lock_); }
 	void unlock() { pthread_mutex_unlock(&lock_); }
@@ -73,13 +76,13 @@ private:
 
 };
 
-class kspin {
+class spin {
 public:
 
-	kspin() {
+	spin() {
 		pthread_spin_init(&lock_, 0);
 	}
-	~kspin() {}
+	~spin() {}
 
 	void lock() { pthread_spin_lock(&lock_); }
 	void unlock() { pthread_spin_unlock(&lock_); }
@@ -90,17 +93,17 @@ private:
 	pthread_spinlock_t lock_;
 };
 
-class kcond {
+class cond {
 public:
 
-	kcond()
+	cond()
 		:cond_(PTHREAD_COND_INITIALIZER) {
 
 	}
-	~kcond() {}
+	~cond() {}
 
-	void wait(kmutex* lock) { pthread_cond_wait(&cond_, (pthread_mutex_t*)lock); }
-	void timedwait(kmutex* lock, int seconds);
+	void wait(mutex* lock) { pthread_cond_wait(&cond_, (pthread_mutex_t*)lock); }
+	void timedwait(mutex* lock, int seconds);
 
 	void notify() { pthread_cond_signal(&cond_); }
 	void notifyAll() { pthread_cond_broadcast(&cond_); }
@@ -111,25 +114,25 @@ private:
 
 };
 
-class kthread :uncopyable {
+class thread :uncopyable {
 public:
 	typedef std::function<void()> functor;
 
-	explicit kthread(const functor& func)
+	explicit thread(const functor& func)
 		:threadFunc(func),
 		tid_(0),
 		started_(0),
 		joinable_(1) {
 
 	}
-	explicit kthread(functor&& func)
+	explicit thread(functor&& func)
 		:threadFunc(std::move(func)),
 		tid_(0),
 		started_(0),
 		joinable_(1) {
 
 	}
-	~kthread() {
+	~thread() {
 		detach();
 	}
 
@@ -152,3 +155,5 @@ private:
 	bool joinable_;
 
 };
+
+}//namespace pax

@@ -1,9 +1,11 @@
 ﻿#pragma once
 
-#include"kthread.h"
+#include"thread.h"
 
 #include<atomic>
 #include<vector>
+
+namespace pax {
 
 struct sequence {
 	enum cache {
@@ -37,8 +39,8 @@ private:
 	size_t capacity_;
 	std::vector<T> ringbuffer_;
 
-	kmutex mutex_;
-	kcond cond_;
+	mutex mutex_;
+	cond cond_;
 
 };
 
@@ -59,7 +61,7 @@ void disruptor<T>::put(const T& val) {
 	uint64_t widx = (wseq - 1) % capacity_;
 
 	if (wseq > readdone_.seq_ + capacity_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		while (wseq > readdone_.seq_ + capacity_) {
 			cond_.wait(&mutex_);
@@ -73,7 +75,7 @@ void disruptor<T>::put(const T& val) {
 	writedone_.seq_ = wseq;
 
 	if (readdone_.seq_ < wseq && wseq < read_.seq_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		cond_.notifyAll();
 	}
@@ -85,7 +87,7 @@ void disruptor<T>::put(T&& val) {
 	uint64_t widx = (wseq - 1) % capacity_;
 
 	if (wseq > readdone_.seq_ + capacity_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		while (wseq > readdone_.seq_ + capacity_) {
 			cond_.wait(&mutex_);
@@ -99,7 +101,7 @@ void disruptor<T>::put(T&& val) {
 	writedone_.seq_ = wseq;
 
 	if (readdone_.seq_ < wseq && wseq < read_.seq_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		cond_.notifyAll();
 	}
@@ -111,7 +113,7 @@ void disruptor<T>::take(T& dst) {
 	uint64_t ridx = (rseq - 1) % capacity_;
 
 	if (rseq > writedone_.seq_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		while (rseq > writedone_.seq_) {
 			cond_.wait(&mutex_);
@@ -125,8 +127,10 @@ void disruptor<T>::take(T& dst) {
 	readdone_.seq_ = rseq;
 
 	if (writedone_.seq_ < rseq && rseq < write_.seq_) {
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 
 		cond_.notifyAll();
 	}
 }
+
+}//namespace pax

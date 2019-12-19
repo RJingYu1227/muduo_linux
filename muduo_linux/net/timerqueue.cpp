@@ -1,12 +1,15 @@
 ﻿#include"timerqueue.h"
 #include"eventloop.h"
-#include"logging.h"
-#include"timestamp.h"
+
+#include"log/logging.h"
+#include"base/timestamp.h"
 
 #include<sys/timerfd.h>
 #include<unistd.h>
 #include<strings.h>
 #include<assert.h>
+
+using namespace::pax;
 
 timerqueue::timerqueue(eventloop* loop)
 	:fd_(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
@@ -25,20 +28,20 @@ timerqueue::~timerqueue() {
 }
 
 ktimerid timerqueue::addTimer(const functor& func, uint64_t time, double seconds) {
-	ktimer* temp = new ktimer(func, time, seconds);
+	timer* temp = new timer(func, time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
 	return ktimerid(time, temp);
 }
 
 ktimerid timerqueue::addTimer(functor&& func, uint64_t time, double seconds) {
-	ktimer* temp = new ktimer(std::move(func), time, seconds);
+	timer* temp = new timer(std::move(func), time, seconds);
 	loop_->runInLoop(std::bind(&timerqueue::addTimerInLoop, this, temp));
 
 	return ktimerid(time, temp);
 }
 
-void timerqueue::addTimerInLoop(ktimer* timer) {
+void timerqueue::addTimerInLoop(timer* timer) {
 	auto iter = timers_.begin();
 	if (iter == timers_.end() || timer->time_ < iter->first)
 		resetTimerfd(timer->time_);
@@ -54,7 +57,7 @@ void timerqueue::cancelTimer(ktimerid timerid){
 }
 
 void timerqueue::cancelTimerInLoop(ktimerid timerid) {
-	//确保不会把正在处理或将要处理的ktimer销毁
+	//确保不会把正在处理或将要处理的timer销毁
 	cancel_timers_.emplace(timerid.born_, timerid.ptr_);
 }
 
@@ -82,12 +85,12 @@ void timerqueue::handleRead() {
 
 void timerqueue::setExpireTimers(uint64_t now) {
 	expire_timers_.clear();
-	entry temp(now, reinterpret_cast<ktimer*>(UINTPTR_MAX));
+	entry temp(now, reinterpret_cast<timer*>(UINTPTR_MAX));
 	auto iter = timers_.begin();
 	auto end = timers_.lower_bound(temp);
 
 	while (iter != end) {
-		ktimer* x = iter->second;
+		timer* x = iter->second;
 		if (!cancel_timers_.erase(entry(x->born_, x)))
 			expire_timers_.push_back(x);
 		else

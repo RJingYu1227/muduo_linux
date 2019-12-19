@@ -2,6 +2,8 @@
 
 #include<string>
 
+namespace pax {
+
 class timestamp {
 public:
 
@@ -33,9 +35,13 @@ private:
 
 };
 
+}//namespace pax
+
 namespace std {
-	template<>
-	inline void swap<timestamp>(timestamp& lhs, timestamp& rhs) {
-		lhs.swap(rhs);
-	}
+
+template<>
+inline void swap<pax::timestamp>(pax::timestamp& lhs, pax::timestamp& rhs) {
+	lhs.swap(rhs);
 }
+
+}//namespace std

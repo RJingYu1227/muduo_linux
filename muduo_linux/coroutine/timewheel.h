@@ -1,9 +1,12 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"base/uncopyable.h"
+
+#include<sys/time.h>
 
 #include<vector>
-#include<sys/time.h>
+
+namespace pax {
 
 template<typename T>
 class klinknode :uncopyable {
@@ -161,3 +164,5 @@ size_t timewheel<T>::getTimeout(std::vector<klinknode<T>*>& vec) {
 
 	return num;
 }
+
+}//namespace pax

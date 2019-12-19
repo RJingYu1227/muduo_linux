@@ -1,8 +1,10 @@
-﻿#include"ktimer.h"
+﻿#include"timer.h"
 
 #include<string>
 
-ktimer::ktimer(const functor &cb, uint64_t time, double seconds)
+using namespace pax;
+
+timer::timer(const functor &cb, uint64_t time, double seconds)
 	:func(cb),
 	born_(time),
 	time_(time),
@@ -10,7 +12,7 @@ ktimer::ktimer(const functor &cb, uint64_t time, double seconds)
 
 }
 
-ktimer::ktimer(functor&& cb, uint64_t time, double seconds)
+timer::timer(functor&& cb, uint64_t time, double seconds)
 	:func(std::move(cb)),
 	born_(time),
 	time_(time),

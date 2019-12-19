@@ -1,9 +1,12 @@
 ﻿#pragma once
 
 #include"logstream.h"
-#include"disruptor.h"
+
+#include"base/disruptor.h"
 
 #include<vector>
+
+namespace pax {
 
 class asynclogger :uncopyable {
 public:
@@ -43,10 +46,12 @@ private:
 	std::string basename_;
 	off_t rollsize_;
 
-	kmutex mutex_;
-	kcond cond_;
-	kthread thread_;
+	mutex mutex_;
+	cond cond_;
+	thread thread_;
 
 	volatile bool running_;
 
 };
+
+}//namespace pax

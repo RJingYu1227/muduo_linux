@@ -2,14 +2,16 @@
 
 #include<functional>
 
-class ktimer {
+namespace pax {
+
+class timer {
 	friend class timerqueue;
 public:
 	typedef std::function<void()> functor;
 
-	ktimer(const functor& cb, uint64_t time, double seconds);
-	ktimer(functor&& cb, uint64_t time, double seconds);
-	~ktimer() {}
+	timer(const functor& cb, uint64_t time, double seconds);
+	timer(functor&& cb, uint64_t time, double seconds);
+	~timer() {}
 
 	uint64_t getBorn()const { return born_; }
 	uint64_t getTime()const { return time_; }
@@ -25,7 +27,7 @@ private:
 
 };
 
-//防止ktimer被销毁
+//防止timer被销毁
 class ktimerid {
 	friend class timerqueue;
 public:
@@ -35,7 +37,7 @@ public:
 		ptr_(nullptr)
 	{}
 
-	ktimerid(uint64_t born, ktimer* ptr) :
+	ktimerid(uint64_t born, timer* ptr) :
 		born_(born),
 		ptr_(ptr)
 	{}
@@ -43,6 +45,8 @@ public:
 private:
 
 	uint64_t born_;//us
-	ktimer* ptr_;
+	timer* ptr_;
 
 };
+
+}//namespace pax

@@ -1,14 +1,16 @@
-﻿#include"coloop.h"
-#include"ksocket.h"
-#include"httprequest.h"
+﻿#include"httprequest.h"
 #include"httpresponse.h"
-#include"buffer.h"
-#include"logging.h"
+
+#include"coroutine/coloop.h"
+#include"base/buffer.h"
+#include"log/logging.h"
 
 #include<unistd.h>
 #include<signal.h>
 
-kmutex loop_mutex;
+using namespace::pax;
+
+mutex loop_mutex;
 std::vector<coloop*> ioloops;
 int thread_num = 4;
 
@@ -32,7 +34,7 @@ void connect_handler() {
 			buff1.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || request.parseRequest(&buff1) == false)
+		if (nread == 0 || request.parseRequest(buff1) == false)
 			break;
 		else if (request.parseDone()) {
 			LOG << "完整解析httprequest " << cpt->getAddr2() << ':' << cpt->getPort();
@@ -50,7 +52,7 @@ void connect_handler() {
 			httpresponse response(alive);
 			httpCallback(request, buff1.toString(), response);
 
-			response.appendToBuffer(&buff2);
+			response.appendToBuffer(buff2);
 			cpt->write(buff2.beginPtr(), buff2.usedBytes(), -1);
 			LOG << "完整发送httpresponse " << cpt->getAddr2() << ':' << cpt->getPort();
 
@@ -103,7 +105,7 @@ void accept_handler() {
 void thread_func() {
 	coloop ioloop;
 	{
-		klock<kmutex> x(&loop_mutex);
+		lock<mutex> x(&loop_mutex);
 		ioloops.push_back(&ioloop);
 	}
 
@@ -122,9 +124,9 @@ int main(int argc, char* argv[]) {
 			thread_num = 8;
 	}
 
-	std::vector<kthread*> thread_vec(thread_num);
+	std::vector<thread*> thread_vec(thread_num);
 	for (auto& x : thread_vec) {
-		x = new kthread(thread_func);
+		x = new thread(thread_func);
 		x->start();
 	}
 

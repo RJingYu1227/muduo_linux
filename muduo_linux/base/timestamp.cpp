@@ -2,6 +2,8 @@
 
 #include<sys/time.h>
 
+using namespace::pax;
+
 uint64_t timestamp::getMicroSeconds() {
 	timeval tv = { 0 };
 	gettimeofday(&tv, NULL);

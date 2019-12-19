@@ -1,12 +1,16 @@
 #pragma once
 
 #include"channel.h"
-#include"kthread.h"
-#include"uncopyable.h"
+
+#include"base/thread.h"
+#include"base/uncopyable.h"
+
+#include<sys/eventfd.h>
 
 #include<functional>
 #include<vector>
-#include<sys/eventfd.h>
+
+namespace pax {
 
 class eventloop;
 
@@ -27,10 +31,11 @@ private:
 
 	int fd_;
 	eventfd_t count_;
-	kmutex lock_;
+	mutex lock_;
 	eventloop* loop_;
 	channel channel_;
 	std::vector<functor> functors_;
 
 };
 
+}//namespace pax

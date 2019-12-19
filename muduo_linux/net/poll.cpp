@@ -1,18 +1,21 @@
-﻿#include"kpoll.h"
-#include"logging.h"
+﻿#include"poll.h"
 #include"channel.h"
+
+#include"log/logging.h"
 
 #include<assert.h>
 
-void kpoll::doPoll(int timeoutms, channellist& active_channels_) {
-	int numevents = poll(&*pollfds_.begin(), pollfds_.size(), timeoutms);
+using namespace pax;
+
+void poll::doPoll(int timeoutms, channellist& active_channels_) {
+	int numevents = ::poll(&*pollfds_.begin(), pollfds_.size(), timeoutms);
 	if (numevents > 0)
 		fillActiveChannels(numevents, active_channels_);
 	else if (numevents == -1)
 		LOG << "poll调用出错，errno = " << errno;
 }
 
-void kpoll::updateChannel(channel* ch) {
+void poll::updateChannel(channel* ch) {
 	int fd = ch->getFd();
 
 	if (ch->getMark() == -1) {
@@ -40,7 +43,7 @@ void kpoll::updateChannel(channel* ch) {
 	}
 }
 
-void kpoll::removeChannel(channel* ch) {
+void poll::removeChannel(channel* ch) {
 	int fd = ch->getFd();
 	int idx = ch->getMark();
 
@@ -66,7 +69,7 @@ void kpoll::removeChannel(channel* ch) {
 	ch->setMark(-1);
 }
 
-void kpoll::fillActiveChannels(int numevents_, channellist& active_channels_) {
+void poll::fillActiveChannels(int numevents_, channellist& active_channels_) {
 	for (auto iter = pollfds_.begin(); iter != pollfds_.end() && numevents_; ++iter) {
 		if (iter->revents > 0) {
 			--numevents_;

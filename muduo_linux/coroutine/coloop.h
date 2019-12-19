@@ -6,6 +6,8 @@
 
 #include<vector>
 
+namespace pax {
+
 //one loop per thread
 class coloop_item;
 
@@ -33,7 +35,7 @@ private:
 	int epfd_;
 	std::vector<epoll_event> revents_;
 
-	kmutex time_mutex_;
+	mutex time_mutex_;
 	std::vector<klinknode<coloop_item*>*> timenodes_;
 	timewheel<coloop_item*> timewheel_;
 
@@ -95,3 +97,5 @@ bool coloop_item::create(functor&& func, const char* ip, int port, coloop* loop)
 coloop_item* coloop_item::self() {
 	return running_cpt_;
 }
+
+}//namespace pax

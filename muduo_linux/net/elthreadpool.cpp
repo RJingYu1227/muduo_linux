@@ -1,6 +1,8 @@
 ﻿#include"elthreadpool.h"
 #include"eventloop.h"
 
+using namespace pax;
+
 elthreadpool::elthreadpool(int num)
 	:started_(0),
 	loop_num_(num),
@@ -14,7 +16,7 @@ void elthreadpool::start() {
 		return;
 
 	for (int i = 1; i <= loop_num_; ++i) {
-		kthread thread_(std::bind(&elthreadpool::threadFunc, this));
+		thread thread_(std::bind(&elthreadpool::threadFunc, this));
 		thread_.start();
 	}
 	
@@ -48,7 +50,7 @@ eventloop* elthreadpool::getLoop() {
 void elthreadpool::threadFunc() {
 	eventloop loop_;
 	{
-		klock<kmutex> x(&lock_);
+		lock<mutex> x(&lock_);
 		loops_.push_back(&loop_);
 	}
 	++current_num_;

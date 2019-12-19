@@ -14,7 +14,7 @@ httpserver::httpserver(const char* ip, int port, int loopnum)
 	server_.setClosedCallback(httpserver::onClosed);
 }
 
-eventloop* httpserver::getLoop() {
+pax::eventloop* httpserver::getLoop() {
 	return server_.getLoop();
 }
 
@@ -24,15 +24,15 @@ void httpserver::defaultCallback(const httprequest& request, httpresponse& respo
 	response.setKeepAlive(0);
 }
 
-void httpserver::onConnected(const tcpconn_ptr& conn) {
+void httpserver::onConnected(const pax::tcpconn_ptr& conn) {
 	conn->setPtr(new httprequest());
 }
 
-void httpserver::onRecvDone(const tcpconn_ptr& conn) {
+void httpserver::onRecvDone(const pax::tcpconn_ptr& conn) {
 	httprequest* request = (httprequest*)conn->getPtr();
-	buffer* buffer1 = conn->getRecvBuffer();
+	pax::buffer* buffer1 = conn->getRecvBuffer();
 
-	if (!request->parseRequest(buffer1)) {
+	if (!request->parseRequest(*buffer1)) {
 		conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
 		conn->shutDown();
 	}
@@ -52,8 +52,8 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 		httpresponse response(alive);
 		httpCallback(*request, response);
 
-		buffer buffer2;
-		response.appendToBuffer(&buffer2);
+		pax::buffer buffer2;
+		response.appendToBuffer(buffer2);
 		conn->send(&buffer2);
 
 		if (response.keepAlive()) {
@@ -65,7 +65,7 @@ void httpserver::onRecvDone(const tcpconn_ptr& conn) {
 	}
 }
 
-void httpserver::onClosed(const tcpconn_ptr& conn) {
+void httpserver::onClosed(const pax::tcpconn_ptr& conn) {
 	delete (httprequest*)conn->getPtr();
 }
 

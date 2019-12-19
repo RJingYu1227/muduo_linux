@@ -48,6 +48,8 @@ namespace {
 
 }
 
+using namespace::pax;
+
 void logstream::staticCheck() {
 	static_assert(kMaxNumericSize - 10 > std::numeric_limits<double>::digits10,
 		"kMaxNumericSize is large enough");

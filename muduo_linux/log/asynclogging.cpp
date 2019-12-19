@@ -1,6 +1,8 @@
 ﻿#include"asynclogging.h"
 #include"logfile.h"
 
+using namespace::pax;
+
 namespace {
 
 	enum config {
@@ -65,7 +67,7 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	uint64_t rseq = read_.seq_;
 	if (rseq <= wseq && wseq <= (rseq + size)) {
 		//缓冲区写入的数据的大小刚好达到要求
-		klock<kmutex> lock(&mutex_);
+		lock<mutex> lock(&mutex_);
 		cond_.notify();
 	}
 }
@@ -99,7 +101,7 @@ void asynclogger::threadFunc() {
 	for (;;) {
 		if (rseq > writedone_.seq_) {
 			//等待缓冲区写入的数据的大小达到要求 或者 超时 再消费
-			klock<kmutex> lock(&mutex_);
+			lock<mutex> lock(&mutex_);
 			if (rseq > writedone_.seq_)
 				cond_.timedwait(&mutex_, kInterval);
 		}

@@ -3,6 +3,8 @@
 
 #include<time.h>
 
+using namespace::pax;
+
 logfile::logfile(const char* basename, off_t rollsize, int count_limit)
 	:basename_(basename),
 	file_(nullptr),

@@ -1,14 +1,14 @@
-﻿#include"coservice.h"
-#include"ksocket.h"
-#include"httprequest.h"
+﻿#include"httprequest.h"
 #include"httpresponse.h"
-#include"buffer.h"
-#include"logging.h"
 
-#include<stdexcept>
+#include"coroutine/coservice.h"
+#include"base/buffer.h"
+#include"log/logging.h"
+
 #include<unistd.h>
 #include<signal.h>
-#include<iostream>
+
+using namespace::pax;
 
 void httpCallback(const httprequest& request, const string& content, httpresponse& response);
 
@@ -32,7 +32,7 @@ void connect_handler() {
 			buff1.ensureLeftBytes(1024);
 		}
 
-		if (nread == 0 || request.parseRequest(&buff1) == false)
+		if (nread == 0 || request.parseRequest(buff1) == false)
 			break;
 		else if (request.parseDone()) {
 			LOG << "完整解析httprequest " << cst->getAddr2() << ':' << cst->getPort();
@@ -50,7 +50,7 @@ void connect_handler() {
 			httpresponse response(alive);
 			httpCallback(request, buff1.toString(), response);
 
-			response.appendToBuffer(&buff2);
+			response.appendToBuffer(buff2);
 			cst->write(buff2.beginPtr(), buff2.usedBytes(), -1);
 			LOG << "完整发送httpresponse " << cst->getAddr2() << ':' << cst->getPort();
 
@@ -114,9 +114,9 @@ int main(int argc, char* argv[]) {
 
 	coservice_item::create(accept_handler, "0.0.0.0", 7777, &service);
 
-	std::vector<kthread*> thread_vec(thread_num);
+	std::vector<thread*> thread_vec(thread_num);
 	for (auto& x : thread_vec) {
-		x = new kthread(thread_func);
+		x = new thread(thread_func);
 		x->start();
 	}
 	for (auto& x : thread_vec)

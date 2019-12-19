@@ -1,9 +1,11 @@
 ﻿#pragma once
 
-#include"kthread.h"
+#include"base/thread.h"
 
 #include<vector>
 #include<atomic>
+
+namespace pax {
 
 class eventloop;
 
@@ -14,23 +16,29 @@ public:
 	~elthreadpool() { stop(); }
 
 	eventloop* getLoop();
-	std::vector<eventloop*> getLoops() 
-	{ return loops_; }
+	std::vector<eventloop*> getLoops()
+	{
+		return loops_;
+	}
 
 	void start();
 	//在非线程池内线程调用；不允许通过其它方式使loop退出循环
 	void stop();
 
-	void setLoopNum(int num) 
-	{ loop_num_ = num; }
-	int getLoopNum() 
-	{ return loop_num_; }
+	void setLoopNum(int num)
+	{
+		loop_num_ = num;
+	}
+	int getLoopNum()
+	{
+		return loop_num_;
+	}
 
 private:
 
 	void threadFunc();
 
-	kmutex lock_;
+	mutex lock_;
 	bool started_;
 	int loop_num_;
 	int index_;
@@ -38,3 +46,5 @@ private:
 	std::vector<eventloop*> loops_;
 
 };
+
+}//namespace pax

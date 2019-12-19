@@ -1,11 +1,14 @@
-﻿#include"kepoll.h"
-#include"logging.h"
+﻿#include"epoll.h"
 #include"channel.h"
+
+#include"log/logging.h"
 
 #include<assert.h>
 #include<unistd.h>
 
-kepoll::kepoll(eventloop* loop)
+using namespace pax;
+
+epoll::epoll(eventloop* loop)
 	:poller(loop),
 	epollfd_(epoll_create1(EPOLL_CLOEXEC)),
 	events_(kInitEventListSize) {
@@ -13,11 +16,11 @@ kepoll::kepoll(eventloop* loop)
 	assert(epollfd_ > 0);
 }
 
-kepoll::~kepoll() {
+epoll::~epoll() {
 	close(epollfd_);
 }
 
-void kepoll::doPoll(int timeoutms, channellist& active_channels_) {
+void epoll::doPoll(int timeoutms, channellist& active_channels_) {
 	int numevents = epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutms);
 	//调用epoll_wait的时候,将readylist中的epitem出列,将触发的事件拷贝到用户空间
 	if (numevents > 0) {
@@ -30,7 +33,7 @@ void kepoll::doPoll(int timeoutms, channellist& active_channels_) {
 
 }
 
-void kepoll::updateChannel(channel* ch) {
+void epoll::updateChannel(channel* ch) {
 	int fd = ch->getFd();
 	epoll_event ev;
 	ev.events = ch->getEvent();
@@ -49,7 +52,7 @@ void kepoll::updateChannel(channel* ch) {
 	}
 }
 
-void kepoll::removeChannel(channel* ch) {
+void epoll::removeChannel(channel* ch) {
 	int fd = ch->getFd();
 
 	if (ch->getMark() == -1) {
@@ -69,7 +72,7 @@ void kepoll::removeChannel(channel* ch) {
 
 }
 
-void kepoll::fillActiveChannels(int numevents_, channellist& active_channels_) {
+void epoll::fillActiveChannels(int numevents_, channellist& active_channels_) {
 	for (int i = 0; i < numevents_; ++i) {
 		channel* ch = (channel*)(events_[i].data.ptr);
 		ch->setRevent(events_[i].events);

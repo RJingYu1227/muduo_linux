@@ -3,7 +3,10 @@
 #include"logstream.h"
 
 #include<errno.h>
+
 #include<functional>
+
+namespace pax {
 
 class asynclogger;
 
@@ -46,3 +49,5 @@ private:
 };
 
 #define LOG logger(__FILE__, __LINE__).stream()
+
+}//namespace pax

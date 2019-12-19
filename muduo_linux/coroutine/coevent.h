@@ -1,10 +1,12 @@
 ﻿#pragma once
 
-#include"ksocket.h"
+#include"base/socket.h"
 
 #include<sys/epoll.h>
 
-class coevent :public ksocket {
+namespace pax {
+
+class coevent :public socket {
 public:
 	enum event {
 		NONE = 0,
@@ -14,13 +16,13 @@ public:
 	};
 
 	coevent(int fd, sockaddr_in& addr) :
-		ksocket(fd, addr),
+		socket(fd, addr),
 		events_(0),
 		revents_(0) {
 
 	}
 	coevent(const char* ip, int port) :
-		ksocket(ip, port),
+		socket(ip, port),
 		events_(0),
 		revents_(0) {
 
@@ -63,3 +65,5 @@ private:
 	uint32_t revents_;
 
 };
+
+}//namespace pax

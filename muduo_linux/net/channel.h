@@ -1,8 +1,10 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"base/uncopyable.h"
 
 #include<functional>
+
+namespace pax {
 
 class eventloop;
 
@@ -25,24 +27,40 @@ public:
 	eventloop* getLoop() { return loop_; }
 
 	//event
-	void enableReading() 
-	{ event_ |= kReadEvent; update(); }
-	void disableReading() 
-	{ event_ &= ~kReadEvent; update(); }
-	bool isReading() const 
-	{ return event_ & kReadEvent; }
+	void enableReading()
+	{
+		event_ |= kReadEvent; update();
+	}
+	void disableReading()
+	{
+		event_ &= ~kReadEvent; update();
+	}
+	bool isReading() const
+	{
+		return event_ & kReadEvent;
+	}
 
-	void enableWriting() 
-	{ event_ |= kWriteEvent; update(); }
-	void disableWrting() 
-	{ event_ &= ~kWriteEvent; update(); }
-	bool isWriting() const 
-	{ return event_ & kWriteEvent; }
+	void enableWriting()
+	{
+		event_ |= kWriteEvent; update();
+	}
+	void disableWrting()
+	{
+		event_ &= ~kWriteEvent; update();
+	}
+	bool isWriting() const
+	{
+		return event_ & kWriteEvent;
+	}
 
-	void disableALL() 
-	{ event_ = kNoneEvent; update(); }
-	bool isNoneEvent()const 
-	{ return event_ == kNoneEvent; }
+	void disableALL()
+	{
+		event_ = kNoneEvent; update();
+	}
+	bool isNoneEvent()const
+	{
+		return event_ == kNoneEvent;
+	}
 
 	//poller
 	void setMark(int mark) { mark_ = mark; }
@@ -74,3 +92,4 @@ private:
 
 };
 
+}//namespace pax

@@ -1,14 +1,16 @@
 ﻿#pragma once
 
-#include"kthread.h"
+#include"base/thread.h"
 
 #include<ucontext.h>
+
+namespace pax {
 
 class coroutine_item;
 
 class coroutine :uncopyable {
 	friend class coroutine_item;
-	friend class kthreadlocal<coroutine>;
+	friend class threadlocal<coroutine>;
 public:
 
 	inline static void yield()noexcept(false);//std::logic_error
@@ -21,7 +23,7 @@ protected:
 private:
 
 	static coroutine* threadCoenv();
-	static kthreadlocal<coroutine> thread_coenv_;
+	static threadlocal<coroutine> thread_coenv_;
 
 	void resumeFunc(coroutine_item* co);
 	void yieldFunc();
@@ -65,7 +67,7 @@ private:
 	static void makeContext(coroutine_item* co);
 	static void swapContext(coroutine_item* curr, coroutine_item* pend);
 
-	static kthreadlocal<char> shared_stack_;
+	static threadlocal<char> shared_stack_;
 	thread_local static coroutine_item* running_crt_;
 
 	costate state_;
@@ -88,3 +90,5 @@ void coroutine::yield() {
 void coroutine_item::resume() {
 	coroutine::threadCoenv()->resumeFunc(this);
 }
+
+}//namespace pax

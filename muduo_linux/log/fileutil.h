@@ -1,15 +1,16 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"base/uncopyable.h"
 
 #include<unistd.h>
 #include<stdio.h>
 
+namespace pax {
 
 class appendfile :uncopyable {
 public:
 	explicit appendfile(const char* filename);
-	~appendfile() { 
+	~appendfile() {
 		fclose(fp_);
 	}
 
@@ -24,3 +25,4 @@ private:
 	off_t written_bytes_;
 };
 
+}//namespace pax

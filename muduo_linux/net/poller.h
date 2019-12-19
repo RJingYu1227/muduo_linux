@@ -1,9 +1,11 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
+#include"base/uncopyable.h"
 
 #include<unordered_map>
 #include<vector>
+
+namespace pax {
 
 class channel;
 class eventloop;
@@ -19,7 +21,7 @@ public:
 
 	static poller* newPoller(eventloop* loop, POLLER p = kEPOLL);
 
-	poller(eventloop* loop) 
+	poller(eventloop* loop)
 		:loop_(loop) {
 
 	}
@@ -37,3 +39,5 @@ protected:
 	channel_map channels_;
 
 };
+
+}//namespace pax

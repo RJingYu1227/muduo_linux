@@ -5,6 +5,8 @@
 #include<queue>
 #include<memory>
 
+namespace pax {
+
 template<typename T>
 struct head {
 	head() {}
@@ -80,3 +82,5 @@ void memorypool<T>::makeSpace() {
 	}
 	size_ *= 2;
 }
+
+}//namespace pax

@@ -1,7 +1,10 @@
-﻿#include"logging.h"
-#include"httpserver.h"
+﻿#include"httpserver.h"
+
+#include"log/logging.h"
 
 #include<signal.h>
+
+using namespace::pax;
 
 httpserver* pserver = nullptr;
 
@@ -14,8 +17,8 @@ int main(int argc, char* argv[]) {
 	if (argc != 4)
 		return 0;
 
-	signal(SIGINT, sigintHandler);
-	signal(SIGPIPE, SIG_IGN);
+	::signal(SIGINT, sigintHandler);
+	::signal(SIGPIPE, SIG_IGN);
 
 	logger::createAsyncLogger();
 

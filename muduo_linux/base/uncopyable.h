@@ -1,5 +1,7 @@
 #pragma once
 
+namespace pax {
+
 class uncopyable {
 protected:
 
@@ -12,3 +14,5 @@ private:
 	uncopyable& operator=(const uncopyable& rhs) = delete;
 
 };
+
+}//namespace pax

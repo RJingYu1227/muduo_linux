@@ -4,6 +4,8 @@
 #include<sys/epoll.h>
 #include<assert.h>
 
+using namespace pax;
+
 const int channel::kNoneEvent = 0;
 const int channel::kReadEvent = EPOLLIN | EPOLLPRI;
 const int channel::kWriteEvent = EPOLLOUT;

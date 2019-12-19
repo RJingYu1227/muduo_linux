@@ -4,8 +4,10 @@
 #include<assert.h>
 #include<string.h>
 
-kthreadlocal<coroutine> coroutine::thread_coenv_(kthreadlocal<coroutine>::freeFunc);
-kthreadlocal<char> coroutine_item::shared_stack_(kthreadlocal<char>::freeFunc);
+using namespace pax;
+
+threadlocal<coroutine> coroutine::thread_coenv_(threadlocal<coroutine>::freeFunc);
+threadlocal<char> coroutine_item::shared_stack_(threadlocal<char>::freeFunc);
 thread_local coroutine_item* coroutine_item::running_crt_ = nullptr;
 
 coroutine::coroutine() :

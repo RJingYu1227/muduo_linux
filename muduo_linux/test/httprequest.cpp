@@ -1,5 +1,6 @@
 ﻿#include"httprequest.h"
-#include"buffer.h"
+
+#include"base/buffer.h"
 
 #include<assert.h>
 #include<algorithm>
@@ -96,19 +97,19 @@ bool httprequest::processRequestLine(const char* start, const char* end) {
 	return 1;
 }
 
-bool httprequest::parseRequest(buffer* buffer1) {
+bool httprequest::parseRequest(pax::buffer& buffer1) {
 	while (1) {
 		if (state_ == kExpectBody) {
-			if (buffer1->usedBytes() >= length_)
+			if (buffer1.usedBytes() >= length_)
 				state_ = kParseDone;
 			break;
 		}
 
-		const char* crlf = buffer1->findCRLF();
+		const char* crlf = buffer1.findCRLF();
 		if (crlf == NULL)
 			break;
-		const char* start = buffer1->beginPtr();
-		buffer1->retrieve(crlf + 2 - start);
+		const char* start = buffer1.beginPtr();
+		buffer1.retrieve(crlf + 2 - start);
 
 		if (state_ == kExpectRequestLine) {
 			if (processRequestLine(start, crlf))

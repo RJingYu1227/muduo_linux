@@ -4,6 +4,8 @@
 #include<unistd.h>
 #include<time.h>
 
+using namespace::pax;
+
 std::string logger::log_filename_ = "./RJingYu.";
 logger::functor logger::output = logger::defaultOutput;
 

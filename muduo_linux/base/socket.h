@@ -5,12 +5,14 @@
 #include<netinet/tcp.h>
 #include<arpa/inet.h>
 
-class ksocket :uncopyable {
+namespace pax {
+
+class socket :uncopyable {
 public:
 
-	ksocket(const char* ip, int port);
-	ksocket(int fd, sockaddr_in& addr);
-	~ksocket();
+	socket(const char* ip, int port);
+	socket(int fd, sockaddr_in& addr);
+	~socket();
 
 	int getFd()const { return fd_; }
 	uint16_t getPort()const { return htons(addr_.sin_port); }
@@ -39,3 +41,4 @@ private:
 
 };
 
+}//namespace pax

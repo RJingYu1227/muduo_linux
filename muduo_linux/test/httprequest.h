@@ -1,12 +1,12 @@
 ﻿#pragma once
 
+#include"base/buffer.h"
+
 #include<stdexcept>
 #include<string>
 #include<map>
 
 using std::string;
-
-class buffer;
 
 class httprequest {
 public:
@@ -27,39 +27,53 @@ public:
 		kHTTP10, kHTTP11
 	};
 
-	httprequest() 
-		:state_(kExpectRequestLine), 
-		method_(kINVALID), 
+	httprequest()
+		:state_(kExpectRequestLine),
+		method_(kINVALID),
 		version_(kUNKNOWN),
 		length_(0)
 	{}
-	
-	bool parseRequest(buffer* buffer1);
-	bool parseDone()const 
-	{ return state_ == kParseDone; }
 
-	version getVersion()const 
-	{ return version_; }
+	bool parseRequest(pax::buffer& buffer1);
+	bool parseDone()const
+	{
+		return state_ == kParseDone;
+	}
 
-	method getMethod()const 
-	{ return method_; }
+	version getVersion()const
+	{
+		return version_;
+	}
 
-	const string& getPath()const 
-	{ return path_; }
+	method getMethod()const
+	{
+		return method_;
+	}
 
-	const string& getQuery()const 
-	{ return query_; }
+	const string& getPath()const
+	{
+		return path_;
+	}
+
+	const string& getQuery()const
+	{
+		return query_;
+	}
 
 	string getHeader(const string& key)const noexcept(false);//std::runtime_error
-	const std::map<string, string>& getHeaders()const 
-	{ return headers_; }
+	const std::map<string, string>& getHeaders()const
+	{
+		return headers_;
+	}
 
-	size_t getLength()const 
-	{ return length_; }
+	size_t getLength()const
+	{
+		return length_;
+	}
 
 	void reset();
 	//void swap(httprequest& that);
-	
+
 private:
 
 	bool processRequestLine(const char* start, const char* end);

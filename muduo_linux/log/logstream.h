@@ -1,14 +1,17 @@
 ﻿#pragma once
 
-#include<string>
 #include<string.h>
+
+#include<string>
+
+namespace pax {
 
 template<int SIZE>
 class logbuffer {
 public:
 
 	logbuffer() :current_(data_) {}
-	~logbuffer(){}
+	~logbuffer() {}
 
 	void append(const char* data, size_t len) {
 		if (leftBytes() > len) {
@@ -104,3 +107,5 @@ private:
 	s_logbuffer buffer_;
 
 };
+
+}//namespace pax

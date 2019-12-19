@@ -4,12 +4,14 @@
 
 #include<sys/epoll.h>
 
+namespace pax {
+
 //默认水平触发，listenfd改为边沿触发
-class kepoll :public poller {
+class epoll :public poller {
 public:
 
-	kepoll(eventloop* loop);
-	~kepoll();
+	epoll(eventloop* loop);
+	~epoll();
 
 	void doPoll(int timeoutms, channellist& active_channels_);
 	void updateChannel(channel* ch);
@@ -26,3 +28,5 @@ private:
 	event_list events_;
 
 };
+
+}//namespace pax

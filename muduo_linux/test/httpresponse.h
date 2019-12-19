@@ -1,12 +1,13 @@
 ﻿#pragma once
 
+#include"base/buffer.h"
+
 #include<stdio.h>
+
 #include<map>
 #include<string>
 
 using std::string;
-
-class buffer;
 
 class httpresponse {
 public:
@@ -25,10 +26,14 @@ public:
 
 	};
 
-	void addHeader(const string& key, const string& value) 
-	{ headers_[key + ": "] = (value + "\r\n"); }
-	void eraseHeader(const string& key) 
-	{ headers_.erase(key + ": "); }
+	void addHeader(const string& key, const string& value)
+	{
+		headers_[key + ": "] = (value + "\r\n");
+	}
+	void eraseHeader(const string& key)
+	{
+		headers_.erase(key + ": ");
+	}
 
 	string& getBody() { return body_; }
 	void setStatu1(statu value) { statu1_ = value; }
@@ -36,7 +41,7 @@ public:
 	void setKeepAlive(bool alive) { alive_ = alive; }
 	bool keepAlive()const { return alive_; }
 
-	void appendToBuffer(buffer* buffer2);
+	void appendToBuffer(pax::buffer& buffer2);
 
 private:
 
@@ -47,5 +52,3 @@ private:
 	bool alive_;
 
 };
-
-

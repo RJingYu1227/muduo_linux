@@ -1,10 +1,13 @@
 ﻿#pragma once
 
-#include"memorypool.h"
 #include"channel.h"
-#include"ksocket.h"
+
+#include"base/memorypool.h"
+#include"base/socket.h"
 
 #include<unordered_map>
+
+namespace pax {
 
 class elthreadpool;
 class eventloop;
@@ -23,7 +26,7 @@ public:
 	bool isListening()const { return listening_; }
 	void start();
 	void stop();
-	
+
 	void setConnectedCallback(const event_callback& cb) { connectedCallback = cb; }
 	void setClosedCallback(const event_callback& cb) { closedCallback = cb; }
 	void setRecvDoneCallback(const event_callback& cb) { recvDoneCallback = cb; }
@@ -46,7 +49,7 @@ private:
 	eventloop* serverloop_;
 	elthreadpool* looppool_;
 
-	ksocket socket_;
+	socket socket_;
 	memorypool<tcpconnection> mpool_;
 	channel channel_;
 	std::unordered_map<int, tcpconn_ptr> connections_;
@@ -63,3 +66,4 @@ private:
 
 };
 
+}//namespace pax

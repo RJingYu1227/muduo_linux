@@ -1,9 +1,12 @@
 ﻿#pragma once
 
-#include"uncopyable.h"
-#include"ktimer.h"
+#include"timer.h"
+
+#include"base/uncopyable.h"
 
 #include<vector>
+
+namespace pax {
 
 class channel;
 class poller;
@@ -25,7 +28,7 @@ public:
 	void assertInLoopThread();
 	void updateChannel(channel* ch);
 	void removeChannel(channel* ch);
-	bool isInLoopThread()const; 
+	bool isInLoopThread()const;
 
 	void runInLoop(const functor& func);
 	void runInLoop(functor&& func);
@@ -57,3 +60,4 @@ private:
 
 };
 
+}//namespace pax

@@ -1,12 +1,13 @@
 ﻿#pragma once
 
-#include"buffer.h"
 #include"channel.h"
-#include"ksocket.h"
+
+#include"base/buffer.h"
+#include"base/socket.h"
 
 #include<memory>
 
-using std::string;
+namespace pax {
 
 class eventloop;
 class tcpconnection;
@@ -37,7 +38,7 @@ public:
 	void startRead();
 	void stopRead();
 	void send(buffer* data);
-	void send(const string& data);
+	void send(const std::string& data);
 
 	buffer* getRecvBuffer() { return &buffer1_; }
 	buffer* getSendBuffer() { return &buffer2_; }
@@ -69,7 +70,7 @@ private:
 	//建议使用shared_from_this()，不然不是线程安全的
 	void startReadInLoop();
 	void stopReadInLoop();
-	void sendInLoop1(const string &data);
+	void sendInLoop1(const std::string& data);
 	void sendInLoop2(const char* data, size_t len);
 	void shutDownInLoop();
 
@@ -85,7 +86,7 @@ private:
 	state state_;
 	size_t watermark_;
 
-	ksocket socket_;
+	socket socket_;
 	buffer buffer1_;
 	buffer buffer2_;
 	channel channel_;
@@ -98,3 +99,4 @@ private:
 
 };
 
+}//namespace pax
