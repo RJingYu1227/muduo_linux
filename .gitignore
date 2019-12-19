@@ -25,10 +25,11 @@ bld/
 # [Ll]og/
 
 # 2019/12/19 ºöÂÔµÄÎÄ¼ş
-/.gitattributes
-/.gitignore
-.sln
-.vcxproj
+readme/
+.gitattributes
+.gitignore
+*.sln
+*.vcxproj
 
 # Visual Studio 2015 cache/options directory
 .vs/
