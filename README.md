@@ -10,3 +10,8 @@
 6. net文件夹下的代码模仿muduo实现  
 7. 包含一些对低层api的封装（以类的形式）  
 8. 测试用例主要是一个http服务器，经过wrk测试，测试结果还未整理  
+  
+makefile:  
+1. make在工作目录下生成静态库libpax.a  
+2. make install在工作目录下新建pax.build文件夹，内含include和lib文件夹  
+3. make clean
