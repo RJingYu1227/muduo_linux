@@ -15,15 +15,24 @@ OBJ = $(patsubst %.cpp, %.o, ${SRC})
 
 LIB = -lpthread -lmysqlclient
 
-TARGET = webserver
+TARGET = libpax.a
 CC = g++
-FLAG = -Wall -std=c++11 ${INC_DIR} ${LIB}
+FLAG = -Wall -std=c++11 -O0 ${INC_DIR} ${LIB}
 
 ${TARGET} : ${OBJ}
-	${CC} -o $@ ${OBJ} ${FLAG}
+	ar cr $@ ${OBJ}
 
 ${OBJ} : 
 	${CC} -c -o $@ $(patsubst %.o, %.cpp, $@) ${FLAG}
+
+install:
+	mkdir -p ./pax.build/include/ \
+	&& mkdir ./pax.build/lib/ \
+	&& cp ./${TARGET} ./pax.build/lib/ \
+	&& cp -r ./pax ./pax.build/include/
+	cd ./pax.build/include \
+	&& rm ${OBJ} \
+	&& rm ${SRC}
 
 clean:
 	rm ${OBJ}
