@@ -10,8 +10,28 @@ template<int SIZE>
 class logbuffer {
 public:
 
-	logbuffer() :current_(data_) {}
-	~logbuffer() {}
+	logbuffer() :
+		current_(data_) 
+	{}
+
+	logbuffer(const logbuffer& rhs) :
+		current_(data_) {
+
+		size_t len = rhs.current_ - rhs.data_;
+		memcpy(data_, rhs.data_, len);
+		current_ += len;
+	}
+
+	~logbuffer() 
+	{}
+
+	logbuffer& operator=(const logbuffer& rhs) {
+		size_t len = rhs.current_ - rhs.data_;
+		memcpy(data_, rhs.data_, len);
+		current_ = data_ + len;
+
+		return *this;
+	}
 
 	void append(const char* data, size_t len) {
 		if (leftBytes() > len) {
@@ -20,10 +40,8 @@ public:
 		}
 	}
 
-	logbuffer& operator=(const logbuffer& rhs) {
-		size_t len = rhs.current_ - rhs.data_;
-		memcpy(data_, rhs.data_, len);
-		current_ = data_ + len;
+	logbuffer& operator+=(const logbuffer& rhs) {
+		this->append(rhs.getData(), rhs.length());
 
 		return *this;
 	}
@@ -58,6 +76,10 @@ typedef logbuffer<kLargeBuffer> l_logbuffer;
 class logstream {
 public:
 	typedef logstream self;
+
+	self& operator<<(self&(*pf)(self&)) {
+		return pf(*this);
+	}
 
 	self& operator<<(bool v) {
 		buffer_.append(v ? "1" : "0", 1);
@@ -97,14 +119,16 @@ public:
 	const s_logbuffer& getBuffer() { return buffer_; }
 	void resetBuffer() { buffer_.reset(); }
 
+protected:
+
+	s_logbuffer buffer_;
+
 private:
 
 	void staticCheck();
 
 	template<typename T>
 	void formatInteger(T);
-
-	s_logbuffer buffer_;
 
 };
 

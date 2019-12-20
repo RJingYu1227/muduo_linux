@@ -32,25 +32,21 @@ void logger::createAsyncLogger() {
 	LOG << "创建asyncLogger";
 }
 
-logger::impl::impl(const char* basename, int line)
-	:basename_(basename),
-	line_(line) {
+logstream& pax::logger::time(logstream& stream) {
+	char buff[32] = { 0 };
 
-}
-
-logger::logger(const char* filename, int line)
-	:impl_(filename, line) {
-
-	char timebuf[32] = { 0 };
 	tm tm_time;
-	time_t seconds = time(nullptr);
+	time_t seconds = ::time(nullptr);
 	localtime_r(&seconds, &tm_time);
-	strftime(timebuf, sizeof timebuf, "%Y %m %d %H:%M:%S", &tm_time);
 
-	impl_.stream_ << timebuf << '\n';
+	strftime(buff, sizeof buff, "%Y %m %d %H:%M:%S", &tm_time);
+
+	return stream << buff;
 }
 
-logger::~logger() {
-	impl_.stream_ << " -- " << impl_.basename_ << ' ' << impl_.line_ << '\n';
-	output(impl_.stream_.getBuffer());
+logstream& pax::logger::flush(logstream& stream) {
+	output(stream.getBuffer());
+	stream.resetBuffer();
+
+	return stream;
 }

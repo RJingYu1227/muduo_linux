@@ -39,6 +39,9 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	size_t size = sbuff.length();
 	const char* src = sbuff.getData();
 
+	if (size == 0)
+		return;
+
 	//更新生产者信息
 	uint64_t wseq = (write_.seq_ += size) - 1;
 	uint64_t begin = kEndIndex & (wseq - size + 1);

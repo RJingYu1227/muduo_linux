@@ -3,6 +3,8 @@
 #include<algorithm>
 #include<stdio.h>
 
+using namespace::pax;
+
 namespace {
 
 	const char logDigits[] = "9876543210123456789";
@@ -47,8 +49,6 @@ namespace {
 	}
 
 }
-
-using namespace::pax;
 
 void logstream::staticCheck() {
 	static_assert(kMaxNumericSize - 10 > std::numeric_limits<double>::digits10,

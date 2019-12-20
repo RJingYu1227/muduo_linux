@@ -14,7 +14,7 @@ appendfile::appendfile(const char* filename)
 
 void appendfile::append(const char* data, size_t len) {
 	size_t remain = len;
-	while (remain > 0) {
+	while (remain) {
 		size_t n = fwrite_unlocked(data, 1, len, fp_);
 		if (n == 0) {
 			int err = ferror(fp_);
