@@ -11,11 +11,11 @@ logger::functor logger::output = logger::defaultOutput;
 
 namespace {
 
-	asynclogger* async_ = nullptr;
+asynclogger* async_ = nullptr;
 
-	void asyncOutput(const s_logbuffer& temp) {
-		async_->append(temp);
-	}
+void asyncOutput(const s_logbuffer& temp) {
+	async_->append(temp);
+}
 
 }
 
@@ -32,7 +32,7 @@ void logger::createAsyncLogger() {
 	LOG << "创建asyncLogger";
 }
 
-logger& pax::logger::time(logger& log) {
+logger& logger::time(logger& log) {
 	char buff[32] = { 0 };
 
 	tm tm_time;
@@ -44,7 +44,7 @@ logger& pax::logger::time(logger& log) {
 	return log << buff;
 }
 
-logger& pax::logger::flush(logger& log) {
+logger& logger::flush(logger& log) {
 	s_logbuffer& buff = log.buffer_;
 
 	if (buff.length()) {
@@ -66,8 +66,9 @@ logger& pax::logger::flush(logger& log) {
 	return log;
 }
 
-logger& pax::logger::error(logger& log) {
+logger& logger::error(logger& log) {
 	char buff[64] = { 0 };
+	int saved_errno = errno;
 
-	return log << strerror_r(errno, buff, sizeof buff);
+	return log << strerror_r(saved_errno, buff, sizeof buff) << "(errno = " << saved_errno << ')';
 }

@@ -13,5 +13,7 @@ int main() {
 	log << logger::time << logger::flush;
 	log << logger::error << '\n';
 
+	logger log2 = log;
+
 	return 0;
 }

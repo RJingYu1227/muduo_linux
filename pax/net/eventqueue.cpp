@@ -8,7 +8,7 @@
 using namespace pax;
 
 eventqueue::eventqueue(eventloop* loop)
-	:fd_(eventfd(0, EFD_CLOEXEC)),
+	:fd_(eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC)),
 	count_(0),
 	loop_(loop),
 	channel_(loop_, fd_) {

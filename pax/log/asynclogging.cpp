@@ -7,9 +7,9 @@ namespace {
 
 enum config {
 
-	kInterval = 10,//ms
-	kBufferSize = kLargeBuffer * 32,//byte
-	kEndIndex = kBufferSize - 1//byte
+	kInterval = 3,//ms
+	kRingBufferSize = kLargeBuffer * 32,//byte
+	kEndIndex = kRingBufferSize - 1//byte
 
 };
 
@@ -18,7 +18,7 @@ enum config {
 asynclogger* asynclogger::instance_ = nullptr;
 
 asynclogger::asynclogger(const char* basename, off_t rollsize) :
-	ringbuffer_(kBufferSize),
+	ringbuffer_(kRingBufferSize),
 	basename_(basename),
 	rollsize_(rollsize),
 	thread_(std::bind(&asynclogger::threadFunc, this)),
@@ -40,7 +40,6 @@ asynclogger::~asynclogger() {
 void asynclogger::append(const s_logbuffer& sbuff) {
 	size_t size = sbuff.length();
 	const char* src = sbuff.getData();
-
 	if (size == 0)
 		return;
 
@@ -49,47 +48,30 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	uint64_t begin = kEndIndex & (wseq - size + 1);
 	uint64_t end = kEndIndex & wseq;
 
-	while (wseq > readdone_.seq_ + kBufferSize) {
+	while (wseq > readdone_.seq_ + kRingBufferSize) {
 		//可写缓冲区大小不足
+		cond_.notify();
 		pthread_yield();
 	}
 
 	//将数据拷贝到环形缓冲区
 	if (end < begin) {
-		uint64_t temp = kBufferSize - begin;
+		uint64_t temp = kRingBufferSize - begin;
 		memcpy(&ringbuffer_[begin], src, temp);
 		memcpy(&ringbuffer_[0], src + temp, end + 1);
 	}
 	else
 		memcpy(&ringbuffer_[begin], src, size);
-
+	
 	while (wseq - size != writedone_.seq_) {
 		//等待其它生产者
 		pthread_yield();
 	}
 	writedone_.seq_ = wseq;
-
-	uint64_t rseq = read_.seq_;
-	if (rseq <= wseq && wseq <= (rseq + size)) {
-		//缓冲区写入的数据的大小刚好达到要求
-		lock<mutex> lock(&mutex_);
-		cond_.notify();
-	}
 }
 
 void asynclogger::threadFunc() {
 	logfile log(basename_.c_str(), rollsize_);
-	
-	auto logappend = [&, this](uint64_t begin, uint64_t end) {
-		//将环形缓冲区的数据添加到log，log会将其写入磁盘
-		if (end < begin) {
-			log.append(&ringbuffer_[begin], kBufferSize - begin);
-			log.append(&ringbuffer_[0], end + 1);
-		}
-		else
-			log.append(&ringbuffer_[begin], end - begin + 1);
-	};
-
 	uint64_t rseq, begin, end;
 
 	auto updateseq = [&, this](uint64_t rdseq) {
@@ -105,10 +87,9 @@ void asynclogger::threadFunc() {
 	updateseq(0);
 	for (;;) {
 		if (rseq > writedone_.seq_) {
-			//等待缓冲区写入的数据的大小达到要求 或者 超时 再消费
+			//等待被唤醒 或者 超时 再消费
 			lock<mutex> lock(&mutex_);
-			if (rseq > writedone_.seq_)
-				cond_.timedwait(&mutex_, kInterval);
+			cond_.timedwait(&mutex_, kInterval);
 		}
 
 		uint64_t wdseq = writedone_.seq_;
@@ -116,20 +97,22 @@ void asynclogger::threadFunc() {
 			//超时并且缓冲区为空，判断是否需要退出
 			if (running_ == false)
 				break;
-		}
-		else if (wdseq < rseq) {
-			//超时并且缓冲区写入一定的数据，但数据的大小未达到要求
-			uint64_t wdidx = kEndIndex & wdseq;
-
-			logappend(begin, wdidx);
-			updateseq(wdseq);
-			log.flush();
+			else
+				continue;
 		}
 		else {
-			//缓冲区写入的数据的大小达到要求
-			logappend(begin, end);
-			updateseq(rseq);
-			log.flush();
+			end = kEndIndex & wdseq;
+			rseq = wdseq;
 		}
+
+		if (end < begin) {
+			log.append(&ringbuffer_[begin], kRingBufferSize - begin);
+			log.append(&ringbuffer_[0], end + 1);
+		}
+		else
+			log.append(&ringbuffer_[begin], end - begin + 1);
+
+		updateseq(rseq);
+		log.flush();
 	}
 }

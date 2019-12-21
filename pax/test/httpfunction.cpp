@@ -148,7 +148,7 @@ path为路径名，返回是否读取成功
 bool insertRedis(const string& path) {
 	int fd = open(path.c_str(), O_RDONLY);
 	if (fd < 0) {
-		LOG << "insertRedis失败，errno = " << errno << " path = " << path;
+		LOG << "insertRedis失败，path = " << path << '\n' << logger::error;
 		return 0;
 	}
 
@@ -174,7 +174,7 @@ bool insertRedis(const string& path) {
 void httpCallback(const httprequest& request, const string& content, httpresponse& response) {
 	response.addHeader("Server", "RJingYu");
 	bool ok = 0;
-	string path = "/home/rjingyu/source/html";
+	string path = "/home/rjingyu/source_webserver/html";
 
 	switch (request.getMethod()) {
 	case(httprequest::kGET):
@@ -186,6 +186,10 @@ void httpCallback(const httprequest& request, const string& content, httprespons
 				response.addHeader("Content-Type", "text/html");
 				ok = 1;
 			}
+		}
+		else if (request.getPath() == "/wrk") {
+			response.addHeader("Content-Type", "text/plain");
+			ok = 1;
 		}
 		else {
 			path += request.getPath();
@@ -235,7 +239,10 @@ void httpCallback(const httprequest& request, const string& content, httprespons
 	if (ok) {
 		response.setStatu1(httpresponse::k200OK);
 		response.setStatu2("OK");
-		response.getBody() = redis[path];
+		if (path == "/home/rjingyu/source_webserver/html")
+			response.getBody() = "hello, world!";
+		else
+			response.getBody() = redis[path];
 	}
 	else {
 		response.setStatu1(httpresponse::k404NotFound);

@@ -9,7 +9,9 @@ public:
 
 	static uint64_t getMicroSeconds();
 	static uint64_t getMillSeconds();
-	static time_t getSeconds() { return time(nullptr); }
+	static time_t getSeconds() { return ::time(nullptr); }
+
+	static timestamp now() { return timestamp(getMicroSeconds()); }
 
 	timestamp() :
 		micro_seconds_(0) {
