@@ -6,7 +6,7 @@
 
 namespace pax {
 
-class logger :public logstream {
+class logger :logstream {
 public:
 	typedef void(*functor)(const s_logbuffer&);
 
@@ -15,7 +15,18 @@ public:
 	}
 
 	~logger() {
-		output(getBuffer());
+		*this << logger::flush;
+	}
+
+	template<typename T>
+	logger& operator<<(T v) {
+		logstream::operator<<(v);
+
+		return *this;
+	}
+
+	logger& operator<<(logger&(*pf)(logger&)) {
+		return pf(*this);
 	}
 
 	static const std::string& getFilenname() { return log_filename_; }
@@ -24,8 +35,9 @@ public:
 
 	static void createAsyncLogger();
 
-	static logstream& time(logstream& stream);
-	static logstream& flush(logstream& stream);
+	static logger& time(logger& log);
+	static logger& flush(logger& log);
+	static logger& error(logger& log);
 
 private:
 
@@ -36,8 +48,12 @@ private:
 
 };
 
-#define LOGBASE logger() << '[' << logger::time << ' ' << __FILE__ << ' ' << __LINE__ << "]\n" 
+#define LOG_HEAD_BASE '[' << logger::time << ' ' << __FILE__ << ' ' << __LINE__ << "]\n"
 
-#define LOG LOGBASE
+#define LOG_HEAD LOG_HEAD_BASE
+
+#define LOG_BASE logger() << LOG_HEAD 
+
+#define LOG LOG_BASE
 
 }//namespace pax

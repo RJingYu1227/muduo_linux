@@ -22,7 +22,7 @@ uint64_t timestamp::getMillSeconds() {
 }
 
 std::string timestamp::toFormattedString(bool us)const {
-	char timebuf[64];
+	char timebuf[64] = { 0 };
 	tm tm_time;
 	time_t seconds = static_cast<time_t>(micro_seconds_ / 1000000);
 	localtime_r(&seconds, &tm_time);//该函数是可重入的

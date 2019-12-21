@@ -5,11 +5,13 @@ using namespace::pax;
 
 namespace {
 
-	enum config {
-		kInterval = 10,//ms
-		kBufferSize = kLargeBuffer * 32,//byte
-		kEndIndex = kBufferSize - 1//byte
-	};
+enum config {
+
+	kInterval = 10,//ms
+	kBufferSize = kLargeBuffer * 32,//byte
+	kEndIndex = kBufferSize - 1//byte
+
+};
 
 }
 

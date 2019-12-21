@@ -77,10 +77,6 @@ class logstream {
 public:
 	typedef logstream self;
 
-	self& operator<<(self&(*pf)(self&)) {
-		return pf(*this);
-	}
-
 	self& operator<<(bool v) {
 		buffer_.append(v ? "1" : "0", 1);
 		return *this;

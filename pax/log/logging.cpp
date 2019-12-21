@@ -32,7 +32,7 @@ void logger::createAsyncLogger() {
 	LOG << "创建asyncLogger";
 }
 
-logstream& pax::logger::time(logstream& stream) {
+logger& pax::logger::time(logger& log) {
 	char buff[32] = { 0 };
 
 	tm tm_time;
@@ -41,12 +41,33 @@ logstream& pax::logger::time(logstream& stream) {
 
 	strftime(buff, sizeof buff, "%Y %m %d %H:%M:%S", &tm_time);
 
-	return stream << buff;
+	return log << buff;
 }
 
-logstream& pax::logger::flush(logstream& stream) {
-	output(stream.getBuffer());
-	stream.resetBuffer();
+logger& pax::logger::flush(logger& log) {
+	s_logbuffer& buff = log.buffer_;
 
-	return stream;
+	if (buff.length()) {
+		char* current = buff.current();
+
+		if (*(current - 1) != '\n') {
+			if (buff.leftBytes() != 0) {
+				*current = '\n';
+				buff.add(1);
+			}
+			else
+				*(current - 1) = '\n';
+		}
+
+		output(buff);
+		buff.reset();
+	}
+
+	return log;
+}
+
+logger& pax::logger::error(logger& log) {
+	char buff[64] = { 0 };
+
+	return log << strerror_r(errno, buff, sizeof buff);
 }
