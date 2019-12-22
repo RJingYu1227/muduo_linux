@@ -14,8 +14,6 @@ coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, c
 
 	*handling_ = true;
 	*timenode_ = this;
-
-	setRevents(0);
 	//另外一种启动方式
 	service_->add(this);
 }
@@ -27,7 +25,6 @@ coservice_item::coservice_item(const functor& func, const char* ip, int port, co
 
 	*handling_ = true;
 	*timenode_ = this;
-	setRevents(0);
 
 	service_->add(this);
 }
@@ -39,7 +36,6 @@ coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coserv
 
 	*handling_ = true;
 	*timenode_ = this;
-	setRevents(0);
 	//另外一种启动方式
 	service_->add(this);
 }
@@ -51,7 +47,6 @@ coservice_item::coservice_item(functor&& func, const char* ip, int port, coservi
 
 	*handling_ = true;
 	*timenode_ = this;
-	setRevents(0);
 
 	service_->add(this);
 }
@@ -60,16 +55,22 @@ coservice_item::~coservice_item() {
 	assert(getState() == DONE);
 }
 
+void coservice_item::yield(double seconds) {
+	assert(this == running_cst_);
+	assert(seconds > 0);
+
+	uint64_t ms = static_cast<uint64_t>(seconds * 1000);
+	service_->setTimeout(ms, &timenode_);
+
+	coroutine::yield();
+}
+
 void coservice_item::yield(int ms) {
 	assert(this == running_cst_);
 	if (ms >= 0)
 		service_->setTimeout(ms, &timenode_);
 
 	coroutine::yield();
-}
-
-void coservice_item::updateEvents() {
-	service_->modify(this);
 }
 
 coservice::coservice() :
@@ -138,7 +139,7 @@ void coservice::doReactor() {
 		for (int i = 0; i < numevents; ++i) {
 			cst = (coservice_item*)revents_[i].data.ptr;
 			if (cst->timenode_.isInlink())
-				timewheel_.removeTimeout(&cst->timenode_);
+				timewheel_.removeTimenode(&cst->timenode_);
 
 			if (*cst->handling_ == true)
 				revents_[i].data.ptr = nullptr;
@@ -146,12 +147,12 @@ void coservice::doReactor() {
 			//且考虑到setTimeout在这之后才拿到锁，会导致超时并未正确处理，所以这一步不可以在外面操作
 		}
 
-		timewheel_.getTimeout(timenodes_);
+		timewheel_.getTimeouts(timenodes_);
 
 		for (size_t i = 0; i < timenodes_.size(); ++i) {
 			cst = **timenodes_[i];
 			if (*cst->handling_ == true) {
-				timewheel_.setTimeout(1, &cst->timenode_);
+				timewheel_.addTimenode(1, &cst->timenode_);
 				timenodes_[i] = nullptr;
 			}
 		}
@@ -198,9 +199,9 @@ void coservice::doReactor() {
 	timenodes_.clear();
 }
 
-void coservice::setTimeout(unsigned int ms, timenode<coservice_item*>* timenode) {
+void coservice::setTimeout(uint64_t ms, timenode<coservice_item*>* timenode) {
 	lock<mutex> lock(&time_mutex_);
-	timewheel_.setTimeout(ms, timenode);
+	timewheel_.addTimenode(ms, timenode);
 }
 
 size_t coservice::run() {

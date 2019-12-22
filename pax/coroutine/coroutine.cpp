@@ -109,24 +109,15 @@ void coroutine_item::makeContext(coroutine_item* co) {
 void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	char addr;
 
-	if (curr->shared_) {
+	if (curr->shared_ && curr->state_ != DONE) {
 		curr->stack_sp_ = &addr;
 		size_t len = curr->stack_bp_ - curr->stack_sp_;
 
-		if (curr->length_ < len) {
-			if (curr->stack_buff_) {
-				::free(curr->stack_buff_);
-
-				curr->stack_buff_ = nullptr;
-				curr->length_ = 0;
-			}
-
-			curr->stack_buff_ = (char*)::malloc(len);
-			if (curr->stack_buff_ == nullptr)
-				throw std::bad_alloc();
-		}
-
+		curr->stack_buff_ = (char*)::malloc(len);
 		curr->length_ = len;
+		if (curr->stack_buff_ == nullptr)
+			throw std::bad_alloc();
+
 		memcpy(curr->stack_buff_, curr->stack_sp_, curr->length_);
 	}
 
@@ -143,8 +134,14 @@ void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	::swapcontext(&curr->ctx_, &pend->ctx_);
 
 	coroutine_item*  co = running_crt_;
-	if (co->shared_)
+
+	if (co->shared_) {
 		memcpy(co->stack_sp_, co->stack_buff_, co->length_);
+
+		::free(co->stack_buff_);
+		co->stack_buff_ = nullptr;
+		co->length_ = 0;
+	}
 }
 
 coroutine_item::coroutine_item(const functor& func, bool shared) :
@@ -176,9 +173,6 @@ coroutine_item::~coroutine_item() {
 
 	if (shared_ == false)
 		::free(ctx_.uc_stack.ss_sp);
-
-	if (stack_buff_)
-		::free(stack_buff_);
 }
 
 void coroutine::resumeFunc(coroutine_item* co) {
@@ -259,7 +253,6 @@ void coroutine::yieldFunc() {
 
 		break;
 	case(coroutine_item::DONE):
-		curr->shared_ = false;
 		coroutine_item::swapContext(curr, pend);
 
 		break;

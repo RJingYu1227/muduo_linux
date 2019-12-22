@@ -7,7 +7,7 @@ namespace {
 
 enum config {
 
-	kInterval = 3,//ms
+	kInterval = 3,//s
 	kRingBufferSize = kLargeBuffer * 32,//byte
 	kEndIndex = kRingBufferSize - 1//byte
 

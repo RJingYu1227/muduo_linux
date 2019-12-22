@@ -10,7 +10,7 @@ template<typename T>
 class blockqueue :uncopyable {
 public:
 
-	size_t timedwait(int seconds);
+	size_t timedwait(double seconds);
 	inline bool empty()const;
 	inline size_t size()const;
 
@@ -35,7 +35,7 @@ private:
 };
 
 template<typename T>
-size_t blockqueue<T>::timedwait(int seconds) {
+size_t blockqueue<T>::timedwait(double seconds) {
 	lock<mutex> x(&lock_);
 	if (queue_.empty())//这里不用while
 		cond_.timedwait(&lock_, seconds);

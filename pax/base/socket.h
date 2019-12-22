@@ -12,7 +12,7 @@ public:
 
 	socket(const char* ip, int port);
 	socket(int fd, sockaddr_in& addr);
-	~socket();
+	virtual ~socket();
 
 	int getFd()const { return fd_; }
 	uint16_t getPort()const { return htons(addr_.sin_port); }

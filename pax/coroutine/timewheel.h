@@ -60,6 +60,7 @@ void timenode<T>::join(timenode<T>* head) {
 	head->next_ = this;
 }
 
+//时间精度ms
 template<typename T>
 class timewheel :uncopyable {
 public:
@@ -69,9 +70,9 @@ public:
 	timewheel(size_t wheels);//设置时间轮盘的容量，容量越大，效率越高
 	~timewheel() {}
 
-	void setTimeout(uint64_t ms, timenode<T>* node);//相对到期时间
-	void removeTimeout(timenode<T>* node);
-	size_t getTimeout(std::vector<timenode<T>*>& vec);
+	void addTimenode(uint64_t ms, timenode<T>* node);//相对到期时间
+	void removeTimenode(timenode<T>* node);
+	size_t getTimeouts(std::vector<timenode<T>*>& vec);
 
 private:
 
@@ -106,11 +107,11 @@ timewheel<T>::timewheel(size_t wheels) :
 }
 
 template<typename T>
-void timewheel<T>::setTimeout(uint64_t ms, timenode<T>* node) {
+void timewheel<T>::addTimenode(uint64_t ms, timenode<T>* node) {
 	assert(node->occupier_ == nullptr);
 
 	uint64_t expire_time = getMilliSeconds();
-	if (node_count_ == 0)//注意这里，既保证了准确性又使getTimeout可以提前返回
+	if (node_count_ == 0)//注意这里，既保证了准确性又使getTimeouts可以提前返回
 		last_time_ = expire_time;
 
 	if (ms)
@@ -129,7 +130,7 @@ void timewheel<T>::setTimeout(uint64_t ms, timenode<T>* node) {
 }
 
 template<typename T>
-void timewheel<T>::removeTimeout(timenode<T>* node) {
+void timewheel<T>::removeTimenode(timenode<T>* node) {
 	assert(node->occupier_ == this);
 
 	--node_count_;
@@ -139,7 +140,7 @@ void timewheel<T>::removeTimeout(timenode<T>* node) {
 }
 
 template<typename T>
-size_t timewheel<T>::getTimeout(std::vector<timenode<T>*>& vec) {
+size_t timewheel<T>::getTimeouts(std::vector<timenode<T>*>& vec) {
 	size_t num = 0;
 	if (node_count_) {
 		uint64_t now = getMilliSeconds();
@@ -156,7 +157,7 @@ size_t timewheel<T>::getTimeout(std::vector<timenode<T>*>& vec) {
 			head = &time_wheels_[index_];
 			while ((node = head->next_)) {
 				if (node->rotation_ == 0) {
-					removeTimeout(node);
+					removeTimenode(node);
 
 					vec.push_back(node);
 					++num;

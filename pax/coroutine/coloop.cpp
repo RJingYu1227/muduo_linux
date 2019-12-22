@@ -13,6 +13,7 @@ coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop*
 	loop_(loop) {
 
 	*timenode_ = this;
+
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -22,6 +23,7 @@ coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* 
 	loop_(loop) {
 
 	*timenode_ = this;
+
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -31,6 +33,7 @@ coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop
 	loop_(loop) {
 
 	*timenode_ = this;
+
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -40,6 +43,7 @@ coloop_item::coloop_item(functor&& func, const char* ip, int port, coloop* loop)
 	loop_(loop) {
 
 	*timenode_ = this;
+
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -47,16 +51,22 @@ coloop_item::~coloop_item() {
 	assert(getState() == DONE);
 }
 
-void coloop_item::yield(int ms) {
+void coloop_item::yield(double seconds) {
 	assert(this == running_cpt_);
-	if (ms > 0)
-		loop_->setTimeout(ms, &timenode_);
+	assert(seconds > 0);
+
+	uint64_t ms = static_cast<uint64_t>(seconds * 1000);
+	loop_->setTimeout(ms, &timenode_);
 
 	coroutine::yield();
 }
 
-void coloop_item::updateEvents() {
-	loop_->modify(this);
+void coloop_item::yield(int ms) {
+	assert(this == running_cpt_);
+	if (ms >= 0)
+		loop_->setTimeout(ms, &timenode_);
+
+	coroutine::yield();
 }
 
 coloop::coloop() :
@@ -112,9 +122,9 @@ void coloop::doItem(coloop_item* cpt) {
 	}
 }
 
-void coloop::setTimeout(unsigned int ms, timenode<coloop_item*>* timenode) {
+void coloop::setTimeout(uint64_t ms, timenode<coloop_item*>* timenode) {
 	lock<mutex> lock(&time_mutex_);
-	timewheel_.setTimeout(ms, timenode);
+	timewheel_.addTimenode(ms, timenode);
 }
 
 void coloop::loop() {
@@ -134,10 +144,10 @@ void coloop::loop() {
 			for (int i = 0; i < numevents; ++i) {
 				cpt = (coloop_item*)revents_[i].data.ptr;
 				if (cpt->timenode_.isInlink())
-					timewheel_.removeTimeout(&cpt->timenode_);
+					timewheel_.removeTimenode(&cpt->timenode_);
 			}
 
-			timewheel_.getTimeout(timenodes_);
+			timewheel_.getTimeouts(timenodes_);
 		}
 
 		for (int i = 0; i < numevents; ++i) {

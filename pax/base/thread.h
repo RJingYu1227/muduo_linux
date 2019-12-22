@@ -67,8 +67,8 @@ public:
 
 	void lock() { pthread_mutex_lock(&lock_); }
 	void unlock() { pthread_mutex_unlock(&lock_); }
-	bool trylock() { return pthread_mutex_trylock(&lock_) == 0; }
-	bool timedlock(int seconds);
+	bool trylock() { return pthread_mutex_trylock(&lock_) == 0; }//!= EBUSY
+	bool timedlock(double seconds);
 
 private:
 
@@ -86,7 +86,7 @@ public:
 
 	void lock() { pthread_spin_lock(&lock_); }
 	void unlock() { pthread_spin_unlock(&lock_); }
-	bool trylock() { return pthread_spin_trylock(&lock_) == 0; }
+	bool trylock() { return pthread_spin_trylock(&lock_) == 0; }//!= EBUSY 
 
 private:
 
@@ -103,7 +103,7 @@ public:
 	~cond() {}
 
 	void wait(mutex* lock) { pthread_cond_wait(&cond_, (pthread_mutex_t*)lock); }
-	void timedwait(mutex* lock, int seconds);
+	bool timedwait(mutex* lock, double seconds);
 
 	void notify() { pthread_cond_signal(&cond_); }
 	void notifyAll() { pthread_cond_broadcast(&cond_); }
@@ -138,7 +138,7 @@ public:
 
 	void start();
 	void start(const pthread_attr_t* attr);
-	int join();
+	int join(void** val = nullptr);
 	int detach();
 
 	bool joinable()const { return joinable_; }
@@ -151,7 +151,7 @@ private:
 
 	functor threadFunc;
 	pthread_t tid_;
-	bool started_;
+	volatile bool started_;
 	bool joinable_;
 
 };

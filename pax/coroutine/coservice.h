@@ -11,6 +11,13 @@
 
 namespace pax {
 
+/*
+暂时不适合使用边沿触发模式，请参考coservice::run
+使用ET模式时，如果其它线程执行epoll_wait得到对应fd的返回事件
+但是，此时对应协程handing_ = 1且此次执行过程中并没有处理该事件
+会使该事件很难得到处理，可以参考boost::asio的 事件任务队列 进行更改
+*/
+
 class coservice_item;
 
 class coservice :uncopyable {
@@ -28,7 +35,7 @@ private:
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
 	void doReactor();
-	void setTimeout(unsigned int ms, timenode<coservice_item*>* timenode);
+	void setTimeout(uint64_t ms, timenode<coservice_item*>* timenode);
 
 	std::atomic_int32_t item_count_;
 
@@ -54,14 +61,15 @@ class coservice_item :
 public:
 	typedef std::function<void()> functor;
 
-	inline static bool create(const functor& func, int fd, sockaddr_in& addr, coservice* service);
-	inline static bool create(const functor& func, const char* ip, int port, coservice* service);
+	static bool create(const functor& func, int fd, sockaddr_in& addr, coservice* service);
+	static bool create(const functor& func, const char* ip, int port, coservice* service);
 
-	inline static bool create(functor&& func, int fd, sockaddr_in& addr, coservice* service);
-	inline static bool create(functor&& func, const char* ip, int port, coservice* service);
+	static bool create(functor&& func, int fd, sockaddr_in& addr, coservice* service);
+	static bool create(functor&& func, const char* ip, int port, coservice* service);
 
-	inline static coservice_item* self();
+	static coservice_item* self();
 
+	void yield(double seconds);
 	void yield(int ms);
 	void updateEvents();
 
@@ -85,29 +93,28 @@ private:
 
 };
 
-bool coservice_item::create(const functor& func, int fd, sockaddr_in& addr, coservice* service) {
+inline bool coservice_item::create(const functor& func, int fd, sockaddr_in& addr, coservice* service) {
 	return new(std::nothrow) coservice_item(func, fd, addr, service);
 }
 
-bool coservice_item::create(const functor& func, const char* ip, int port, coservice* service) {
+inline bool coservice_item::create(const functor& func, const char* ip, int port, coservice* service) {
 	return new(std::nothrow) coservice_item(func, ip, port, service);
 }
 
-bool coservice_item::create(functor&& func, int fd, sockaddr_in& addr, coservice* service) {
+inline bool coservice_item::create(functor&& func, int fd, sockaddr_in& addr, coservice* service) {
 	return new(std::nothrow) coservice_item(std::move(func), fd, addr, service);
 }
 
-bool coservice_item::create(functor&& func, const char* ip, int port, coservice* service) {
+inline bool coservice_item::create(functor&& func, const char* ip, int port, coservice* service) {
 	return new(std::nothrow) coservice_item(std::move(func), ip, port, service);
 }
 
-coservice_item* coservice_item::self() {
+inline coservice_item* coservice_item::self() {
 	return running_cst_;
 }
 
-//暂时不适合使用边沿触发模式，请参考coservice::run
-//使用ET模式时，如果其它线程执行epoll_wait得到对应fd的返回事件
-//但是，此时对应协程handing_ = 1且此次执行过程中并没有处理该事件
-//会使该事件很难得到处理，可以参考boost::asio的 事件任务队列 进行更改
+inline void coservice_item::updateEvents() {
+	service_->modify(this);
+}
 
 }//namespace pax

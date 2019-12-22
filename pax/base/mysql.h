@@ -54,11 +54,11 @@ public:
 
 	int getColumn(const std::string& str)const;
 	int getColumn(const char* str)const;
-	inline unsigned int numOfField()const;
-	inline MYSQL_FIELD* getFields();
+	unsigned int numOfField()const;
+	MYSQL_FIELD* getFields();
 
-	inline size_t numOfRow()const;
-	inline MYSQL_ROWS* operator[](size_t idx);
+	size_t numOfRow()const;
+	MYSQL_ROWS* operator[](size_t idx);
 
 private:
 
@@ -67,19 +67,19 @@ private:
 
 };
 
-unsigned int mysqlres::numOfField()const {
+inline unsigned int mysqlres::numOfField()const {
 	return res_->data->fields;
 }
 
-MYSQL_FIELD* mysqlres::getFields() {
+inline MYSQL_FIELD* mysqlres::getFields() {
 	return res_->fields;
 }
 
-size_t mysqlres::numOfRow()const {
+inline size_t mysqlres::numOfRow()const {
 	return res_->data->rows;
 }
 
-MYSQL_ROWS* mysqlres::operator[](size_t idx) {
+inline MYSQL_ROWS* mysqlres::operator[](size_t idx) {
 	return rows_[idx];
 }
 /*
