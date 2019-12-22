@@ -10,10 +10,11 @@ thread_local coservice_item* coservice_item::running_cst_ = nullptr;
 coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service) :
 	coroutine_item(func, 0),
 	coevent(fd, addr),
-	service_(service),
-	handling_(1) {
+	service_(service) {
 
-	timenode_.setValue(this);
+	*handling_ = true;
+	*timenode_ = this;
+
 	setRevents(0);
 	//另外一种启动方式
 	service_->add(this);
@@ -22,10 +23,10 @@ coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, c
 coservice_item::coservice_item(const functor& func, const char* ip, int port, coservice* service) :
 	coroutine_item(func, 0),
 	coevent(ip, port),
-	service_(service),
-	handling_(1) {
+	service_(service) {
 
-	timenode_.setValue(this);
+	*handling_ = true;
+	*timenode_ = this;
 	setRevents(0);
 
 	service_->add(this);
@@ -34,10 +35,10 @@ coservice_item::coservice_item(const functor& func, const char* ip, int port, co
 coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service) :
 	coroutine_item(std::move(func), 0),
 	coevent(fd, addr),
-	service_(service),
-	handling_(1) {
+	service_(service) {
 
-	timenode_.setValue(this);
+	*handling_ = true;
+	*timenode_ = this;
 	setRevents(0);
 	//另外一种启动方式
 	service_->add(this);
@@ -46,10 +47,10 @@ coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coserv
 coservice_item::coservice_item(functor&& func, const char* ip, int port, coservice* service) :
 	coroutine_item(std::move(func), 0),
 	coevent(ip, port),
-	service_(service),
-	handling_(1) {
+	service_(service) {
 
-	timenode_.setValue(this);
+	*handling_ = true;
+	*timenode_ = this;
 	setRevents(0);
 
 	service_->add(this);
@@ -137,18 +138,19 @@ void coservice::doReactor() {
 		for (int i = 0; i < numevents; ++i) {
 			cst = (coservice_item*)revents_[i].data.ptr;
 			if (cst->timenode_.isInlink())
-				timewheel_.cancelTimeout(&cst->timenode_);
+				timewheel_.removeTimeout(&cst->timenode_);
 
-			if (cst->handling_)
+			if (*cst->handling_ == true)
 				revents_[i].data.ptr = nullptr;
 			//不能使会导致重复resume的事情发生
 			//且考虑到setTimeout在这之后才拿到锁，会导致超时并未正确处理，所以这一步不可以在外面操作
 		}
 
 		timewheel_.getTimeout(timenodes_);
+
 		for (size_t i = 0; i < timenodes_.size(); ++i) {
-			cst = timenodes_[i]->getValue();
-			if (cst->handling_) {
+			cst = **timenodes_[i];
+			if (*cst->handling_ == true) {
 				timewheel_.setTimeout(1, &cst->timenode_);
 				timenodes_[i] = nullptr;
 			}
@@ -166,7 +168,7 @@ void coservice::doReactor() {
 			if (cst == nullptr)
 				continue;
 
-			cst->handling_ = 1;
+			*cst->handling_ = true;
 			cst->setRevents(revents_[i].events);
 			task_queue_.push(cst);
 		}
@@ -175,8 +177,8 @@ void coservice::doReactor() {
 			if (node == nullptr)
 				continue;
 
-			cst = node->getValue();
-			cst->handling_ = 1;
+			cst = **node;
+			*cst->handling_ = true;
 			cst->setRevents(0);
 			task_queue_.push(cst);
 		}
@@ -196,7 +198,7 @@ void coservice::doReactor() {
 	timenodes_.clear();
 }
 
-void coservice::setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode) {
+void coservice::setTimeout(unsigned int ms, timenode<coservice_item*>* timenode) {
 	lock<mutex> lock(&time_mutex_);
 	timewheel_.setTimeout(ms, timenode);
 }
@@ -238,7 +240,7 @@ size_t coservice::run() {
 				done_items_.push_back(cst);
 			}
 			else
-				cst->handling_ = 0;
+				*cst->handling_ = false;
 		}
 
 		++count;

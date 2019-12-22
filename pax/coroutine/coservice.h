@@ -1,10 +1,12 @@
 ﻿#pragma once
 
+#include<pax/base/sharedatomic.h>
+#include<pax/base/thread.h>
+
 #include<pax/coroutine/coroutine.h>
 #include<pax/coroutine/coevent.h>
 #include<pax/coroutine/timewheel.h>
 
-#include<atomic>
 #include<queue>
 
 namespace pax {
@@ -26,13 +28,13 @@ private:
 	void modify(coservice_item* cst);
 	void remove(coservice_item* cst);
 	void doReactor();
-	void setTimeout(unsigned int ms, klinknode<coservice_item*>* timenode);
+	void setTimeout(unsigned int ms, timenode<coservice_item*>* timenode);
 
 	std::atomic_int32_t item_count_;
 
 	int epfd_;
 	std::vector<epoll_event> revents_;
-	std::vector<klinknode<coservice_item*>*> timenodes_;
+	std::vector<timenode<coservice_item*>*> timenodes_;
 
 	mutex task_mutex_;
 	cond task_cond_;
@@ -78,8 +80,8 @@ private:
 	thread_local static coservice_item* running_cst_;
 
 	coservice* service_;
-	std::atomic_bool handling_;
-	klinknode<coservice_item*> timenode_;
+	sharedatomic<bool> handling_;
+	timenode<coservice_item*> timenode_;
 
 };
 

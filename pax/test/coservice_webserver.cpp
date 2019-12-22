@@ -4,6 +4,7 @@
 #include<pax/coroutine/coservice.h>
 #include<pax/base/buffer.h>
 #include<pax/log/logging.h>
+#include<pax/base/thread.h>
 
 #include<unistd.h>
 #include<signal.h>
@@ -99,7 +100,6 @@ void thread_func() {
 }
 
 int main(int argc, char* argv[]) {
-	logger::setFilename("./han.");
 	logger::createAsyncLogger();
 	signal(SIGPIPE, SIG_IGN);
 

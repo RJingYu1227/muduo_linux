@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include<pax/base/thread.h>
+
 #include<pax/coroutine/coroutine.h>
 #include<pax/coroutine/coevent.h>
 #include<pax/coroutine/timewheel.h>
@@ -27,7 +29,7 @@ private:
 	void modify(coloop_item* cpt);
 	void remove(coloop_item* cpt);
 	void doItem(coloop_item* cpt);
-	void setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode);
+	void setTimeout(unsigned int ms, timenode<coloop_item*>* timenode);
 
 	bool looping_;
 	bool quit_;
@@ -36,7 +38,7 @@ private:
 	std::vector<epoll_event> revents_;
 
 	mutex time_mutex_;
-	std::vector<klinknode<coloop_item*>*> timenodes_;
+	std::vector<timenode<coloop_item*>*> timenodes_;
 	timewheel<coloop_item*> timewheel_;
 
 };
@@ -74,7 +76,7 @@ private:
 	thread_local static coloop_item* running_cpt_;
 
 	coloop* loop_;
-	klinknode<coloop_item*> timenode_;
+	timenode<coloop_item*> timenode_;
 
 };
 

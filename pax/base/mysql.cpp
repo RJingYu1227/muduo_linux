@@ -63,9 +63,9 @@ MYSQL_RES* mysql::getResult() {
 }
 
 mysqlres::mysqlres(MYSQL_RES* res) :
-	res_(res) {
+	res_(res),
+	rows_(res->data->rows) {
 
-	rows_.reserve(res_->data->rows);
 	MYSQL_ROWS* node = res_->data_cursor;
 	for (size_t i = 0; i < res_->data->rows; ++i) {
 		rows_[i] = node;

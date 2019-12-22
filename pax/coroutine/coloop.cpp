@@ -12,7 +12,7 @@ coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop*
 	coevent(fd, addr),
 	loop_(loop) {
 
-	timenode_.setValue(this);
+	*timenode_ = this;
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -21,7 +21,7 @@ coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* 
 	coevent(ip, port),
 	loop_(loop) {
 
-	timenode_.setValue(this);
+	*timenode_ = this;
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -30,7 +30,7 @@ coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop
 	coevent(fd, addr),
 	loop_(loop) {
 
-	timenode_.setValue(this);
+	*timenode_ = this;
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -39,7 +39,7 @@ coloop_item::coloop_item(functor&& func, const char* ip, int port, coloop* loop)
 	coevent(ip, port),
 	loop_(loop) {
 
-	timenode_.setValue(this);
+	*timenode_ = this;
 	loop_->setTimeout(1, &timenode_);
 }
 
@@ -112,7 +112,7 @@ void coloop::doItem(coloop_item* cpt) {
 	}
 }
 
-void coloop::setTimeout(unsigned int ms, klinknode<coloop_item*>* timenode) {
+void coloop::setTimeout(unsigned int ms, timenode<coloop_item*>* timenode) {
 	lock<mutex> lock(&time_mutex_);
 	timewheel_.setTimeout(ms, timenode);
 }
@@ -134,7 +134,7 @@ void coloop::loop() {
 			for (int i = 0; i < numevents; ++i) {
 				cpt = (coloop_item*)revents_[i].data.ptr;
 				if (cpt->timenode_.isInlink())
-					timewheel_.cancelTimeout(&cpt->timenode_);
+					timewheel_.removeTimeout(&cpt->timenode_);
 			}
 
 			timewheel_.getTimeout(timenodes_);
@@ -148,7 +148,7 @@ void coloop::loop() {
 		}
 
 		for (auto node : timenodes_) {
-			cpt = node->getValue();
+			cpt = **node;
 			cpt->setRevents(0);
 
 			doItem(cpt);

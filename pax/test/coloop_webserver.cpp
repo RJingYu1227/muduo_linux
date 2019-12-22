@@ -4,6 +4,7 @@
 #include<pax/coroutine/coloop.h>
 #include<pax/base/buffer.h>
 #include<pax/log/logging.h>
+#include<pax/base/thread.h>
 
 #include<unistd.h>
 #include<signal.h>

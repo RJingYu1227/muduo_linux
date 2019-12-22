@@ -1,8 +1,10 @@
 ﻿#pragma once
 
-#include<pax/base/thread.h>
+#include<pax/base/uncopyable.h>
 
 #include<ucontext.h>
+
+#include<functional>
 
 namespace pax {
 
@@ -10,20 +12,22 @@ class coroutine_item;
 
 class coroutine :uncopyable {
 	friend class coroutine_item;
-	friend class threadlocal<coroutine>;
 public:
 
-	inline static void yield()noexcept(false);//std::logic_error
+	static void yield()noexcept(false) {
+		//std::logic_error
+		threadCoenv()->yieldFunc();
+	}
+
+	~coroutine();
 
 protected:
 
 	coroutine();
-	~coroutine();
 
 private:
 
 	static coroutine* threadCoenv();
-	static threadlocal<coroutine> thread_coenv_;
 
 	void resumeFunc(coroutine_item* co);
 	void yieldFunc();
@@ -54,20 +58,18 @@ public:
 	~coroutine_item();//可以考虑换成virtual
 
 	costate getState()const { return state_; }
-	inline void resume()noexcept(false);//std::logic_error, std::bad_alloc
+	void resume()noexcept(false) {
+		//std::logic_error, std::bad_alloc
+		coroutine::threadCoenv()->resumeFunc(this);
+	}
 
 private:
-	enum stacksize {
-		kStackSize = 64 * 1024,
-		kSharedStackSize = 1024 * 1024
-	};
 
 	static void coroutineFunc(coroutine_item* co);
 
 	static void makeContext(coroutine_item* co);
 	static void swapContext(coroutine_item* curr, coroutine_item* pend);
 
-	static threadlocal<char> shared_stack_;
 	thread_local static coroutine_item* running_crt_;
 
 	costate state_;
@@ -82,13 +84,5 @@ private:
 	size_t length_;
 
 };
-
-void coroutine::yield() {
-	threadCoenv()->yieldFunc();
-}
-
-void coroutine_item::resume() {
-	coroutine::threadCoenv()->resumeFunc(this);
-}
 
 }//namespace pax

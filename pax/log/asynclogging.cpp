@@ -24,10 +24,10 @@ asynclogger::asynclogger(const char* basename, off_t rollsize) :
 	thread_(std::bind(&asynclogger::threadFunc, this)),
 	running_(0) {
 
-	readdone_.seq_ = 0;
-	read_.seq_ = 1;
-	writedone_.seq_ = 0;
-	write_.seq_ = 1;
+	*readdone_ = 0;
+	*read_ = 1;
+	*writedone_ = 0;
+	*write_ = 1;
 }
 
 asynclogger::~asynclogger() {
@@ -44,11 +44,11 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 		return;
 
 	//更新生产者信息
-	uint64_t wseq = (write_.seq_ += size) - 1;
+	uint64_t wseq = (*write_ += size) - 1;
 	uint64_t begin = kEndIndex & (wseq - size + 1);
 	uint64_t end = kEndIndex & wseq;
 
-	while (wseq > readdone_.seq_ + kRingBufferSize) {
+	while (wseq > *readdone_ + kRingBufferSize) {
 		//可写缓冲区大小不足
 		cond_.notify();
 		pthread_yield();
@@ -63,11 +63,11 @@ void asynclogger::append(const s_logbuffer& sbuff) {
 	else
 		memcpy(&ringbuffer_[begin], src, size);
 	
-	while (wseq - size != writedone_.seq_) {
+	while (wseq - size != *writedone_) {
 		//等待其它生产者
 		pthread_yield();
 	}
-	writedone_.seq_ = wseq;
+	*writedone_ = wseq;
 }
 
 void asynclogger::threadFunc() {
@@ -76,8 +76,8 @@ void asynclogger::threadFunc() {
 
 	auto updateseq = [&, this](uint64_t rdseq) {
 		//更新消费者信息
-		readdone_.seq_ = rdseq;
-		read_.seq_ = rdseq + kLargeBuffer + 1;
+		*readdone_ = rdseq;
+		*read_ = rdseq + kLargeBuffer + 1;
 
 		begin = kEndIndex & (rdseq + 1);
 		rseq = rdseq + kLargeBuffer;
@@ -86,14 +86,14 @@ void asynclogger::threadFunc() {
 
 	updateseq(0);
 	for (;;) {
-		if (rseq > writedone_.seq_) {
+		if (rseq > *writedone_) {
 			//等待被唤醒 或者 超时 再消费
 			lock<mutex> lock(&mutex_);
 			cond_.timedwait(&mutex_, kInterval);
 		}
 
-		uint64_t wdseq = writedone_.seq_;
-		if (readdone_.seq_ == wdseq) {
+		uint64_t wdseq = *writedone_;
+		if (*readdone_ == wdseq) {
 			//超时并且缓冲区为空，判断是否需要退出
 			if (running_ == false)
 				break;
