@@ -1,37 +1,108 @@
 ﻿#include<pax/base/socket.h>
 
-#include<pax/log/logging.h>
-
+#include<netinet/tcp.h>
 #include<unistd.h>
-#include<strings.h>
 #include<assert.h>
+#include<string.h>
+#include<errno.h>
 
 using namespace::pax;
 
-socket::socket(const char* ip, int port) :
-	fd_(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP)) {
-
-	assert(fd_ > 0);
-	bzero(&addr_, sizeof(sockaddr_in));
+socket::socket() :
+	fd_(::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP)),
+	state_(OPENED) {
 
 	addr_.sin_family = AF_INET;
-
-	inet_pton(AF_INET, ip, &addr_.sin_addr);
-	strncpy(ip_, ip, 16);
-
-	addr_.sin_port = htons(static_cast<uint16_t>(port));
+	if (fd_ < 0)
+		state_ = INVALID;
 }
 
-socket::socket(int fd, sockaddr_in& addr) :
+socket::socket(int fd, const sockaddr_in& addr) :
 	fd_(fd),
-	addr_(addr) {
+	state_(CONNECTED),
+	addr_(addr),
+	port_(ntohs(addr.sin_port)) {
 
 	assert(fd_ > 0);
-	inet_ntop(AF_INET, &addr_.sin_addr, ip_, 16);
+	inet_ntop(AF_INET, &addr.sin_addr.s_addr, ip_, INET_ADDRSTRLEN);
 }
 
 socket::~socket() {
-	::close(fd_);
+	if (state_ != INVALID)
+		::close(fd_);
+}
+
+bool socket::bind(const char* ip, uint16_t port, bool server) {
+	assert(state_ == OPENED);
+
+	if (inet_pton(AF_INET, ip, &addr_.sin_addr) == 1) {
+		//该函数成功返回1，出错返回0
+		addr_.sin_port = htons(port);
+
+		if (server == false || ::bind(fd_, (sockaddr*)&addr_, sizeof addr_) == 0) {
+			strncpy(ip_, ip, INET_ADDRSTRLEN);
+			port_ = port;
+			state_ = BINDED;
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/*
+本方法通过重复调用connect，判断是否连接成功
+不太肯定会不会有EINTR错误
+*/
+int socket::connect() {
+	assert(state_ == BINDED || state_ == CONNECTING);
+
+	if (::connect(fd_, (sockaddr*)&addr_, sizeof(sockaddr_in)) == 0 || errno == EISCONN) {
+		state_ = CONNECTED;
+		return 1;
+	}
+
+	if (errno == EINPROGRESS) {
+		state_ = CONNECTING;
+		return 0;
+	}
+	else {
+		::close(fd_);
+		fd_ = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP);
+		if (fd_ < 0)
+			state_ = INVALID;
+
+		return -1;
+	}
+}
+
+bool socket::listen() {
+	assert(state_ == BINDED);
+
+	if (::listen(fd_, SOMAXCONN) == 0) {
+		state_ = LISTENING;
+		return 1;
+	}
+
+	return 0;
+}
+
+int socket::accept(sockaddr_in* peeraddr) {
+	assert(state_ == LISTENING);
+
+	socklen_t len = sizeof(sockaddr_in);//值-结果参数，不初始化时，可能会出错，errno = 22
+	bzero(peeraddr, len);
+	int clifd = ::accept4(fd_, (sockaddr*)peeraddr, &len,
+		SOCK_NONBLOCK | SOCK_CLOEXEC);
+
+	if (clifd > 0)
+		return clifd;
+
+	if (errno == EAGAIN)
+		return 0;
+	else
+		return -1;
 }
 
 bool socket::getTcpInfo(tcp_info* info)const {
@@ -40,79 +111,22 @@ bool socket::getTcpInfo(tcp_info* info)const {
 	return getsockopt(fd_, SOL_TCP, TCP_INFO, info, &len) == 0;
 }
 
-bool socket::bind() {
-	if (::bind(fd_, (sockaddr*)&addr_, sizeof addr_) == -1) {
-		LOG << "bind失败，errno = " << errno;
-		return 0;
-	}
-
-	return 1;
-}
-
-bool socket::listen() {
-	if (::listen(fd_, SOMAXCONN) == -1) {
-		LOG << "listen失败，errno = " << errno;
-		return 0;
-	}
-
-	return 1;
-}
-
-int socket::accept(sockaddr_in* peeraddr) {
-	socklen_t len = sizeof(sockaddr_in);//值-结果参数，不初始化时，可能会出错，errno = 22
-	bzero(peeraddr, len);
-	int clifd_ = ::accept4(fd_, (sockaddr*)peeraddr, &len,
-		SOCK_NONBLOCK | SOCK_CLOEXEC);
-
-	if (clifd_ == -1 && errno != EAGAIN)
-		LOG << "建立连接失败，errno = " << errno;
-
-	return clifd_;
-}
-
-void socket::shutdownWrite() {
-	if (shutdown(fd_, SHUT_WR) == -1)
-		LOG << "shutdownWrite失败，errno = " << errno;
-}
-
-void socket::shutdownRead() {
-	if (shutdown(fd_, SHUT_RD) == -1)
-		LOG << "shutdownRead失败，errno = " << errno;
-}
-
-void socket::shutdownAll() {
-	if (shutdown(fd_, SHUT_RDWR) == -1)
-		LOG << "shutdownAll失败，errno = " << errno;
-}
-
-void socket::setReuseAddr(bool on) {
+bool socket::setReuseAddr(bool on) {
 	int optval = on ? 1 : 0;
-	int ret = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR,
-		&optval, sizeof optval);
-	if (ret < 0 && on)
-		LOG << "setReuseAddr失败，errno = " << errno;
+	return setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval) == 0;
 }
 
-void socket::setReusePort(bool on) {
+bool socket::setReusePort(bool on) {
 	int optval = on ? 1 : 0;
-	int ret = setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT,
-		&optval, sizeof optval);
-	if (ret < 0 && on)
-		LOG << "setReusePort失败，errno = " << errno;
+	return setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof optval) == 0;
 }
 
-void socket::setTcpNodelay(bool on) {
+bool socket::setTcpNodelay(bool on) {
 	int optval = on ? 1 : 0;
-	int ret = setsockopt(fd_, SOL_TCP, TCP_NODELAY,
-		&optval, sizeof optval);
-	if (ret < 0 && on)
-		LOG << "setTcpNodelay失败，errno = " << errno;
+	return setsockopt(fd_, SOL_TCP, TCP_NODELAY, &optval, sizeof optval) == 0;
 }
 
-void socket::setKeepalive(bool on) {
+bool socket::setKeepalive(bool on) {
 	int optval = on ? 1 : 0;
-	int ret = setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE,
-		&optval, sizeof optval);
-	if (ret < 0 && on)
-		LOG << "setKeepalive失败，errno = " << errno;
+	return setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof optval) == 0;
 }

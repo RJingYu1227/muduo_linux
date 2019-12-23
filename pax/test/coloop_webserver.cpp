@@ -22,7 +22,7 @@ void connect_handler() {
 	cpt->enableReading();
 	cpt->updateEvents();
 
-	LOG << "处理新连接 " << cpt->getAddr2() << ':' << cpt->getPort();
+	LOG << "处理新连接 " << cpt->getIp() << ':' << cpt->getPort();
 	coroutine::yield();
 
 	ssize_t nread;
@@ -38,7 +38,7 @@ void connect_handler() {
 		if (nread == 0 || request.parseRequest(buff1) == false)
 			break;
 		else if (request.parseDone()) {
-			LOG << "完整解析httprequest " << cpt->getAddr2() << ':' << cpt->getPort();
+			LOG << "完整解析httprequest " << cpt->getIp() << ':' << cpt->getPort();
 
 			string temp;
 			try {
@@ -55,7 +55,7 @@ void connect_handler() {
 
 			response.appendToBuffer(buff2);
 			cpt->write(buff2.beginPtr(), buff2.usedBytes(), -1);
-			LOG << "完整发送httpresponse " << cpt->getAddr2() << ':' << cpt->getPort();
+			LOG << "完整发送httpresponse " << cpt->getIp() << ':' << cpt->getPort();
 
 			if (!response.keepAlive()) {
 				cpt->shutdownWrite();
@@ -70,17 +70,17 @@ void connect_handler() {
 		coroutine::yield();
 	}
 
-	LOG << "连接处理完毕 " << cpt->getAddr2() << ':' << cpt->getPort();
+	LOG << "连接处理完毕 " << cpt->getIp() << ':' << cpt->getPort();
 }
 
 void accept_handler() {
 	coloop_item* cpt = coloop_item::self();
-	cpt->bind();
+	cpt->bind("0.0.0.0", 7777, 1);
 	cpt->listen();
 	cpt->enableReading();
 	cpt->updateEvents();
 
-	LOG << "TcpServer开始监听 " << cpt->getAddr2() << ':' << cpt->getPort();
+	LOG << "TcpServer开始监听 " << cpt->getIp() << ':' << cpt->getPort();
 	coroutine::yield();
 
 	sockaddr_in cliaddr;
@@ -100,7 +100,7 @@ void accept_handler() {
 		coroutine::yield();
 	}
 
-	LOG << "TcpServer停止监听 " << cpt->getAddr2() << ':' << cpt->getPort();
+	LOG << "TcpServer停止监听 " << cpt->getIp() << ':' << cpt->getPort();
 }
 
 void thread_func() {
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	coloop loop;
-	coloop_item::create(accept_handler, "0.0.0.0", 7777, &loop);
+	coloop_item::create(accept_handler, &loop);
 	loop.loop();
 
 	for (auto& x : thread_vec)

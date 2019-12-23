@@ -62,10 +62,10 @@ public:
 	typedef std::function<void()> functor;
 
 	static bool create(const functor& func, int fd, sockaddr_in& addr, coservice* service);
-	static bool create(const functor& func, const char* ip, int port, coservice* service);
+	static bool create(const functor& func, coservice* service);
 
 	static bool create(functor&& func, int fd, sockaddr_in& addr, coservice* service);
-	static bool create(functor&& func, const char* ip, int port, coservice* service);
+	static bool create(functor&& func, coservice* service);
 
 	static coservice_item* self();
 
@@ -76,10 +76,10 @@ public:
 protected:
 
 	coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service);
-	coservice_item(const functor& func, const char* ip, int port, coservice* service);
+	coservice_item(const functor& func, coservice* service);
 
 	coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service);
-	coservice_item(functor&& func, const char* ip, int port, coservice* service);
+	coservice_item(functor&& func, coservice* service);
 
 	virtual ~coservice_item();
 
@@ -97,16 +97,16 @@ inline bool coservice_item::create(const functor& func, int fd, sockaddr_in& add
 	return new(std::nothrow) coservice_item(func, fd, addr, service);
 }
 
-inline bool coservice_item::create(const functor& func, const char* ip, int port, coservice* service) {
-	return new(std::nothrow) coservice_item(func, ip, port, service);
+inline bool coservice_item::create(const functor& func, coservice* service) {
+	return new(std::nothrow) coservice_item(func, service);
 }
 
 inline bool coservice_item::create(functor&& func, int fd, sockaddr_in& addr, coservice* service) {
 	return new(std::nothrow) coservice_item(std::move(func), fd, addr, service);
 }
 
-inline bool coservice_item::create(functor&& func, const char* ip, int port, coservice* service) {
-	return new(std::nothrow) coservice_item(std::move(func), ip, port, service);
+inline bool coservice_item::create(functor&& func, coservice* service) {
+	return new(std::nothrow) coservice_item(std::move(func), service);
 }
 
 inline coservice_item* coservice_item::self() {

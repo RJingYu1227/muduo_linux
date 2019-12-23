@@ -21,8 +21,7 @@ public:
 		revents_(0) {
 
 	}
-	coevent(const char* ip, int port) :
-		socket(ip, port),
+	coevent() :
 		events_(0),
 		revents_(0) {
 

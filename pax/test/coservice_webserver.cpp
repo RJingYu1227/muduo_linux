@@ -20,7 +20,7 @@ void connect_handler() {
 	cst->enableReading();
 	cst->updateEvents();
 
-	LOG << "处理新连接 " << cst->getAddr2() << ':' << cst->getPort();
+	LOG << "处理新连接 " << cst->getIp() << ':' << cst->getPort();
 	coroutine::yield();
 
 	ssize_t nread;
@@ -36,7 +36,7 @@ void connect_handler() {
 		if (nread == 0 || request.parseRequest(buff1) == false)
 			break;
 		else if (request.parseDone()) {
-			LOG << "完整解析httprequest " << cst->getAddr2() << ':' << cst->getPort();
+			LOG << "完整解析httprequest " << cst->getIp() << ':' << cst->getPort();
 			
 			string temp;
 			try {
@@ -53,7 +53,7 @@ void connect_handler() {
 
 			response.appendToBuffer(buff2);
 			cst->write(buff2.beginPtr(), buff2.usedBytes(), -1);
-			LOG << "完整发送httpresponse " << cst->getAddr2() << ':' << cst->getPort();
+			LOG << "完整发送httpresponse " << cst->getIp() << ':' << cst->getPort();
 
 			if (!response.keepAlive()) {
 				cst->shutdownWrite();
@@ -68,17 +68,17 @@ void connect_handler() {
 		coroutine::yield();
 	}
 
-	LOG << "连接处理完毕 " << cst->getAddr2() << ':' << cst->getPort();
+	LOG << "连接处理完毕 " << cst->getIp() << ':' << cst->getPort();
 }
 
 void accept_handler() {
 	coservice_item* cst = coservice_item::self();
-	cst->bind();
+	cst->bind("0.0.0.0", 7777, 1);
 	cst->listen();
 	cst->enableReading();
 	cst->updateEvents();
 
-	LOG << "TcpServer开始监听 " << cst->getAddr2() << ':' << cst->getPort();
+	LOG << "TcpServer开始监听 " << cst->getIp() << ':' << cst->getPort();
 	coroutine::yield();
 	
 	sockaddr_in cliaddr;
@@ -92,7 +92,7 @@ void accept_handler() {
 		coroutine::yield();
 	}
 
-	LOG << "TcpServer停止监听 " << cst->getAddr2() << ':' << cst->getPort();
+	LOG << "TcpServer停止监听 " << cst->getIp() << ':' << cst->getPort();
 }
 
 void thread_func() {
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 			thread_num = 8;
 	}
 
-	coservice_item::create(accept_handler, "0.0.0.0", 7777, &service);
+	coservice_item::create(accept_handler, &service);
 
 	std::vector<thread*> thread_vec(thread_num);
 	for (auto& x : thread_vec) {

@@ -17,10 +17,11 @@ coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop*
 	loop_->setTimeout(1, &timenode_);
 }
 
-coloop_item::coloop_item(const functor& func, const char* ip, int port, coloop* loop) :
+coloop_item::coloop_item(const functor& func, coloop* loop) :
 	coroutine_item(func, 0),
-	coevent(ip, port),
 	loop_(loop) {
+
+	assert(socket::valid());
 
 	*timenode_ = this;
 
@@ -37,10 +38,11 @@ coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop
 	loop_->setTimeout(1, &timenode_);
 }
 
-coloop_item::coloop_item(functor&& func, const char* ip, int port, coloop* loop) :
+coloop_item::coloop_item(functor&& func, coloop* loop) :
 	coroutine_item(std::move(func), 0),
-	coevent(ip, port),
 	loop_(loop) {
+
+	assert(socket::valid());
 
 	*timenode_ = this;
 

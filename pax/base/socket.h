@@ -2,43 +2,73 @@
 
 #include<pax/base/uncopyable.h>
 
-#include<netinet/tcp.h>
 #include<arpa/inet.h>
+
+//<netinet/tcp.h>
+struct tcp_info;
 
 namespace pax {
 
 class socket :uncopyable {
 public:
 
-	socket(const char* ip, int port);
-	socket(int fd, sockaddr_in& addr);
+	socket();
+	socket(int fd, const sockaddr_in& addr);
+
 	virtual ~socket();
 
-	int getFd()const { return fd_; }
-	uint16_t getPort()const { return htons(addr_.sin_port); }
-	uint32_t getAddr1()const { return addr_.sin_addr.s_addr; }
-	const char* getAddr2()const { return ip_; }
-	bool getTcpInfo(tcp_info* info)const;
+	bool valid()const { return state_ != INVALID; }
 
-	bool bind();
+	bool bind(const char* ip, uint16_t port, bool server);
+
+	int connect();
+
 	bool listen();
 	int accept(sockaddr_in* peeraddr);
 
-	void shutdownWrite();
-	void shutdownRead();
-	void shutdownAll();
+	int getFd()const { return fd_; }
+	const sockaddr_in& getAddr()const { return addr_; }
+	const char* getIp()const { return ip_; }
+	uint16_t getPort()const { return port_; }
+	bool getTcpInfo(tcp_info* info)const;
 
-	void setReuseAddr(bool on);
-	void setReusePort(bool on);
-	void setTcpNodelay(bool on);
-	void setKeepalive(bool on);
+	bool shutdownWrite();
+	bool shutdownRead();
+	bool shutdownAll();
+
+	bool setReuseAddr(bool on);
+	bool setReusePort(bool on);
+	bool setTcpNodelay(bool on);
+	bool setKeepalive(bool on);
 
 private:
+	enum state {
+		INVALID,
+		OPENED,
+		BINDED,
+		CONNECTING, CONNECTED, 
+		LISTENING
+	};
 
 	int fd_;
+	state state_;
+
 	sockaddr_in addr_;
-	char ip_[16];
+	char ip_[INET_ADDRSTRLEN];
+	uint16_t port_;
 
 };
+
+inline bool socket::shutdownWrite() {
+	return shutdown(fd_, SHUT_WR) == 0;
+}
+
+inline bool socket::shutdownRead() {
+	return shutdown(fd_, SHUT_RD) == 0;
+}
+
+inline bool socket::shutdownAll() {
+	return shutdown(fd_, SHUT_RDWR) == 0;
+}
 
 }//namespace pax

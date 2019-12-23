@@ -18,10 +18,11 @@ coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, c
 	service_->add(this);
 }
 
-coservice_item::coservice_item(const functor& func, const char* ip, int port, coservice* service) :
+coservice_item::coservice_item(const functor& func, coservice* service) :
 	coroutine_item(func, 0),
-	coevent(ip, port),
 	service_(service) {
+
+	assert(socket::valid());
 
 	*handling_ = true;
 	*timenode_ = this;
@@ -40,10 +41,11 @@ coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coserv
 	service_->add(this);
 }
 
-coservice_item::coservice_item(functor&& func, const char* ip, int port, coservice* service) :
+coservice_item::coservice_item(functor&& func, coservice* service) :
 	coroutine_item(std::move(func), 0),
-	coevent(ip, port),
 	service_(service) {
+
+	assert(socket::valid());
 
 	*handling_ = true;
 	*timenode_ = this;
