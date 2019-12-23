@@ -14,10 +14,7 @@ class coroutine :uncopyable {
 	friend class coroutine_item;
 public:
 
-	static void yield()noexcept(false) {
-		//std::logic_error
-		threadCoenv()->yieldFunc();
-	}
+	static void yield()noexcept(false);
 
 	~coroutine();
 
@@ -58,10 +55,7 @@ public:
 	~coroutine_item();//可以考虑换成virtual
 
 	costate getState()const { return state_; }
-	void resume()noexcept(false) {
-		//std::logic_error, std::bad_alloc
-		coroutine::threadCoenv()->resumeFunc(this);
-	}
+	void resume()noexcept(false);
 
 private:
 
@@ -72,17 +66,28 @@ private:
 
 	thread_local static coroutine_item* running_crt_;
 
+	coroutine_item();//for coroutine
+
 	costate state_;
 	functor coFunc;
 
 	ucontext_t ctx_;
 
-	bool shared_;
-	char* stack_bp_;
+	const bool shared_;
 	char* stack_sp_;
 	char* stack_buff_;
 	size_t length_;
 
 };
+
+//std::logic_error, std::bad_alloc
+inline void coroutine::yield()noexcept(false) {
+	threadCoenv()->yieldFunc();
+}
+
+//std::logic_error, std::bad_alloc
+inline void coroutine_item::resume()noexcept(false) {
+	coroutine::threadCoenv()->resumeFunc(this);
+}
 
 }//namespace pax

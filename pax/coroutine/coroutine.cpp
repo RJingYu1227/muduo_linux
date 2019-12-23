@@ -14,15 +14,23 @@ enum config {
 };
 
 //共享栈协程可能要先于环境协程创建出来
-thread_local char* shared_stack = nullptr;
+thread_local char* shared_stack_sp = nullptr;
+thread_local char* shared_stack_bp = nullptr;
 thread_local coroutine* env = nullptr;
+
+auto initSharedStack = [&]() {
+	shared_stack_sp = (char*)::malloc(kSharedStackSize);
+	if (shared_stack_sp == nullptr)
+		throw std::bad_alloc();
+	shared_stack_bp = shared_stack_sp + kSharedStackSize;
+};
 
 class free {
 public:
 
 	~free() {
-		if (shared_stack)
-			::free(shared_stack);
+		if (shared_stack_sp)
+			::free(shared_stack_sp);
 
 		if (env)
 			delete env;
@@ -37,22 +45,18 @@ thread_local free obj;
 thread_local coroutine_item* coroutine_item::running_crt_ = nullptr;
 
 coroutine::coroutine() :
-	env_co_((coroutine_item*)::malloc(sizeof(coroutine_item))),
+	env_co_(new coroutine_item()),
 	index_(0) {
 
-	assert(env_co_);
-
-	env_co_->shared_ = false;
 	call_stack_[index_] = env_co_;
-	env_co_->state_ = coroutine_item::RUNNING;
-	coroutine_item::running_crt_ = env_co_;
 	//::getcontext(&env_co_->ctx_);
 }
 
 coroutine::~coroutine() {
 	assert(index_ == 0);
 
-	::free(env_co_);
+	env_co_->state_ = coroutine_item::DONE;
+	delete env_co_;
 }
 
 coroutine* coroutine::threadCoenv() {
@@ -69,7 +73,6 @@ void coroutine_item::coroutineFunc(coroutine_item* co) {
 	co->coFunc();
 
 	co->state_ = DONE;
-
 	coroutine::yield();//这里不会throw
 }
 
@@ -79,63 +82,50 @@ void coroutine_item::makeContext(coroutine_item* co) {
 	co->ctx_.uc_link = 0;
 	co->ctx_.uc_stack.ss_flags = 0;
 
-	void* sp;
 	if (co->shared_) {
-		if (shared_stack == nullptr) {
-			shared_stack = (char*)::malloc(kSharedStackSize);
-			if (shared_stack == nullptr)
-				throw std::bad_alloc();
-		}
-		sp = shared_stack;
+		if (shared_stack_sp == nullptr)
+			initSharedStack();
 
-		co->stack_bp_ = (char*)sp + kSharedStackSize;
 		co->ctx_.uc_stack.ss_size = kSharedStackSize;
-		co->ctx_.uc_stack.ss_sp = sp;
+		co->ctx_.uc_stack.ss_sp = shared_stack_sp;
 	}
 	else {
-		sp = ::malloc(kStackSize);
+		void* sp = ::malloc(kStackSize);
 		if (sp == nullptr)
 			throw std::bad_alloc();
 
-		co->stack_bp_ = (char*)sp + kStackSize;
 		co->ctx_.uc_stack.ss_size = kStackSize;
 		co->ctx_.uc_stack.ss_sp = sp;
 
 		::makecontext(&co->ctx_, (void(*)())coroutineFunc, 1, co);
 	}
-	
 }
 
 void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	char addr;
 
-	if (curr->shared_ && curr->state_ != DONE) {
+	if (curr->shared_ == true && curr->state_ != DONE) {
 		curr->stack_sp_ = &addr;
-		size_t len = curr->stack_bp_ - curr->stack_sp_;
+		size_t len = shared_stack_bp - curr->stack_sp_;
 
 		curr->stack_buff_ = (char*)::malloc(len);
-		curr->length_ = len;
 		if (curr->stack_buff_ == nullptr)
 			throw std::bad_alloc();
 
+		curr->length_ = len;
 		memcpy(curr->stack_buff_, curr->stack_sp_, curr->length_);
 	}
 
-	if (pend->shared_) {
-		if (pend->ctx_.uc_stack.ss_sp != shared_stack)
-			throw std::logic_error("共享栈协程不能跨线程调用");
-			
-		if (pend->state_ == FREE)
-			::makecontext(&pend->ctx_, (void(*)())coroutineFunc, 1, pend);
+	if (pend->state_ == FREE && pend->shared_ == true) {
+		//放在这里make使得共享栈协程执行过程中可以创建一个新的共享栈协程
+		::makecontext(&pend->ctx_, (void(*)())coroutineFunc, 1, pend);
 	}
 
 	running_crt_ = pend;
-
 	::swapcontext(&curr->ctx_, &pend->ctx_);
 
 	coroutine_item*  co = running_crt_;
-
-	if (co->shared_) {
+	if (co->shared_ == true) {
 		memcpy(co->stack_sp_, co->stack_buff_, co->length_);
 
 		::free(co->stack_buff_);
@@ -144,11 +134,20 @@ void coroutine_item::swapContext(coroutine_item* curr, coroutine_item* pend) {
 	}
 }
 
+coroutine_item::coroutine_item() :
+	state_(RUNNING),
+	shared_(false),
+	stack_sp_(0),
+	stack_buff_(0),
+	length_(0) {
+
+	running_crt_ = this;
+}
+
 coroutine_item::coroutine_item(const functor& func, bool shared) :
 	state_(FREE),
 	coFunc(func),
 	shared_(shared),
-	stack_bp_(0),
 	stack_sp_(0),
 	stack_buff_(0),
 	length_(0) {
@@ -160,7 +159,6 @@ coroutine_item::coroutine_item(functor&& func, bool shared) :
 	state_(FREE),
 	coFunc(std::move(func)),
 	shared_(shared),
-	stack_bp_(0),
 	stack_sp_(0),
 	stack_buff_(0),
 	length_(0) {
@@ -201,7 +199,11 @@ void coroutine::resumeFunc(coroutine_item* co) {
 
 		break;
 	}
-	
+
+	if (co->shared_ == true && co->ctx_.uc_stack.ss_sp != shared_stack_sp) {
+		throw std::logic_error("共享栈协程不能跨线程调用");
+	}
+
 	coroutine_item* curr = call_stack_[index_];
 	curr->state_ = coroutine_item::INSTACK;
 
@@ -212,7 +214,7 @@ void coroutine::resumeFunc(coroutine_item* co) {
 	try {
 		coroutine_item::swapContext(curr, co);
 	}
-	catch (...) {
+	catch (std::bad_alloc) {
 		co->state_ = last_state;
 
 		--index_;
@@ -241,7 +243,7 @@ void coroutine::yieldFunc() {
 		try {
 			coroutine_item::swapContext(curr, pend);
 		}
-		catch (...) {
+		catch (std::bad_alloc) {
 			pend->state_ = coroutine_item::INSTACK;
 
 			++index_;
