@@ -27,7 +27,7 @@ tcpconnection::tcpconnection(eventloop* loop, int fd, sockaddr_in& cliaddr)
 		std::bind(&tcpconnection::handleError, this));
 	channel_.setCloseCallback(
 		std::bind(&tcpconnection::handleClose, this));
-	LOG << "建立一个新连接：" << socket_.getAddr2() << ' ' << socket_.getPort();
+	LOG << "建立一个新连接：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 tcpconnection::~tcpconnection() {
@@ -169,7 +169,7 @@ void tcpconnection::handleClose() {
 
 	channel_.remove();//注意
 	closedCallback(shared_from_this());
-	LOG << "关闭一个连接：" << socket_.getAddr2() << ' ' << socket_.getPort();
+	LOG << "关闭一个连接：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 void tcpconnection::handleWrite() {

@@ -12,16 +12,16 @@ using std::placeholders::_1;
 tcpserver::tcpserver(const char* ip, int port, int loopnum)
 	:serverloop_(new eventloop()),
 	looppool_(new elthreadpool(loopnum)),
-	socket_(ip, port),
+	socket_(),
 	mpool_(1024),
 	channel_(serverloop_, socket_.getFd()),
 	removeFunc(std::bind(&tcpserver::removeConn, this, _1)),
 	deleterFunc(std::bind(&tcpserver::deleter, this, _1)),
 	listening_(0) {
 
-	socket_.bind();
+	socket_.bind(ip, static_cast<uint16_t>(port), 1);
 	channel_.setReadCallback(std::bind(&tcpserver::acceptConn, this));
-	LOG << "创建TcpServer：" << socket_.getAddr2() << ' ' << socket_.getPort();
+	LOG << "创建TcpServer：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 tcpserver::~tcpserver() {
@@ -35,7 +35,7 @@ tcpserver::~tcpserver() {
 
 	connections_.clear();
 	delete serverloop_;
-	LOG << "关闭TcpServer：" << socket_.getAddr2() << ' ' << socket_.getPort();
+	LOG << "关闭TcpServer：" << socket_.getIp() << ' ' << socket_.getPort();
 }
 
 void tcpserver::start() {

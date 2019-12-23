@@ -34,8 +34,7 @@ public:
 
 	int getFd()const { return socket_.getFd(); }
 	uint16_t getPort()const { return socket_.getPort(); }
-	uint32_t getAddr1()const { return socket_.getAddr1(); }
-	const char* getAddr2()const { return socket_.getAddr2(); }
+	const char* getIp()const { return socket_.getIp(); }
 
 private:
 
