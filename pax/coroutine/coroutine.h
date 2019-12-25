@@ -50,8 +50,8 @@ public:
 		DONE,
 	};
 
-	coroutine_item(const functor& func, bool shared = false)noexcept(false);//std::bad_alloc
-	coroutine_item(functor&& func, bool shared = false)noexcept(false);//std::bad_alloc
+	explicit coroutine_item(const functor& func, bool shared = false)noexcept(false);//std::bad_alloc
+	explicit coroutine_item(functor&& func, bool shared = false)noexcept(false);//std::bad_alloc
 	~coroutine_item();//可以考虑换成virtual
 
 	costate getState()const { return state_; }

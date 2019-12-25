@@ -88,12 +88,12 @@ bool socket::listen() {
 	return 0;
 }
 
-int socket::accept(sockaddr_in* peeraddr) {
+int socket::accept(sockaddr_in& peeraddr) {
 	assert(state_ == LISTENING);
 
 	socklen_t len = sizeof(sockaddr_in);//值-结果参数，不初始化时，可能会出错，errno = 22
-	bzero(peeraddr, len);
-	int clifd = ::accept4(fd_, (sockaddr*)peeraddr, &len,
+	bzero(&peeraddr, len);
+	int clifd = ::accept4(fd_, (sockaddr*)&peeraddr, &len,
 		SOCK_NONBLOCK | SOCK_CLOEXEC);
 
 	if (clifd > 0)

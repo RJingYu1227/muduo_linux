@@ -18,7 +18,7 @@ class eventqueue :uncopyable {
 public:
 	typedef std::function<void()> functor;
 
-	eventqueue(eventloop* loop);
+	explicit eventqueue(eventloop* loop);
 	~eventqueue();
 
 	void wakeup();

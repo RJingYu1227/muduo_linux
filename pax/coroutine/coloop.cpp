@@ -7,7 +7,7 @@ using namespace pax;
 
 thread_local coloop_item* coloop_item::running_cpt_ = nullptr;
 
-coloop_item::coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop* loop) :
+coloop_item::coloop_item(const functor& func, int fd, const sockaddr_in& addr, coloop* loop) :
 	coroutine_item(func, 0),
 	coevent(fd, addr),
 	loop_(loop) {
@@ -28,7 +28,7 @@ coloop_item::coloop_item(const functor& func, coloop* loop) :
 	loop_->setTimeout(1, &timenode_);
 }
 
-coloop_item::coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop) :
+coloop_item::coloop_item(functor&& func, int fd, const sockaddr_in& addr, coloop* loop) :
 	coroutine_item(std::move(func), 0),
 	coevent(fd, addr),
 	loop_(loop) {
@@ -134,11 +134,9 @@ void coloop::loop() {
 	looping_ = 1;
 	quit_ = 0;
 
-	coloop_item* cpt;
-	int numevents;
-
 	while (!quit_) {
-		numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+		int numevents = epoll_wait(epfd_, &*revents_.begin(), static_cast<int>(revents_.size()), 1);
+		coloop_item* cpt;
 
 		{
 			lock<mutex> x(&time_mutex_);

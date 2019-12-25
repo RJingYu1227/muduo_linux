@@ -29,7 +29,7 @@ void httpserver::onConnected(const pax::tcpconn_ptr& conn) {
 }
 
 void httpserver::onRecvDone(const pax::tcpconn_ptr& conn) {
-	httprequest* request = (httprequest*)conn->getPtr();
+	httprequest* request = reinterpret_cast<httprequest*>(conn->getPtr());
 	pax::buffer* buffer1 = conn->getRecvBuffer();
 
 	if (!request->parseRequest(*buffer1)) {
@@ -41,7 +41,7 @@ void httpserver::onRecvDone(const pax::tcpconn_ptr& conn) {
 		try {
 			temp = request->getHeader("Connection");
 		}
-		catch (std::runtime_error er) {
+		catch (std::runtime_error& er) {
 			temp.clear();
 		}
 		bool alive = (temp == "keep-alive") ||
@@ -66,6 +66,6 @@ void httpserver::onRecvDone(const pax::tcpconn_ptr& conn) {
 }
 
 void httpserver::onClosed(const pax::tcpconn_ptr& conn) {
-	delete (httprequest*)conn->getPtr();
+	delete reinterpret_cast<httprequest*>(conn->getPtr());
 }
 

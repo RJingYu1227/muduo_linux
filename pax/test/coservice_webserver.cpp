@@ -23,12 +23,12 @@ void connect_handler() {
 	LOG << "处理新连接 " << cst->getIp() << ':' << cst->getPort();
 	coroutine::yield();
 
-	ssize_t nread;
 	buffer buff1, buff2;
 	httprequest request;
 
 	for (;;) {
-		if ((nread = cst->read(buff1.endPtr(), 1024)) > 0) {
+		ssize_t nread = cst->read(buff1.endPtr(), 1024);
+		if (nread > 0) {
 			buff1.hasUsed(nread);
 			buff1.ensureLeftBytes(1024);
 		}
@@ -42,7 +42,7 @@ void connect_handler() {
 			try {
 				temp = request.getHeader("Connection");
 			}
-			catch (std::runtime_error er) {
+			catch (std::runtime_error& er) {
 				temp.clear();
 			}
 			bool alive = (temp == "keep-alive") ||
@@ -82,10 +82,9 @@ void accept_handler() {
 	coroutine::yield();
 	
 	sockaddr_in cliaddr;
-	int clifd;
 
 	for (;;) {
-		clifd = cst->accept(&cliaddr);
+		int clifd = cst->accept(cliaddr);
 		if (clifd > 0)
 			coservice_item::create(connect_handler, clifd, cliaddr, &service);
 

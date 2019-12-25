@@ -63,7 +63,7 @@ bool checkLoginValues(initializer_list<string*> values) {
 				return 0;
 
 			for (auto ch : *pstr)
-				if (isalnum(ch) == false)//标准库函数，判断是否是字母或数字
+				if (isalnum(ch))//标准库函数，判断是否是字母或数字
 					return 0;
 		}
 		else if (i == 2) {//repswd
@@ -75,7 +75,7 @@ bool checkLoginValues(initializer_list<string*> values) {
 				return 0;
 
 			for (auto ch : *pstr)
-				if (isdigit(ch) == false)//标准库函数，判断是否是数字
+				if (isdigit(ch))//标准库函数，判断是否是数字
 					return 0;
 		}
 		else

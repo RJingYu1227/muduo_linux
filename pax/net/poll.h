@@ -9,15 +9,15 @@ namespace pax {
 class poll :public poller {
 public:
 
-	poll(eventloop* loop)
+	explicit poll(eventloop* loop)
 		:poller(loop) {
 
 	}
 	~poll() = default;
 
 	void doPoll(int timeoutms, channellist& active_channels_);
-	void updateChannel(channel* ch);
-	void removeChannel(channel* ch);
+	void updateChannel(channel* ch)override;
+	void removeChannel(channel* ch)override;
 
 private:
 	typedef std::vector<struct pollfd> pollfd_list;

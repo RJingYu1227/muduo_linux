@@ -10,12 +10,12 @@ namespace pax {
 class epoll :public poller {
 public:
 
-	epoll(eventloop* loop);
+	explicit epoll(eventloop* loop);
 	~epoll();
 
 	void doPoll(int timeoutms, channellist& active_channels_);
-	void updateChannel(channel* ch);
-	void removeChannel(channel* ch);
+	void updateChannel(channel* ch)override;
+	void removeChannel(channel* ch)override;
 
 private:
 	typedef std::vector<epoll_event> event_list;

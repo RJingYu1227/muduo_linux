@@ -41,7 +41,7 @@ template<typename T>
 class lock {
 public:
 
-	lock(T* lock)
+	explicit lock(T* lock)
 		:lock_(lock) {
 		lock_->lock();
 	}

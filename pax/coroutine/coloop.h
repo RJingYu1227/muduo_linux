@@ -50,24 +50,24 @@ class coloop_item :
 public:
 	typedef std::function<void()> functor;
 
-	static bool create(const functor& func, int fd, sockaddr_in& addr, coloop* loop);
+	static bool create(const functor& func, int fd, const sockaddr_in& addr, coloop* loop);
 	static bool create(const functor& func, coloop* loop);
 
-	static bool create(functor&& func, int fd, sockaddr_in& addr, coloop* loop);
+	static bool create(functor&& func, int fd, const sockaddr_in& addr, coloop* loop);
 	static bool create(functor&& func, coloop* loop);
 
 	static coloop_item* self();
 
 	void yield(double seconds);
-	void yield(int ms);
-	void updateEvents();
+	void yield(int ms)override;
+	void updateEvents()override;
 
 protected:
 
-	coloop_item(const functor& func, int fd, sockaddr_in& addr, coloop* loop);
+	coloop_item(const functor& func, int fd, const sockaddr_in& addr, coloop* loop);
 	coloop_item(const functor& func, coloop* loop);
 
-	coloop_item(functor&& func, int fd, sockaddr_in& addr, coloop* loop);
+	coloop_item(functor&& func, int fd, const sockaddr_in& addr, coloop* loop);
 	coloop_item(functor&& func, coloop* loop);
 
 	~coloop_item();
@@ -81,7 +81,7 @@ private:
 
 };
 
-inline bool coloop_item::create(const functor& func, int fd, sockaddr_in& addr, coloop* loop) {
+inline bool coloop_item::create(const functor& func, int fd, const sockaddr_in& addr, coloop* loop) {
 	return new(std::nothrow) coloop_item(func, fd, addr, loop);
 }
 
@@ -89,7 +89,7 @@ inline bool coloop_item::create(const functor& func, coloop* loop) {
 	return new(std::nothrow) coloop_item(func, loop);
 }
 
-inline bool coloop_item::create(functor&& func, int fd, sockaddr_in& addr, coloop* loop) {
+inline bool coloop_item::create(functor&& func, int fd, const sockaddr_in& addr, coloop* loop) {
 	return new(std::nothrow) coloop_item(std::move(func), fd, addr, loop);
 }
 

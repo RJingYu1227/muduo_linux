@@ -17,7 +17,7 @@ class timerqueue :uncopyable {
 public:
 	typedef std::function<void()> functor;
 
-	timerqueue(eventloop* loop);
+	explicit timerqueue(eventloop* loop);
 	~timerqueue();
 
 	ktimerid addTimer(const functor& func, uint64_t time, double seconds);

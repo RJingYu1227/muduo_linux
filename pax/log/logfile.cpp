@@ -39,10 +39,10 @@ void logfile::flush() {
 }
 
 void logfile::append_unlock(const char* data, size_t len) {
-	size_t leftbytes, temp;
-
 	assert(data);
 	while (len) {
+		size_t leftbytes, temp;
+
 		if (file_->writtenBytes() == rollsize_)
 			rollfile();
 

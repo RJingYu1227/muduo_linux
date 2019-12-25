@@ -61,24 +61,24 @@ class coservice_item :
 public:
 	typedef std::function<void()> functor;
 
-	static bool create(const functor& func, int fd, sockaddr_in& addr, coservice* service);
+	static bool create(const functor& func, int fd, const sockaddr_in& addr, coservice* service);
 	static bool create(const functor& func, coservice* service);
 
-	static bool create(functor&& func, int fd, sockaddr_in& addr, coservice* service);
+	static bool create(functor&& func, int fd, const sockaddr_in& addr, coservice* service);
 	static bool create(functor&& func, coservice* service);
 
 	static coservice_item* self();
 
 	void yield(double seconds);
-	void yield(int ms);
-	void updateEvents();
+	void yield(int ms)override;
+	void updateEvents()override;
 
 protected:
 
-	coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service);
+	coservice_item(const functor& func, int fd, const sockaddr_in& addr, coservice* service);
 	coservice_item(const functor& func, coservice* service);
 
-	coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service);
+	coservice_item(functor&& func, int fd, const sockaddr_in& addr, coservice* service);
 	coservice_item(functor&& func, coservice* service);
 
 	virtual ~coservice_item();
@@ -93,7 +93,7 @@ private:
 
 };
 
-inline bool coservice_item::create(const functor& func, int fd, sockaddr_in& addr, coservice* service) {
+inline bool coservice_item::create(const functor& func, int fd, const sockaddr_in& addr, coservice* service) {
 	return new(std::nothrow) coservice_item(func, fd, addr, service);
 }
 
@@ -101,7 +101,7 @@ inline bool coservice_item::create(const functor& func, coservice* service) {
 	return new(std::nothrow) coservice_item(func, service);
 }
 
-inline bool coservice_item::create(functor&& func, int fd, sockaddr_in& addr, coservice* service) {
+inline bool coservice_item::create(functor&& func, int fd, const sockaddr_in& addr, coservice* service) {
 	return new(std::nothrow) coservice_item(std::move(func), fd, addr, service);
 }
 

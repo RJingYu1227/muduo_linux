@@ -15,7 +15,7 @@ public:
 		ET = EPOLLET,
 	};
 
-	coevent(int fd, sockaddr_in& addr) :
+	coevent(int fd, const sockaddr_in& addr) :
 		socket(fd, addr),
 		events_(0),
 		revents_(0) {

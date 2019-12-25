@@ -67,16 +67,14 @@ void tcpserver::stopInLoop() {
 
 void tcpserver::acceptConn() {
 	sockaddr_in cliaddr_;
-	int clifd_;
-	eventloop* ioloop_;
 	tcpconnection* conn_;
 
 	while (1) {
-		clifd_ = socket_.accept(&cliaddr_);
+		int clifd_ = socket_.accept(cliaddr_);
 		if (clifd_ == -1)
 			break;
 
-		ioloop_ = looppool_->getLoop();
+		eventloop* ioloop_ = looppool_->getLoop();
 		if (ioloop_ == nullptr)
 			ioloop_ = serverloop_;
 

@@ -7,7 +7,7 @@ using namespace pax;
 
 thread_local coservice_item* coservice_item::running_cst_ = nullptr;
 
-coservice_item::coservice_item(const functor& func, int fd, sockaddr_in& addr, coservice* service) :
+coservice_item::coservice_item(const functor& func, int fd, const sockaddr_in& addr, coservice* service) :
 	coroutine_item(func, 0),
 	coevent(fd, addr),
 	service_(service) {
@@ -30,7 +30,7 @@ coservice_item::coservice_item(const functor& func, coservice* service) :
 	service_->add(this);
 }
 
-coservice_item::coservice_item(functor&& func, int fd, sockaddr_in& addr, coservice* service) :
+coservice_item::coservice_item(functor&& func, int fd, const sockaddr_in& addr, coservice* service) :
 	coroutine_item(std::move(func), 0),
 	coevent(fd, addr),
 	service_(service) {

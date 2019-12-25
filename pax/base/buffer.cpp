@@ -51,11 +51,12 @@ void buffer::makeSpace(size_t len) {
 		buffer_.resize(end_index_ + len);
 	else {
 		assert(kCheapPrepend < begin_index_);
-		size_t readable_ = usedBytes();
+
+		size_t readable = usedBytes();
+
 		std::copy(headPtr() + begin_index_, headPtr() + end_index_, headPtr() + kCheapPrepend);
 		begin_index_ = kCheapPrepend;
-		end_index_ = begin_index_ + readable_;
-		assert(readable_ = usedBytes());
+		end_index_ = begin_index_ + readable;
 	}
 }
 

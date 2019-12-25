@@ -24,7 +24,7 @@ public:
 	int connect();
 
 	bool listen();
-	int accept(sockaddr_in* peeraddr);
+	int accept(sockaddr_in& peeraddr);
 
 	int getFd()const { return fd_; }
 	const sockaddr_in& getAddr()const { return addr_; }

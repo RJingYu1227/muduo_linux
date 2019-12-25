@@ -51,7 +51,7 @@ void timerqueue::addTimerInLoop(timer* timer) {
 }
 
 void timerqueue::cancelTimer(ktimerid timerid){
-	if (timerid.born_ <= 0 || timerid.ptr_ == nullptr)
+	if (timerid.born_ == 0 || timerid.ptr_ == nullptr)
 		return;
 
 	loop_->runInLoop(std::bind(&timerqueue::cancelTimerInLoop, this, timerid));

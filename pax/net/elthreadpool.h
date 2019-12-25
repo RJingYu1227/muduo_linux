@@ -12,7 +12,7 @@ class eventloop;
 class elthreadpool :uncopyable {
 public:
 
-	elthreadpool(int num);
+	explicit elthreadpool(int num);
 	~elthreadpool() { stop(); }
 
 	eventloop* getLoop();

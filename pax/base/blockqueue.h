@@ -86,7 +86,7 @@ T blockqueue<T>::take_front() {
 		cond_.wait(&lock_);
 	T front(std::move(queue_.front()));
 	queue_.pop_front();
-	return std::move(front);
+	return front;//
 }
 
 template<typename T>
@@ -121,7 +121,7 @@ T blockqueue<T>::take_back() {
 		cond_.wait(&lock_);
 	T back(std::move(queue_.back()));
 	queue_.pop_back();
-	return std::move(back);
+	return back;//
 }
 
 }//namespace pax
