@@ -73,7 +73,7 @@ int socket::connect() {
 		if (fd_ < 0)
 			state_ = INVALID;
 		else
-			state_ = OPENED;
+			state_ = BINDED;
 
 		return -1;
 	}
