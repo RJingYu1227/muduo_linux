@@ -70,8 +70,10 @@ int socket::connect() {
 	else {
 		::close(fd_);
 		fd_ = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, SOL_TCP);
-		if (fd_ < 0)//这里存在逻辑错误
+		if (fd_ < 0)
 			state_ = INVALID;
+		else
+			state_ = OPENED;
 
 		return -1;
 	}
