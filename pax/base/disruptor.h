@@ -7,6 +7,8 @@
 
 namespace pax {
 
+//在c++11标准里，class的*运算符的优先级高于++运算符
+//在往后的标准里，只高于前置++运算符，而低于后置++运算符
 template<typename T>
 class disruptor :uncopyable {
 public:
@@ -97,7 +99,7 @@ void disruptor<T>::put(T&& val) {
 
 template<typename T>
 void disruptor<T>::take(T& dst) {
-	uint64_t rseq = *read_;
+	uint64_t rseq = *read_++;
 	uint64_t ridx = (rseq - 1) % capacity_;
 
 	if (rseq > *writedone_) {
